@@ -14,57 +14,44 @@ import time
 import datetime
 # tools for plotting confusion matrices and t-SNE
 from torchsummary import summary
-
-
+from Code.data_loaders import aguilera_dataset_loader, extract_segment_trial, train_test_val_split
+from share import aguilera_info
 # ========================= BCIIV2A data =====================================
 
-def bci4_2a():  # 通用模型模块, 不需要更改, 放在main中方便调试;
-    dataset = 'BCI4_2A'
-    data_path = "/Users/almacuevas/work_projects/voting_system_platform/Code/LMDA-Code/BCICIV_2a_edf"
+def get_data(dataset: str, data_path: str, dataset_info: dict, valid_flag: bool = False):
+    filename = F"S{subject_id}.edf"
+    filepath = os.path.join(data_path, filename)
 
-    train_filename = "{}T.edf".format(subject_id)
-    test_filename = "{}E.edf".format(subject_id)
-    train_filepath = os.path.join(data_path, train_filename)
-    test_filepath = os.path.join(data_path, test_filename)
-    train_label_filepath = train_filepath.replace(".edf", ".mat")
-    test_label_filepath = test_filepath.replace(".edf", ".mat")
-
-    train_loader = BCICompetition4Set2A(
-        train_filepath, labels_filename=train_label_filepath
-    )
-    test_loader = BCICompetition4Set2A(
-        test_filepath, labels_filename=test_label_filepath
-    )
-    train_cnt = train_loader.load()
-    test_cnt = test_loader.load()
+    loader = aguilera_dataset_loader(filepath)
+    cnt = loader.load()
 
     # band-pass before segment trials
     # train_cnt = mne_apply(lambda a: a * 1e6, train_cnt)
     # test_cnt = mne_apply(lambda a: a * 1e6, test_cnt)
 
-    train_cnt = mne_apply(lambda a: bandpass_cnt(a, low_cut_hz=4, high_cut_hz=38,
-                                                 filt_order=200, fs=250, zero_phase=False),
-                          train_cnt)
+    cnt = mne_apply(lambda a: bandpass_cnt(a, low_cut_hz=4, high_cut_hz=38,
+                                                 filt_order=200, fs=dataset_info['sample_rate'], zero_phase=False),
+                          cnt)
 
-    test_cnt = mne_apply(lambda a: bandpass_cnt(a, low_cut_hz=4, high_cut_hz=38,
-                                                filt_order=200, fs=250, zero_phase=False),
-                         test_cnt)
+    data, label = extract_segment_trial(cnt)
+    print(data)
+    label = label - 1
 
-    train_data, train_label = extract_segment_trial(train_cnt)
-    test_data, test_label = extract_segment_trial(test_cnt)
-    print(train_data)
-    train_label = train_label - 1
-    test_label = test_label - 1
+    data = preprocess4mi(data) # This was for MI, try it. If it doesn't work, delete it.
+    x_train, x_test, x_val, y_train, y_test, y_val = train_test_val_split(dataX = data, dataY= label, valid_flag=valid_flag)
 
-    preprocessed_train = preprocess4mi(train_data)
-    preprocessed_test = preprocess4mi(test_data)
+    if valid_flag:
+        valid_loader = EEGDataLoader(x_val, y_val)
+        valid_dl = DataLoader(valid_loader, batch_size=batch_size, shuffle=False, drop_last=False, **kwargs)
+    else:
+        valid_dl = None
 
-    train_loader = EEGDataLoader(preprocessed_train, train_label)
-    test_loader = EEGDataLoader(preprocessed_test, test_label)
+    train_loader = EEGDataLoader(x_train, y_train)
+    test_loader = EEGDataLoader(x_test, y_test)
 
     train_dl = DataLoader(train_loader, batch_size=batch_size, shuffle=True, drop_last=False, **kwargs)
     test_dl = DataLoader(test_loader, batch_size=batch_size, shuffle=False, drop_last=False, **kwargs)
-    valid_dl = None
+
 
     model_id = '%s' % share_model_name
     folder_path = './%s/%s/' % (dataset, subject_id)  # mkdir in current folder, and name it by target's num
@@ -119,7 +106,7 @@ if __name__ == "__main__":
     sample_rate = 250
 
     # subject of the dataset
-    subject_id = 'A03'
+    subject_id = '1'
     device = torch.device('cuda')
 
     print('subject_id: ', subject_id)
@@ -158,8 +145,10 @@ if __name__ == "__main__":
     batch_size = 32
     kwargs = {'num_workers': 1, 'pin_memory': True}  # 因为pycharm开启了多进行运行main, num_works设置多个会报错
     # ================================================================================
+    dataset = 'aguilera_dataset'
+    data_path = "/Users/almacuevas/work_projects/voting_system_platform/Datasets/aguilera_dataset"
 
-    train_dl, valid_dl, test_dl, ShallowNet, model_optimizer, model_constraint, fig_path = bci4_2a()
+    train_dl, valid_dl, test_dl, ShallowNet, model_optimizer, model_constraint, fig_path = get_data(dataset, data_path, aguilera_info)
 
     exp = Experiment(model=ShallowNet,
                      device=device,

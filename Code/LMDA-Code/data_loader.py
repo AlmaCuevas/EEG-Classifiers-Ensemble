@@ -147,7 +147,7 @@ def extract_segment_trial(raw_gdb, baseline=(-0.5, 0), duration=4):
 
 if __name__ == '__main__':
     subject_id = 3
-    data_path = "/Users/rosit/Documents/MCC/voting_system_platform/Code/LMDA-Code/BCICIV_2a_edf/"
+    data_path = "/Users/almacuevas/work_projects/voting_system_platform/Code/LMDA-Code/BCICIV_2a_edf"
 
     train_filename = "A{:02d}T.edf".format(subject_id)
     test_filename = "A{:02d}E.edf".format(subject_id)
@@ -165,11 +165,5 @@ if __name__ == '__main__':
     train_cnt = train_loader.load()
     test_cnt = test_loader.load()
 
-    train_cnt = train_cnt.drop_channels(
-        ["EOG-left", "EOG-central", "EOG-right"]
-    )
-    test_cnt = test_cnt.drop_channels(
-        ["EOG-left", "EOG-central", "EOG-right"]
-    )
     print(train_cnt.get_data().shape)
     print(test_cnt.get_data().shape)
