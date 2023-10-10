@@ -1,0 +1,3 @@
+[submodule "Code/Inner_Speech_Dataset"]
+	path = Code/Inner_Speech_Dataset
+	url = https://github.com/N-Nieto/Inner_Speech_Dataset.git

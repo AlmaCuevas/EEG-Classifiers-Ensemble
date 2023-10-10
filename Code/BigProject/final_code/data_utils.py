@@ -38,7 +38,7 @@ def get_data(filepath, num_validation=50, num_test=50, subtract_mean=True, subtr
     y = y[mask]
     np.isnan(np.sum(x))
 
-    # now data loading is done, shuffle and seperate training, validation, test set
+    # now data loading is done, shuffle and separate training, validation, test set
     N, C, H = x.shape
     num_training = N - num_test - num_validation
     x, y = shuffle(x, y, random_state=0)

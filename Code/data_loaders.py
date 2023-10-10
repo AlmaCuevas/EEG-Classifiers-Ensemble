@@ -2,11 +2,10 @@ import numpy as np
 import mne
 from scipy.io import loadmat
 import os
+from Code.Inner_Speech_Dataset.Python_Processing.Data_extractions import  Extract_data_from_subject
+from Code.Inner_Speech_Dataset.Python_Processing.Data_processing import  Select_time_window, Transform_for_classificator, Split_trial_in_time
 
-from sklearn.model_selection import train_test_split
-
-
-# TODO: Create a DataLoader for each dataset
+# TODO: Create a DataLoader for Nieto and Torres
 class aguilera_dataset_loader:
     # Aguilera dataset are .edf
     def __init__(self, filename):
@@ -112,32 +111,109 @@ def extract_segment_trial(raw, baseline=(-0.5, 0), duration=4): # I think this c
 
     return trial_data, labels
 
-def train_test_val_split(dataX, dataY, valid_flag: bool = False):
-    train_ratio = 0.75
-    test_ratio = 0.10
 
-    # train is now 75% of the entire data set
-    x_train, x_test, y_train, y_test = train_test_split(dataX, dataY, test_size=1 - train_ratio)
+def nieto_dataset_loader(root_dir: str, N_S: int):
+    ### Hyperparameters
+    # N_S: Subject number
 
-    if valid_flag:
-        validation_ratio = 0.15
-        # test is now 10% of the initial data set
-        # validation is now 15% of the initial data set
-        x_val, x_test, y_val, y_test = train_test_split(x_test, y_test,
-                                                        test_size=test_ratio / (test_ratio + validation_ratio))
-    else:
-        x_val = None
-        y_val = None
-    return x_train, x_test, x_val, y_train, y_test, y_val
+    # Data Type
+    datatype = "EEG"
+
+    # Sampling rate
+    fs = 256
+
+    # Select the useful par of each trial. Time in seconds
+    t_start = 1.5
+    t_end = 3.5
+
+    # Load all trials for a single subject
+    X, Y = Extract_data_from_subject(root_dir, N_S, datatype) # This uses the derivatives folder
+
+    # Cut useful time. i.e action interval
+    X = Select_time_window(X=X, t_start=t_start, t_end=t_end, fs=fs)
+
+    # Conditions to compared
+    Conditions = [["Inner"], ["Inner"],["Inner"], ["Inner"]]
+    # The class for the above condition
+    Classes = [["Up"], ["Down"], ["Right"], ["Left"]]
+
+    # Transform data and keep only the trials of interes
+    X, Y = Transform_for_classificator(X, Y, Classes, Conditions)
+
+    return X, Y
+
+def coretto_dataset_loader(filepath: str):
+    """
+    Load data from all .mat files, combine them, eliminate EOG signals, shuffle and seperate
+    training data, validation data and testing data. Also do mean subtraction on x.
+
+    F3 -- Muestra 1:4096
+    F4 -- Muestra 4097:8192
+    C3 -- Muestra 8193:12288
+    C4 -- Muestra 12289:16384
+    P3 -- Muestra 16385:20480
+    P4 -- Muestra 20481:24576
+    Etiquetas :  Modalidad: 1 - Imaginada
+	     		            2 - Pronunciada
+
+                 Estímulo:  1 - A
+                            2 - E
+                            3 - I
+                            4 - O
+                            5 - U
+                            6 - Arriba
+                            7 - Abajo
+                            8 - Adelante
+                            9 - Atrás
+                            10 - Derecha
+                            11 - Izquierda
+                 Artefactos: 1 - No presenta
+                             2 - Presencia de parpadeo(blink)
+    """
+
+    x = []
+    y = []
+
+    #for i in np.arange(1, 10): # import all data in 9 .mat files # TODO: We are still not loading everyone. Just one subject at a time.
+    EEG = loadmat(filepath) # Channels and labels are concat
+
+    #modality = EEG['EEG'][:,24576]
+    #stimulus = EEG['EEG'][:, 24577]
+
+    direction_labels = [6, 7, 10, 11]
+    EEG_filtered_by_labels = EEG['EEG'][(EEG['EEG'][:,24576] == 1) & (np.in1d(EEG['EEG'][:,24577], direction_labels))]
+    x_channels_concat = EEG_filtered_by_labels[:,:-3] # Remove labels
+    x = [np.split(x_channel,6) for x_channel in x_channels_concat]
+    y = EEG_filtered_by_labels[:,-2] # Direction labels array
+
+    # reshape x in 3d data(Trials, Channels, Samples) and y in 1d data(Trials)
+    x = np.asarray(x)
+    y = np.asarray(y, dtype=np.int32)
+
+    # N, C, H = x.shape # You can use something like this for unit test later.
+    return x, y
 
 if __name__ == '__main__':
-    subject_id = 1
-    data_path = "/Users/almacuevas/work_projects/voting_system_platform/Datasets/aguilera_dataset"
+    # Manual Inputs
+    subject_id = 1  # Only two things I should be able to change
+    dataset_name = 'nieto'  # Only two things I should be able to change
 
-    train_filename = F"S{subject_id}.edf"
-    train_filepath = os.path.join(data_path, train_filename)
+    # Folders and paths
+    dataset_foldername = dataset_name + '_dataset'
+    data_path = "/Users/almacuevas/work_projects/voting_system_platform/Datasets/" + dataset_foldername
 
-    train_loader = aguilera_dataset_loader(train_filepath)
-    train_cnt = train_loader.load()
 
-    print(train_cnt.get_data().shape)
+
+    if dataset_name == 'aguilera':
+        filename = F"S{subject_id}.edf"
+        filepath = os.path.join(data_path, filename)
+        loader = aguilera_dataset_loader(filepath)
+        cnt = loader.load()
+        print(cnt.get_data().shape)
+    elif dataset_name == 'nieto':
+        X, Y = nieto_dataset_loader(data_path, subject_id)
+        print(X.shape)
+        print(Y.shape)
+
+
+
