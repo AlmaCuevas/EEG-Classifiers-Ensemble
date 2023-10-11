@@ -14,13 +14,13 @@ import time
 import datetime
 # tools for plotting confusion matrices and t-SNE
 from torchsummary import summary
-from Code.data_loaders import aguilera_dataset_loader, extract_segment_trial, nieto_dataset_loader, coretto_dataset_loader
-from share import datasets_basic_infos
-from Code.data_utils import train_test_val_split
+from voting_system_platform.Code.data_loaders import aguilera_dataset_loader, extract_segment_trial, nieto_dataset_loader, coretto_dataset_loader
+from voting_system_platform.share import datasets_basic_infos
+from voting_system_platform.Code.data_utils import train_test_val_split
 # ========================= LMDA general run =====================================
 
 def data_and_model(dataset_name: str, valid_flag: bool = False):
-    if dataset_name == 'aguilera': # TODO: It doesn't run. First try with GPU.
+    if dataset_name == 'aguilera':
         filename = F"S{subject_id}.edf"
         filepath = os.path.join(data_path, filename)
 
@@ -37,8 +37,6 @@ def data_and_model(dataset_name: str, valid_flag: bool = False):
 
         data, label = extract_segment_trial(cnt) # Check because this says that the duration is 4s
 
-
-        print(data)
         label = label - 1
     elif dataset_name == 'nieto':
         data, label = nieto_dataset_loader(data_path) # Not sure if I can do this and then concatenate
@@ -88,7 +86,7 @@ def data_and_model(dataset_name: str, valid_flag: bool = False):
     logging.info("****************  %s for %s! ***************************", model_id, subject_id)
 
     if share_model_name == 'LMDA':
-        Net = LMDA(num_classes=dataset_info['#_class'], chans=dataset_info['#_channels'], samples=dataset_info['samples'],
+        Net = LMDA(num_classes=model_para['num_classes'], chans=model_para['chans'], samples=data.shape[3],
                    channel_depth1=model_para['channel_depth1'],
                    channel_depth2=model_para['channel_depth2'],
                    kernel=model_para['kernel'], depth=model_para['depth'],
@@ -97,10 +95,10 @@ def data_and_model(dataset_name: str, valid_flag: bool = False):
         logging.info(model_para)
 
     elif share_model_name == 'EEGNet':
-        Net = EEGNet(num_classes=dataset_info['#_class'], chans=dataset_info['#_channels'], samples=dataset_info['samples']).to(device)
+        Net = EEGNet(num_classes=model_para['num_classes'], chans=model_para['chans'], samples=data.shape[3]).to(device)
 
     else:  # ConvNet
-        Net = ShallowConvNet(num_classes=dataset_info['#_class'], chans=dataset_info['#_channels'], samples=dataset_info['samples']).to(device)
+        Net = ShallowConvNet(num_classes=model_para['num_classes'], chans=model_para['chans'], samples=data.shape[3]).to(device)
 
     Net.apply(weights_init)
     Net.apply(weights_init)
@@ -123,18 +121,22 @@ if __name__ == "__main__":
 
     # Folders and paths
     dataset_foldername = dataset_name + '_dataset'
-    data_path = "/Users/almacuevas/work_projects/voting_system_platform/Datasets/" + dataset_foldername
+    #computer_root_path = "/Users/almacuevas/work_projects/voting_system_platform/Datasets/" # MAC
+    computer_root_path = "/Users/rosit/Documents/MCC/voting_system_platform/Datasets/"  # OMEN
+    data_path = computer_root_path + dataset_foldername
     dataset_info = datasets_basic_infos[dataset_name]
 
-    assert dataset_info['#_channels'] >= int(subject_id)
+    assert dataset_info['subjects'] >= int(subject_id)
 
-    device = torch.device('cpu')
+    device = torch.device('cuda')
 
 
     print('subject_id: ', subject_id)
 
     model_para = {
-        'channel_depth1': 24,  # 推荐时间域的卷积层数比空间域的卷积层数更多
+        'num_classes': dataset_info['#_class'],
+        'chans': dataset_info['#_channels'],
+        'channel_depth1': dataset_info['#_channels'] + 2,  # It is recommended that the number of convolutional layers in the time domain is more than the number of convolutional layers in the spatial domain.
         'channel_depth2': 9,
         'kernel': 75,
         'depth': 9,
@@ -168,9 +170,9 @@ if __name__ == "__main__":
     kwargs = {'num_workers': 1, 'pin_memory': True}  # 因为pycharm开启了多进行运行main, num_works设置多个会报错
     # ================================================================================
 
-    train_dl, valid_dl, test_dl, ShallowNet, model_optimizer, model_constraint, fig_path = data_and_model(dataset_name)
+    train_dl, valid_dl, test_dl, Net, model_optimizer, model_constraint, fig_path = data_and_model(dataset_name)
 
-    exp = Experiment(model=ShallowNet,
+    exp = Experiment(model=Net,
                      device=device,
                      optimizer=model_optimizer,
                      train_dl=train_dl,

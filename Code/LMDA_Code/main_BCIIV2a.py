@@ -20,7 +20,8 @@ from torchsummary import summary
 
 def bci4_2a():  # 通用模型模块, 不需要更改, 放在main中方便调试;
     dataset = 'BCI4_2A'
-    data_path = "/Users/almacuevas/work_projects/voting_system_platform/Code/LMDA_Code/BCICIV_2a_edf"
+    #data_path = "/Users/almacuevas/work_projects/voting_system_platform/Code/LMDA_Code/BCICIV_2a_edf"
+    data_path = "/Users/rosit/Documents/MCC/voting_system_platform/Code/LMDA_Code/BCICIV_2a_edf"
 
     train_filename = "{}T.edf".format(subject_id)
     test_filename = "{}E.edf".format(subject_id)
@@ -115,7 +116,7 @@ if __name__ == "__main__":
     # basic info of the dataset
     mi_class = 4
     channels = 22
-    samples = 1125
+    samples = 2000
     sample_rate = 250
 
     # subject of the dataset

@@ -37,7 +37,7 @@ class LMDA(nn.Module):
     """
     LMDA-Net for the paper
     """
-    def __init__(self, chans=22, samples=1125, num_classes=4, depth=9, kernel=75, channel_depth1=24, channel_depth2=9,
+    def __init__(self, chans=24, samples=1125, num_classes=4, depth=9, kernel=75, channel_depth1=24, channel_depth2=9,
                 ave_depth=1, avepool=5):
         super(LMDA, self).__init__()
         self.ave_depth = ave_depth

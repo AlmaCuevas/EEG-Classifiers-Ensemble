@@ -3,7 +3,7 @@
 
 # Edgar Aguilera Tradicional
 aguilera_info = {'#_class': 4, # avanzar, retroceder, derecha and izquierda
-'#_channels': 24,
+'#_channels': 22, # Deleting the references. Andrea did this, you could try bringing them back maybe.
 'samples':0, # PENDING
 'sample_rate': 500,
 'channels_names': [], # PENDING

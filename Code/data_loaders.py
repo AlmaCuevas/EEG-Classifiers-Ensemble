@@ -2,8 +2,8 @@ import numpy as np
 import mne
 from scipy.io import loadmat
 import os
-from Code.Inner_Speech_Dataset.Python_Processing.Data_extractions import  Extract_data_from_subject
-from Code.Inner_Speech_Dataset.Python_Processing.Data_processing import  Select_time_window, Transform_for_classificator, Split_trial_in_time
+from voting_system_platform.Code.Inner_Speech_Dataset.Python_Processing.Data_extractions import Extract_data_from_subject
+from voting_system_platform.Code.Inner_Speech_Dataset.Python_Processing.Data_processing import Select_time_window, Transform_for_classificator, Split_trial_in_time
 
 # TODO: Create a DataLoader for Nieto and Torres
 class aguilera_dataset_loader:
