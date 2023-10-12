@@ -22,7 +22,7 @@ def train_test_val_split(dataX, dataY, valid_flag: bool = False):
     x_train, x_test, y_train, y_test = train_test_split(dataX, dataY, test_size=1 - train_ratio)
 
     if valid_flag:
-        validation_ratio = 0.15
+        validation_ratio = 1-train_ratio-test_ratio
         # test is now 10% of the initial data set
         # validation is now 15% of the initial data set
         x_val, x_test, y_val, y_test = train_test_split(x_test, y_test,

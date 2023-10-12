@@ -116,7 +116,7 @@ if __name__ == "__main__":
     # basic info of the dataset
     mi_class = 4
     channels = 22
-    samples = 2000
+    samples = 1125
     sample_rate = 250
 
     # subject of the dataset

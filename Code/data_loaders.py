@@ -82,7 +82,7 @@ class aguilera_dataset_loader:
         return trial_events, artifact_trial_mask
 
 
-def extract_segment_trial(raw, baseline=(-0.5, 0), duration=4): # I think this could have been done with Andrea's approach, but it works so I won't move it yet.
+def extract_segment_trial(raw, baseline=(0, 0), duration=1.4): # I think this could have been done with Andrea's approach, but it works so I won't move it yet.
     '''
     get segmented data and corresponding labels from raw_gdb.
     :param raw: raw data
