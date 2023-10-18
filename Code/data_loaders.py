@@ -183,7 +183,7 @@ def coretto_dataset_loader(filepath: str):
     direction_labels = [6, 7, 10, 11]
     EEG_filtered_by_labels = EEG['EEG'][(EEG['EEG'][:,24576] == 1) & (np.in1d(EEG['EEG'][:,24577], direction_labels))]
     x_channels_concat = EEG_filtered_by_labels[:,:-3] # Remove labels
-    x = [np.split(x_channel,6) for x_channel in x_channels_concat]
+    x = [np.split(x_channel,6) for x_channel in x_channels_concat] # We stil have to split the 4 seconds in three sections
     y = EEG_filtered_by_labels[:,-2] # Direction labels array
 
     # reshape x in 3d data(Trials, Channels, Samples) and y in 1d data(Trials)
