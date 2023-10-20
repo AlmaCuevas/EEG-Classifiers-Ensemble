@@ -7,7 +7,7 @@ from share import datasets_basic_infos
 from Code.Inner_Speech_Dataset.Python_Processing.Data_extractions import Extract_data_from_subject
 from Code.Inner_Speech_Dataset.Python_Processing.Data_processing import Select_time_window, Transform_for_classificator, Split_trial_in_time
 
-# TODO: Create a DataLoader for Nieto and Torres
+# TODO: Create a DataLoader for Torres
 class aguilera_dataset_loader:
     # Aguilera dataset are .edf
     def __init__(self, filename):
@@ -185,11 +185,16 @@ def coretto_dataset_loader(filepath: str):
     direction_labels = [6, 7, 10, 11]
     EEG_filtered_by_labels = EEG['EEG'][(EEG['EEG'][:,24576] == 1) & (np.in1d(EEG['EEG'][:,24577], direction_labels))]
     x_channels_concat = EEG_filtered_by_labels[:,:-3] # Remove labels
-    x = [np.split(x_channel,6) for x_channel in x_channels_concat] # We stil have to split the 4 seconds in three sections
+    x_divided_in_channels = np.asarray(np.split(x_channels_concat,6,axis=1))
+    # There are 3 words trials, but the samples didn't match so a series of conversions had to be done
+    x_divided_in_channels_and_thirds = np.asarray(np.split(x_divided_in_channels[:,:,1:],3,axis=2))
+    x_transposed = np.transpose(x_divided_in_channels_and_thirds, (1, 3, 0, 2))
+    x_transposed_reshaped = x_transposed.reshape(x_transposed.shape[:-2] + (-1,))
+
     y = EEG_filtered_by_labels[:,-2] # Direction labels array
 
     # reshape x in 3d data(Trials, Channels, Samples) and y in 1d data(Trials)
-    x = np.asarray(x)
+    x = np.transpose(x_transposed_reshaped, (2, 0, 1))
     y = np.asarray(y, dtype=np.int32)
 
     # N, C, H = x.shape # You can use something like this for unit test later.
@@ -217,7 +222,7 @@ def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, datase
     elif dataset_name == 'nieto': # Checar sample
         data, label = nieto_dataset_loader(data_path, subject_id)
 
-    elif dataset_name == 'coretto': # TODO: Checar # samples. Que no sea 10s, sino por ejemplo 1s.
+    elif dataset_name == 'coretto':
         foldername = "S{:02d}".format(subject_id)
         filename = foldername + "_EEG.mat"
         path = [data_path, foldername, filename]
@@ -233,7 +238,7 @@ def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, datase
 if __name__ == '__main__':
     # Manual Inputs
     subject_id = 1  # Only two things I should be able to change
-    dataset_name = 'nieto'  # Only two things I should be able to change
+    dataset_name = 'coretto'  # Only two things I should be able to change
 
     # Folders and paths
     dataset_foldername = dataset_name + '_dataset'

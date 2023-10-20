@@ -14,7 +14,7 @@ if __name__ == '__main__':
     data_path = "/Users/almacuevas/work_projects/voting_system_platform/Datasets/" + dataset_foldername
     dataset_info = datasets_basic_infos[dataset_name]
 
-    for subject_id in range(1, dataset_info['subjects']):
+    for subject_id in range(1, dataset_info['subjects']+1):
         # load your data
         X, y = load_data_labels_based_on_dataset(dataset_name, subject_id, dataset_info, data_path)
 

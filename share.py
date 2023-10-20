@@ -22,13 +22,13 @@ nieto_info = {'#_class': 4, # arriba, abajo, derecha, izquierda
 # De modo que el registro de una palabra esta constituido por 24576 muestras correspondientes a los canales de EEG, más tres muestras adicionales que indican la modalidad, estimulo y la presencia de artefactos oculares.
 coretto_info = {'#_class': 6, # arriba, abajo, izquierda, derecha, adelante and atrás (not counted, but the db also has vocals: a, e, i, o, u)
 '#_channels': 6,
-'samples': 0, # PENDING 4096, that would be 4s. Is that right?
-'sample_rate': 1024,
+'samples': 1365, # =(4096-1)/3 . Originally 4096, that would be 4s. But there were 3 trials inside that, so the first sample was removed and then divided in thirds.
+'sample_rate': 1024, # with 1365 samples, it's 1.3 seconds
 'channels_names': ['F3', 'F4', 'C3', 'C4', 'P3', 'P4'],
 'subjects':15}
 
 # Torres
-torres_info = {'#_class': 5, # arriba, abajo, izquierda, derecha and seleccionar
+torres_info = {'#_class': 5, # 'arriba', 'abajo', 'izquierda', 'derecha' and 'seleccionar'
 '#_channels': 14, # CHECK
 'samples': 0, # PENDING
 'sample_rate': 128,
