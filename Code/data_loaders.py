@@ -2,6 +2,8 @@ import numpy as np
 import mne
 from scipy.io import loadmat
 import os
+from data_preprocess import mne_apply, bandpass_cnt
+from voting_system_platform.share import datasets_basic_infos
 from voting_system_platform.Code.Inner_Speech_Dataset.Python_Processing.Data_extractions import Extract_data_from_subject
 from voting_system_platform.Code.Inner_Speech_Dataset.Python_Processing.Data_processing import Select_time_window, Transform_for_classificator, Split_trial_in_time
 
@@ -193,6 +195,41 @@ def coretto_dataset_loader(filepath: str):
     # N, C, H = x.shape # You can use something like this for unit test later.
     return x, y
 
+def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, dataset_info: dict, data_path: str):
+    if dataset_name == 'aguilera':
+        filename = F"S{subject_id}.edf"
+        filepath = os.path.join(data_path, filename)
+
+        loader = aguilera_dataset_loader(filepath)
+        cnt = loader.load()
+
+        # band-pass before segment trials
+        # train_cnt = mne_apply(lambda a: a * 1e6, train_cnt)
+        # test_cnt = mne_apply(lambda a: a * 1e6, test_cnt)
+
+        cnt = mne_apply(lambda a: bandpass_cnt(a, low_cut_hz=4, high_cut_hz=38,
+                                                     filt_order=200, fs=dataset_info['sample_rate'], zero_phase=False),
+                              cnt)
+
+        data, label = extract_segment_trial(cnt, baseline=(0,0), duration=1.4) # Check because this says that the duration is 4s
+
+        label = label - 1
+    elif dataset_name == 'nieto': # Checar sample
+        data, label = nieto_dataset_loader(data_path, subject_id)
+
+    elif dataset_name == 'coretto': # TODO: Checar # samples. Que no sea 10s, sino por ejemplo 1s.
+        foldername = "S{:02d}".format(subject_id)
+        filename = foldername + "_EEG.mat"
+        path = [data_path, foldername, filename]
+        filepath = os.path.join(*path)
+        data, label = coretto_dataset_loader(filepath)
+
+    elif dataset_name == 'torres':
+        pass
+    else:
+        raise Exception("Not supported dataset, choose from the following: aguilera, nieto, coretto or torres.")
+    return data, label
+
 if __name__ == '__main__':
     # Manual Inputs
     subject_id = 1  # Only two things I should be able to change
@@ -201,19 +238,14 @@ if __name__ == '__main__':
     # Folders and paths
     dataset_foldername = dataset_name + '_dataset'
     data_path = "/Users/almacuevas/work_projects/voting_system_platform/Datasets/" + dataset_foldername
+    dataset_info = datasets_basic_infos[dataset_name]
+
+    data, label = load_data_labels_based_on_dataset(dataset_name, subject_id, dataset_info, data_path)
 
 
-
-    if dataset_name == 'aguilera':
-        filename = F"S{subject_id}.edf"
-        filepath = os.path.join(data_path, filename)
-        loader = aguilera_dataset_loader(filepath)
-        cnt = loader.load()
-        print(cnt.get_data().shape)
-    elif dataset_name == 'nieto':
-        X, Y = nieto_dataset_loader(data_path, subject_id)
-        print(X.shape)
-        print(Y.shape)
+    print(data.shape)
+    print(label.shape)
+    print("Congrats! You were able to load data. You can now use this in a processing method.")
 
 
 

@@ -3,7 +3,7 @@ from lmda_model import LMDA
 from experiment import EEGDataLoader, Experiment, setup_seed
 # dataloader and preprocess
 from data_loader import BCICompetition4Set2A, extract_segment_trial
-from data_preprocess import preprocess4mi, mne_apply, bandpass_cnt
+from Code.data_preprocess import preprocess4mi, mne_apply, bandpass_cnt
 # tools for pytorch
 from torch.utils.data import DataLoader
 import torch
