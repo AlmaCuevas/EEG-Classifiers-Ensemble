@@ -200,7 +200,7 @@ def coretto_dataset_loader(filepath: str):
     # N, C, H = x.shape # You can use something like this for unit test later.
     return x, y
 
-def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, dataset_info: dict, data_path: str):
+def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, dataset_info: dict, data_path: str, transpose: bool = False):
     if dataset_name == 'aguilera':
         filename = F"S{subject_id}.edf"
         filepath = os.path.join(data_path, filename)
@@ -233,6 +233,9 @@ def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, datase
         pass
     else:
         raise Exception("Not supported dataset, choose from the following: aguilera, nieto, coretto or torres.")
+    if transpose:
+        data = np.transpose(data, (0, 2, 1))
+
     return data, label
 
 if __name__ == '__main__':
