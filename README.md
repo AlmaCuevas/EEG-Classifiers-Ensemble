@@ -16,3 +16,7 @@ They were modified to accomodate the needs for the project.
 * Install the minimum amount of dependencies to make sure those are the ones that the project really needs. You need to go to requirements.txt and check none are missing or are extra.
 * Cite code
 * Cite datasets and mention why they were chosen
+* Try to combine the XDWAN with Riemman
+* Standardize the results from all the methods
+* Call all the methods from one file
+* Run LMDA on Coretto and try Aguilera again
