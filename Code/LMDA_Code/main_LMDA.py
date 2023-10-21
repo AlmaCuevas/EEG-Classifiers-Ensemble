@@ -129,7 +129,7 @@ if __name__ == "__main__":
 
     dataset_info = datasets_basic_infos[dataset_name]
     times=[]
-    for subject_id in range(1, dataset_info['subjects']):
+    for subject_id in range(10, dataset_info['subjects']+1):
         # Folders and paths
         dataset_foldername = dataset_name + '_dataset'
         #computer_root_path = "/Users/almacuevas/work_projects/voting_system_platform/Datasets/" # MAC
