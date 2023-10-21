@@ -2,7 +2,7 @@ from compared_models import weights_init, MaxNormDefaultConstraint, EEGNet, Shal
 from lmda_model import LMDA
 from experiment import EEGDataLoader, Experiment, setup_seed
 # dataloader and preprocess
-from data_preprocess import preprocess4mi, mne_apply, bandpass_cnt
+from Code.data_preprocess import preprocess4mi
 # tools for pytorch
 from torch.utils.data import DataLoader
 import torch
@@ -13,7 +13,7 @@ import time
 import datetime
 # tools for plotting confusion matrices and t-SNE
 from torchsummary import summary
-from voting_system_platform.Code.data_loaders import aguilera_dataset_loader, extract_segment_trial, nieto_dataset_loader, coretto_dataset_loader
+from voting_system_platform.Code.data_loaders import load_data_labels_based_on_dataset
 from voting_system_platform.share import datasets_basic_infos
 from voting_system_platform.Code.data_utils import train_test_val_split
 
@@ -21,39 +21,7 @@ import warnings
 # ========================= LMDA general run =====================================
 
 def data_and_model(dataset_name: str, valid_flag: bool = False):
-    if dataset_name == 'aguilera':
-        filename = F"S{subject_id}.edf"
-        filepath = os.path.join(data_path, filename)
-
-        loader = aguilera_dataset_loader(filepath)
-        cnt = loader.load()
-
-        # band-pass before segment trials
-        # train_cnt = mne_apply(lambda a: a * 1e6, train_cnt)
-        # test_cnt = mne_apply(lambda a: a * 1e6, test_cnt)
-
-        cnt = mne_apply(lambda a: bandpass_cnt(a, low_cut_hz=4, high_cut_hz=38,
-                                                     filt_order=200, fs=dataset_info['sample_rate'], zero_phase=False),
-                              cnt)
-
-        data, label = extract_segment_trial(cnt, baseline=(0,0), duration=1.4) # Check because this says that the duration is 4s
-
-        label = label - 1
-    elif dataset_name == 'nieto': # Checar sample
-        data, label = nieto_dataset_loader(data_path, subject_id)
-
-    elif dataset_name == 'coretto': # TODO: Checar # samples. Que no sea 10s, sino por ejemplo 1s.
-        foldername = "S{:02d}".format(subject_id)
-        filename = foldername + "_EEG.mat"
-        path = [data_path, foldername, filename]
-        filepath = os.path.join(*path)
-        data, label = coretto_dataset_loader(filepath)
-
-    elif dataset_name == 'torres':
-        pass
-    else:
-        raise Exception("Not supported dataset, choose from the following: aguilera, nieto, coretto or torres.")
-
+    data, label = load_data_labels_based_on_dataset(dataset_name, subject_id, dataset_info, data_path)
     data = preprocess4mi(data) # This was for MI, try it. If it doesn't work, delete it.
     x_train, x_test, x_val, y_train, y_test, y_val = train_test_val_split(dataX = data, dataY= label, valid_flag=valid_flag)
 

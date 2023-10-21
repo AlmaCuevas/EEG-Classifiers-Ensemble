@@ -2,10 +2,12 @@ import numpy as np
 import mne
 from scipy.io import loadmat
 import os
-from voting_system_platform.Code.Inner_Speech_Dataset.Python_Processing.Data_extractions import Extract_data_from_subject
-from voting_system_platform.Code.Inner_Speech_Dataset.Python_Processing.Data_processing import Select_time_window, Transform_for_classificator, Split_trial_in_time
+from Code.data_preprocess import mne_apply, bandpass_cnt
+from share import datasets_basic_infos
+from Code.Inner_Speech_Dataset.Python_Processing.Data_extractions import Extract_data_from_subject
+from Code.Inner_Speech_Dataset.Python_Processing.Data_processing import Select_time_window, Transform_for_classificator, Split_trial_in_time
 
-# TODO: Create a DataLoader for Nieto and Torres
+# TODO: Create a DataLoader for Torres
 class aguilera_dataset_loader:
     # Aguilera dataset are .edf
     def __init__(self, filename):
@@ -183,37 +185,75 @@ def coretto_dataset_loader(filepath: str):
     direction_labels = [6, 7, 10, 11]
     EEG_filtered_by_labels = EEG['EEG'][(EEG['EEG'][:,24576] == 1) & (np.in1d(EEG['EEG'][:,24577], direction_labels))]
     x_channels_concat = EEG_filtered_by_labels[:,:-3] # Remove labels
-    x = [np.split(x_channel,6) for x_channel in x_channels_concat] # We stil have to split the 4 seconds in three sections
+    x_divided_in_channels = np.asarray(np.split(x_channels_concat,6,axis=1))
+    # There are 3 words trials, but the samples didn't match so a series of conversions had to be done
+    x_divided_in_channels_and_thirds = np.asarray(np.split(x_divided_in_channels[:,:,1:],3,axis=2))
+    x_transposed = np.transpose(x_divided_in_channels_and_thirds, (1, 3, 0, 2))
+    x_transposed_reshaped = x_transposed.reshape(x_transposed.shape[:-2] + (-1,))
+
     y = EEG_filtered_by_labels[:,-2] # Direction labels array
 
     # reshape x in 3d data(Trials, Channels, Samples) and y in 1d data(Trials)
-    x = np.asarray(x)
+    x = np.transpose(x_transposed_reshaped, (2, 0, 1))
     y = np.asarray(y, dtype=np.int32)
-
+    y = np.repeat(y, 3, axis=0)
     # N, C, H = x.shape # You can use something like this for unit test later.
     return x, y
+
+def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, dataset_info: dict, data_path: str, transpose: bool = False):
+    if dataset_name == 'aguilera':
+        filename = F"S{subject_id}.edf"
+        filepath = os.path.join(data_path, filename)
+
+        loader = aguilera_dataset_loader(filepath)
+        cnt = loader.load()
+
+        # band-pass before segment trials
+        # train_cnt = mne_apply(lambda a: a * 1e6, train_cnt)
+        # test_cnt = mne_apply(lambda a: a * 1e6, test_cnt)
+
+        cnt = mne_apply(lambda a: bandpass_cnt(a, low_cut_hz=4, high_cut_hz=38,
+                                                     filt_order=200, fs=dataset_info['sample_rate'], zero_phase=False),
+                              cnt)
+
+        data, label = extract_segment_trial(cnt, baseline=(0,0), duration=1.4) # Check because this says that the duration is 4s
+
+        label = label - 1
+    elif dataset_name == 'nieto': # Checar sample
+        data, label = nieto_dataset_loader(data_path, subject_id)
+
+    elif dataset_name == 'coretto':
+        foldername = "S{:02d}".format(subject_id)
+        filename = foldername + "_EEG.mat"
+        path = [data_path, foldername, filename]
+        filepath = os.path.join(*path)
+        data, label = coretto_dataset_loader(filepath)
+
+    elif dataset_name == 'torres':
+        pass
+    else:
+        raise Exception("Not supported dataset, choose from the following: aguilera, nieto, coretto or torres.")
+    if transpose:
+        data = np.transpose(data, (0, 2, 1))
+
+    return data, label
 
 if __name__ == '__main__':
     # Manual Inputs
     subject_id = 1  # Only two things I should be able to change
-    dataset_name = 'nieto'  # Only two things I should be able to change
+    dataset_name = 'coretto'  # Only two things I should be able to change
 
     # Folders and paths
     dataset_foldername = dataset_name + '_dataset'
     data_path = "/Users/almacuevas/work_projects/voting_system_platform/Datasets/" + dataset_foldername
+    dataset_info = datasets_basic_infos[dataset_name]
+
+    data, label = load_data_labels_based_on_dataset(dataset_name, subject_id, dataset_info, data_path)
 
 
-
-    if dataset_name == 'aguilera':
-        filename = F"S{subject_id}.edf"
-        filepath = os.path.join(data_path, filename)
-        loader = aguilera_dataset_loader(filepath)
-        cnt = loader.load()
-        print(cnt.get_data().shape)
-    elif dataset_name == 'nieto':
-        X, Y = nieto_dataset_loader(data_path, subject_id)
-        print(X.shape)
-        print(Y.shape)
+    print(data.shape)
+    print(label.shape)
+    print("Congrats! You were able to load data. You can now use this in a processing method.")
 
 
 
