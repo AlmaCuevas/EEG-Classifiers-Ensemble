@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     for subject_id in range(1, dataset_info['subjects']+1):
         # load your data
-        X, y = load_data_labels_based_on_dataset(dataset_name, subject_id, dataset_info, data_path)
+        X, y = load_data_labels_based_on_dataset(dataset_name, subject_id, dataset_info, data_path, array_format=True)
 
         # build your pipeline
         covest = Covariances()
@@ -31,5 +31,5 @@ if __name__ == '__main__':
 
         # cross validation
         accuracy = cross_val_score(clf, X, y)
-
+        # The output is not the array of commands that I need, is literally the accuracies of the CV
         print(f"Subject {subject_id} , accuracies: {accuracy}, mean accuracy: {accuracy.mean()}")

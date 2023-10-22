@@ -1,0 +1,195 @@
+subject: 1,
+ report:               precision    recall  f1-score   support
+
+     Avanzar       0.87      0.87      0.87        30
+  Retroceder       0.59      0.67      0.62        30
+     Derecha       0.70      0.70      0.70        30
+   Izquierda       0.58      0.50      0.54        30
+
+    accuracy                           0.68       120
+   macro avg       0.68      0.68      0.68       120
+weighted avg       0.68      0.68      0.68       120
+
+
+subject: 2,
+ report:               precision    recall  f1-score   support
+
+     Avanzar       0.56      0.60      0.58        30
+  Retroceder       0.40      0.40      0.40        30
+     Derecha       0.44      0.47      0.45        30
+   Izquierda       0.42      0.37      0.39        30
+
+    accuracy                           0.46       120
+   macro avg       0.46      0.46      0.46       120
+weighted avg       0.46      0.46      0.46       120
+
+
+subject: 3,
+ report:               precision    recall  f1-score   support
+
+     Avanzar       0.61      0.63      0.62        30
+  Retroceder       0.38      0.43      0.41        30
+     Derecha       0.38      0.30      0.33        30
+   Izquierda       0.55      0.57      0.56        30
+
+    accuracy                           0.48       120
+   macro avg       0.48      0.48      0.48       120
+weighted avg       0.48      0.48      0.48       120
+
+
+subject: 4,
+ report:               precision    recall  f1-score   support
+
+     Avanzar       0.59      0.57      0.58        30
+  Retroceder       0.62      0.60      0.61        30
+     Derecha       0.55      0.60      0.57        30
+   Izquierda       0.72      0.70      0.71        30
+
+    accuracy                           0.62       120
+   macro avg       0.62      0.62      0.62       120
+weighted avg       0.62      0.62      0.62       120
+
+
+subject: 5,
+ report:               precision    recall  f1-score   support
+
+     Avanzar       0.67      0.73      0.70        30
+  Retroceder       0.45      0.47      0.46        30
+     Derecha       0.55      0.53      0.54        30
+   Izquierda       0.52      0.47      0.49        30
+
+    accuracy                           0.55       120
+   macro avg       0.55      0.55      0.55       120
+weighted avg       0.55      0.55      0.55       120
+
+
+subject: 6,
+ report:               precision    recall  f1-score   support
+
+     Avanzar       0.53      0.53      0.53        30
+  Retroceder       0.53      0.57      0.55        30
+     Derecha       0.47      0.53      0.50        30
+   Izquierda       0.67      0.53      0.59        30
+
+    accuracy                           0.54       120
+   macro avg       0.55      0.54      0.54       120
+weighted avg       0.55      0.54      0.54       120
+
+
+subject: 7,
+ report:               precision    recall  f1-score   support
+
+     Avanzar       0.61      0.57      0.59        30
+  Retroceder       0.43      0.43      0.43        30
+     Derecha       0.55      0.57      0.56        30
+   Izquierda       0.61      0.63      0.62        30
+
+    accuracy                           0.55       120
+   macro avg       0.55      0.55      0.55       120
+weighted avg       0.55      0.55      0.55       120
+
+
+subject: 8,
+ report:               precision    recall  f1-score   support
+
+     Avanzar       0.76      0.63      0.69        30
+  Retroceder       0.73      0.80      0.76        30
+     Derecha       0.58      0.50      0.54        30
+   Izquierda       0.53      0.63      0.58        30
+
+    accuracy                           0.64       120
+   macro avg       0.65      0.64      0.64       120
+weighted avg       0.65      0.64      0.64       120
+
+
+subject: 9,
+ report:               precision    recall  f1-score   support
+
+     Avanzar       0.53      0.60      0.56        30
+  Retroceder       0.50      0.53      0.52        30
+     Derecha       0.63      0.57      0.60        30
+   Izquierda       0.67      0.60      0.63        30
+
+    accuracy                           0.57       120
+   macro avg       0.58      0.57      0.58       120
+weighted avg       0.58      0.57      0.58       120
+
+
+subject: 10,
+ report:               precision    recall  f1-score   support
+
+     Avanzar       0.68      0.77      0.72        30
+  Retroceder       0.44      0.37      0.40        30
+     Derecha       0.47      0.47      0.47        30
+   Izquierda       0.55      0.57      0.56        30
+
+    accuracy                           0.54       120
+   macro avg       0.53      0.54      0.54       120
+weighted avg       0.53      0.54      0.54       120
+
+
+subject: 11,
+ report:               precision    recall  f1-score   support
+
+     Avanzar       0.74      0.87      0.80        30
+  Retroceder       0.45      0.43      0.44        30
+     Derecha       0.52      0.53      0.52        30
+   Izquierda       0.60      0.50      0.55        30
+
+    accuracy                           0.58       120
+   macro avg       0.58      0.58      0.58       120
+weighted avg       0.58      0.58      0.58       120
+
+
+subject: 12,
+ report:               precision    recall  f1-score   support
+
+     Avanzar       0.68      0.63      0.66        30
+  Retroceder       0.50      0.50      0.50        30
+     Derecha       0.48      0.53      0.51        30
+   Izquierda       0.69      0.67      0.68        30
+
+    accuracy                           0.58       120
+   macro avg       0.59      0.58      0.59       120
+weighted avg       0.59      0.58      0.59       120
+
+
+subject: 13,
+ report:               precision    recall  f1-score   support
+
+     Avanzar       0.63      0.57      0.60        30
+  Retroceder       0.40      0.47      0.43        30
+     Derecha       0.50      0.50      0.50        30
+   Izquierda       0.50      0.47      0.48        30
+
+    accuracy                           0.50       120
+   macro avg       0.51      0.50      0.50       120
+weighted avg       0.51      0.50      0.50       120
+
+
+subject: 14,
+ report:               precision    recall  f1-score   support
+
+     Avanzar       0.65      0.67      0.66        30
+  Retroceder       0.52      0.50      0.51        30
+     Derecha       0.45      0.50      0.48        30
+   Izquierda       0.37      0.33      0.35        30
+
+    accuracy                           0.50       120
+   macro avg       0.50      0.50      0.50       120
+weighted avg       0.50      0.50      0.50       120
+
+
+subject: 15,
+ report:               precision    recall  f1-score   support
+
+     Avanzar       0.50      0.60      0.55        30
+  Retroceder       0.48      0.40      0.44        30
+     Derecha       0.59      0.57      0.58        30
+   Izquierda       0.47      0.47      0.47        30
+
+    accuracy                           0.51       120
+   macro avg       0.51      0.51      0.51       120
+weighted avg       0.51      0.51      0.51       120
+
+

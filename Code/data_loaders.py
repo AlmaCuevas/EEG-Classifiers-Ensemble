@@ -6,113 +6,22 @@ from Code.data_preprocess import mne_apply, bandpass_cnt
 from share import datasets_basic_infos
 from Code.Inner_Speech_Dataset.Python_Processing.Data_extractions import Extract_data_from_subject
 from Code.Inner_Speech_Dataset.Python_Processing.Data_processing import Select_time_window, Transform_for_classificator, Split_trial_in_time
+from mne import io, Epochs, events_from_annotations, EpochsArray
+
 
 # TODO: Create a DataLoader for Torres
-class aguilera_dataset_loader:
-    # Aguilera dataset are .edf
-    def __init__(self, filename):
-        self.filename = filename
 
-    def load(self):
-        cnt = self.extract_data()
-        events, artifact_trial_mask = self.extract_events(cnt)
-        cnt.info["temp"]["events"] = events
-        cnt.info["temp"]["artifact_trial_mask"] = artifact_trial_mask
-        return cnt
+def aguilera_dataset_loader(data_path: str):
+    raw = io.read_raw_edf(data_path, preload=True, verbose=40, exclude=['Channel 21', 'Channel 22', 'Gyro 1', 'Gyro 2', 'Gyro 3'])
+    events, event_id = events_from_annotations(raw)
 
-    def extract_data(self):
-        raw_edf = mne.io.read_raw_edf(self.filename, stim_channel="auto", verbose='ERROR',
-                                      exclude=(['Gyro 1',
-                           'Gyro 2',
-                           'Gyro 3',
-                           'Channel 20',
-                           'Channel 21']))
-        #raw_edf.rename_channels(
-        #    {'EEG-Fz': 'Fz', 'EEG-0': 'FC3', 'EEG-1': 'FC1', 'EEG-2': 'FCz', 'EEG-3': 'FC2', 'EEG-4': 'FC4',
-        #     'EEG-5': 'C5', 'EEG-C3': 'C3', 'EEG-6': 'C1', 'EEG-Cz': 'Cz', 'EEG-7': 'C2', 'EEG-C4': 'C4', 'EEG-8': 'C6',
-        #     'EEG-9': 'CP3', 'EEG-10': 'CP1', 'EEG-11': 'CPz', 'EEG-12': 'CP2', 'EEG-13': 'CP4',
-        #     'EEG-14': 'P1', 'EEG-15': 'Pz', 'EEG-16': 'P2', 'EEG-Pz': 'POz'})
-        raw_edf.load_data()
-        # correct nan values
-        data = raw_edf.get_data()
+    event_id.pop('OVTK_StimulationId_Label_05') # This is not a command
+    events = events[3:] # From the one that is not a command
 
-        for i_chan in range(data.shape[0]):
-            # first set to nan, than replace nans by nanmean.
-            this_chan = data[i_chan]
-            data[i_chan] = np.where(
-                this_chan == np.min(this_chan), np.nan, this_chan
-            )
-            mask = np.isnan(data[i_chan])
-            chan_mean = np.nanmean(data[i_chan])
-            data[i_chan, mask] = chan_mean
-
-        edf_events = mne.events_from_annotations(raw_edf)
-        raw_edf = mne.io.RawArray(data, raw_edf.info, verbose="ERROR")
-        # remember gdf events
-        raw_edf.info["temp"] = dict()
-        raw_edf.info["temp"]["events"] = edf_events
-        return raw_edf
-
-    def extract_events(self, raw_edf):
-        events, name_to_code = raw_edf.info["temp"]["events"]
-
-        class_names = ['OVTK_StimulationId_Label_01', 'OVTK_StimulationId_Label_02', 'OVTK_StimulationId_Label_03', 'OVTK_StimulationId_Label_04', 'OVTK_StimulationId_Label_05']
-
-        trial_codes = [value_tag for class_name, value_tag in name_to_code.items() if any(class_name in x for x in class_names)]
-
-
-        trial_mask = [ev_code in trial_codes for ev_code in events[:, 2]]
-        trial_events = events[trial_mask]
-
-        # TODO: We don't have rejected trials yet
-        #trial_start_events_tag = [value_tag for class_name, value_tag in name_to_code.items() if class_name == 'OVTK_GDF_Start_Of_Trial']
-
-        #trial_start_events = events[events[:, 2] == trial_start_events_tag[0]]
-
-        #assert len(trial_start_events) == len(trial_events)
-        artifact_trial_mask = np.zeros(len(trial_events), dtype=np.uint8)
-        #artifact_events = events[events[:, 2] == 1]
-
-        #for artifact_time in artifact_events[:, 0]:
-        #    try: # I think this is poorly done. It should be "delete the trial that contains the boundary, that is the
-        #        # the one between the before and after the timestamp of the boundary"
-        #        i_trial = trial_start_events[:, 0].tolist().index(artifact_time)
-        #        artifact_trial_mask[i_trial] = 1
-        #    except:
-        #        pass
-
-        return trial_events, artifact_trial_mask
-
-
-def extract_segment_trial(raw, baseline=(0, 0), duration=1.4): # I think this could have been done with Andrea's approach, but it works so I won't move it yet.
-    '''
-    get segmented data and corresponding labels from raw_gdb.
-    :param raw: raw data
-    :param baseline: unit: second. baseline for the segment data. The first value is time before cue.
-                     The second value is the time after the Mi duration. Positive values represent the time delays,
-                     negative values represent the time lead.
-    :param duration: unit: seconds. mi duration time
-    :return: array data: trial data, labels
-    '''
-    events = raw.info["temp"]["events"]
-    raw_data = raw.get_data()
-    freqs = raw.info['sfreq']
-    epoch_duration = int(freqs * duration)
-    duration_before_epoch = int(freqs * baseline[0])
-    duration_after_epoch = int(freqs * baseline[1])
-
-    labels = np.array(events[:, 2])
-
-    trial_data = []
-    for i_event in events:  # i_event [time, 0, class]
-        segmented_data = raw_data[:,
-                         int(i_event[0]) + duration_before_epoch:int(i_event[0]) + epoch_duration + duration_after_epoch]
-        assert segmented_data.shape[-1] == epoch_duration - duration_before_epoch + duration_after_epoch
-        trial_data.append(segmented_data)
-    trial_data = np.stack(trial_data, 0)
-
-    return trial_data, labels
-
+    # Read epochs
+    epochs = Epochs(raw, events, event_id, preload=True, tmin=0, tmax=1.4, baseline=None)
+    label = epochs.events[:, -1]
+    return epochs, label
 
 def nieto_dataset_loader(root_dir: str, N_S: int):
     ### Hyperparameters
@@ -139,10 +48,11 @@ def nieto_dataset_loader(root_dir: str, N_S: int):
     # The class for the above condition
     Classes = [["Up"], ["Down"], ["Right"], ["Left"]]
 
-    # Transform data and keep only the trials of interes
+    # Transform data and keep only the trials of interest
     X, Y = Transform_for_classificator(X, Y, Classes, Conditions)
-
-    return X, Y
+    Y = Y.astype(int)
+    event_dict = {'Arriba': 0, 'Abajo': 1, 'Derecha': 2,'Izquierda': 3}
+    return X, Y, event_dict
 
 def coretto_dataset_loader(filepath: str):
     """
@@ -198,61 +108,62 @@ def coretto_dataset_loader(filepath: str):
     y = np.asarray(y, dtype=np.int32)
     y = np.repeat(y, 3, axis=0)
     # N, C, H = x.shape # You can use something like this for unit test later.
-    return x, y
+    event_dict = {"Arriba": 6, "Abajo": 7, "Derecha": 10, "Izquierda": 11}
+    return x, y, event_dict
 
-def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, dataset_info: dict, data_path: str, transpose: bool = False):
+def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_path: str, transpose: bool = False, array_format: bool = True):
+    dataset_info = datasets_basic_infos[dataset_name]
     if dataset_name == 'aguilera':
         filename = F"S{subject_id}.edf"
         filepath = os.path.join(data_path, filename)
-
-        loader = aguilera_dataset_loader(filepath)
-        cnt = loader.load()
-
-        # band-pass before segment trials
-        # train_cnt = mne_apply(lambda a: a * 1e6, train_cnt)
-        # test_cnt = mne_apply(lambda a: a * 1e6, test_cnt)
-
-        cnt = mne_apply(lambda a: bandpass_cnt(a, low_cut_hz=4, high_cut_hz=38,
-                                                     filt_order=200, fs=dataset_info['sample_rate'], zero_phase=False),
-                              cnt)
-
-        data, label = extract_segment_trial(cnt, baseline=(0,0), duration=1.4) # Check because this says that the duration is 4s
-
-        label = label - 1
+        data, label = aguilera_dataset_loader(filepath) # The output is epochs
+        if array_format:
+            data = data.get_data()
     elif dataset_name == 'nieto': # Checar sample
-        data, label = nieto_dataset_loader(data_path, subject_id)
-
+        data, label, event_dict = nieto_dataset_loader(data_path, subject_id)
     elif dataset_name == 'coretto':
         foldername = "S{:02d}".format(subject_id)
         filename = foldername + "_EEG.mat"
         path = [data_path, foldername, filename]
         filepath = os.path.join(*path)
-        data, label = coretto_dataset_loader(filepath)
-
+        data, label, event_dict = coretto_dataset_loader(filepath)
     elif dataset_name == 'torres':
-        pass
+        raise Exception("Torres is not ready yet.")
     else:
         raise Exception("Not supported dataset, choose from the following: aguilera, nieto, coretto or torres.")
     if transpose:
         data = np.transpose(data, (0, 2, 1))
-
+    if not array_format and dataset_name != 'aguilera':
+        #raise Exception("For now epoch is only available for Aguilera")
+        events = np.column_stack((
+            np.arange(0, dataset_info['sample_rate'] * data.shape[0], dataset_info['sample_rate']),
+            np.zeros(len(label), dtype=int),
+            np.array(label),
+        ))
+        data = EpochsArray(data, info=mne.create_info(dataset_info['#_channels'],
+                                                        sfreq=dataset_info['sample_rate'], ch_types='eeg'), events=events,
+                             event_id=event_dict)
     return data, label
 
 if __name__ == '__main__':
     # Manual Inputs
     subject_id = 1  # Only two things I should be able to change
-    dataset_name = 'coretto'  # Only two things I should be able to change
+    dataset_name = 'nieto'  # Only two things I should be able to change
+    array_format = False
 
     # Folders and paths
     dataset_foldername = dataset_name + '_dataset'
-    data_path = "/Users/almacuevas/work_projects/voting_system_platform/Datasets/" + dataset_foldername
-    dataset_info = datasets_basic_infos[dataset_name]
+    computer_root_path = "/Users/rosit/Documents/MCC/voting_system_platform/Datasets/"  # OMEN
+    # computer_root_path = "/Users/almacuevas/work_projects/voting_system_platform/Datasets/" # MAC
+    data_path = computer_root_path + dataset_foldername
 
-    data, label = load_data_labels_based_on_dataset(dataset_name, subject_id, dataset_info, data_path)
+    data, label = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path, array_format=array_format)
 
-
-    print(data.shape)
-    print(label.shape)
+    if array_format:
+        print(data.shape)
+        print(label.shape)
+    else:
+        print(data)
     print("Congrats! You were able to load data. You can now use this in a processing method.")
 
 
