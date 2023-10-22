@@ -22,4 +22,4 @@ They were modified to accomodate the needs for the project.
 * Try to combine the XDWAN with Riemman
 * Standardize the results from all the methods
 * Call all the methods from one file
-* Run LMDA on Coretto and try Aguilera again
+* Run LMDA on Coretto and try Aguilera again. Or maybe just give up on LMDA.

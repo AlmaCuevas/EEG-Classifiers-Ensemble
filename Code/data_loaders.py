@@ -50,7 +50,8 @@ def nieto_dataset_loader(root_dir: str, N_S: int):
 
     # Transform data and keep only the trials of interest
     X, Y = Transform_for_classificator(X, Y, Classes, Conditions)
-    event_dict = {'Arriba': 0., 'Abajo': 1., 'Derecha': 2.,'Izquierda': 3.}
+    Y = Y.astype(int)
+    event_dict = {'Arriba': 0, 'Abajo': 1, 'Derecha': 2,'Izquierda': 3}
     return X, Y, event_dict
 
 def coretto_dataset_loader(filepath: str):
@@ -110,7 +111,8 @@ def coretto_dataset_loader(filepath: str):
     event_dict = {"Arriba": 6, "Abajo": 7, "Derecha": 10, "Izquierda": 11}
     return x, y, event_dict
 
-def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, dataset_info: dict, data_path: str, transpose: bool = False, array_format: bool = True):
+def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_path: str, transpose: bool = False, array_format: bool = True):
+    dataset_info = datasets_basic_infos[dataset_name]
     if dataset_name == 'aguilera':
         filename = F"S{subject_id}.edf"
         filepath = os.path.join(data_path, filename)
@@ -139,22 +141,21 @@ def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, datase
             np.array(label),
         ))
         data = EpochsArray(data, info=mne.create_info(dataset_info['#_channels'],
-                                                        sfreq=dataset_info['sample_rate']), events=events,
+                                                        sfreq=dataset_info['sample_rate'], ch_types='eeg'), events=events,
                              event_id=event_dict)
     return data, label
 
 if __name__ == '__main__':
     # Manual Inputs
-    subject_id = 14  # Only two things I should be able to change
-    dataset_name = 'aguilera'  # Only two things I should be able to change
-    array_format = True
+    subject_id = 1  # Only two things I should be able to change
+    dataset_name = 'coretto'  # Only two things I should be able to change
+    array_format = False
 
     # Folders and paths
     dataset_foldername = dataset_name + '_dataset'
     data_path = "/Users/almacuevas/work_projects/voting_system_platform/Datasets/" + dataset_foldername
-    dataset_info = datasets_basic_infos[dataset_name]
 
-    data, label = load_data_labels_based_on_dataset(dataset_name, subject_id, dataset_info, data_path, array_format=array_format)
+    data, label = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path, array_format=array_format)
 
     if array_format:
         print(data.shape)

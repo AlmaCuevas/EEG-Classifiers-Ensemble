@@ -3,6 +3,7 @@
 
 # Edgar Aguilera Tradicional
 aguilera_info = {'#_class': 4, # avanzar, retroceder, derecha and izquierda
+'target_names': ["Avanzar", "Retroceder", "Derecha", "Izquierda"],
 '#_channels': 22, # Deleting the references. Andrea did this, you could try bringing them back maybe.
 'samples': 700, # sample_rate * duration in seconds = 500*1.4=700
 'sample_rate': 500,
@@ -12,6 +13,7 @@ aguilera_info = {'#_class': 4, # avanzar, retroceder, derecha and izquierda
 
 # Nieto
 nieto_info = {'#_class': 4, # arriba, abajo, derecha, izquierda
+'target_names': ["Arriba", "Abajo", "Derecha", "Izquierda"],
 '#_channels': 128,
 'samples': 512,
 'sample_rate': 256, # in BDF: 1024, but 256 is what the Python extraction tutorial they provided says.
@@ -22,7 +24,8 @@ nieto_info = {'#_class': 4, # arriba, abajo, derecha, izquierda
 # Coretto
 # La frecuencia de muestreo se estrablecio en 1024Hz. De modo que cada intervalo de habla imaginada consta de 4096 muestras (4 segundos). Se implementaron filtrado digital pasabanda con frecuencias de paso de 2 y 45 HZ.
 # De modo que el registro de una palabra esta constituido por 24576 muestras correspondientes a los canales de EEG, más tres muestras adicionales que indican la modalidad, estimulo y la presencia de artefactos oculares.
-coretto_info = {'#_class': 6, # arriba, abajo, izquierda, derecha, adelante and atrás (not counted, but the db also has vocals: a, e, i, o, u)
+coretto_info = {'#_class': 6, # arriba, abajo, izquierda, derecha, adelante and atrás (last two not counted, but the db also has vocals: a, e, i, o, u)
+'target_names': ["Arriba", "Abajo", "Derecha", "Izquierda"],
 '#_channels': 6,
 'samples': 1365, # =(4096-1)/3 . Originally 4096, that would be 4s. But there were 3 trials inside that, so the first sample was removed and then divided in thirds.
 'sample_rate': 1024, # with 1365 samples, it's 1.3 seconds
