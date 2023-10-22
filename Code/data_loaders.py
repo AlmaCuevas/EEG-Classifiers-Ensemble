@@ -12,10 +12,11 @@ from mne import io, Epochs, events_from_annotations, EpochsArray
 # TODO: Create a DataLoader for Torres
 
 def aguilera_dataset_loader(data_path: str):
-    raw = io.read_raw_edf(data_path, preload=True, verbose=False, exclude=['Gyro 1', 'Gyro 2', 'Gyro 3', 'Channel 21', 'Channel 22'])
+    raw = io.read_raw_edf(data_path, preload=True, verbose=40, exclude=['Channel 21', 'Channel 22', 'Gyro 1', 'Gyro 2', 'Gyro 3'])
     events, event_id = events_from_annotations(raw)
 
-    del event_id['OVTK_StimulationId_Label_05'] # This is not a command
+    event_id.pop('OVTK_StimulationId_Label_05') # This is not a command
+    events = events[3:] # From the one that is not a command
 
     # Read epochs
     epochs = Epochs(raw, events, event_id, preload=True, tmin=0, tmax=1.4, baseline=None)
@@ -144,9 +145,9 @@ def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, datase
 
 if __name__ == '__main__':
     # Manual Inputs
-    subject_id = 1  # Only two things I should be able to change
-    dataset_name = 'coretto'  # Only two things I should be able to change
-    array_format = False
+    subject_id = 14  # Only two things I should be able to change
+    dataset_name = 'aguilera'  # Only two things I should be able to change
+    array_format = True
 
     # Folders and paths
     dataset_foldername = dataset_name + '_dataset'

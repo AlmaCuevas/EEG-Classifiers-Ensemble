@@ -4,6 +4,9 @@ All the codes here are from other contributors:
 * LMDA-Net
 * BigProject
 * CCSPNet
+* pyRiemann
+* XDAWN
+
 They were modified to accomodate the needs for the project.
 
 #  The Datasets are provided by:
