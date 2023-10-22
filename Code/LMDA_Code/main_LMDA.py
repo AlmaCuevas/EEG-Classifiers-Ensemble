@@ -91,7 +91,7 @@ if __name__ == "__main__":
 
     # Manual Inputs
     #subject_id = 1                      # Only 3 things I should be able to change
-    dataset_name = 'nieto'           # Only 3 things I should be able to change
+    dataset_name = 'coretto'           # Only 3 things I should be able to change
     share_model_name = 'LMDA'           # Only 3 things I should be able to change
     assert share_model_name in ['LMDA', 'EEGNet', 'ConvNet']
 
