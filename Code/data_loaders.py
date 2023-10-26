@@ -54,6 +54,34 @@ def nieto_dataset_loader(root_dir: str, N_S: int):
     event_dict = {'Arriba': 0, 'Abajo': 1, 'Derecha': 2,'Izquierda': 3}
     return X, Y, event_dict
 
+def torres_dataset_loader(filepath: str, subject_id: int): # TODO: Flag or something to return all subjects
+    EEG_nested_dict = loadmat(filepath, simplify_cells=True)
+    EEG_array = np.zeros((7, 5, 33, 421, 17)) # Subject, Word, Trial, Samples, Channels
+
+    for i_subject, subject in enumerate(EEG_nested_dict['S']):
+        for i_word, word in enumerate(subject['Palabra']):
+            for i_epoch, epoch in enumerate(word['Epoca']):
+                if i_epoch > 32: # One subject has an extra epoch, the option was leaving one empty epoch to everyone or removing it.
+                    pass # I chose removing, that's why we don't capture it.
+                else:
+                    EEG_array[i_subject, i_word, i_epoch, :epoch['SenalesEEG'].shape[0], :] = epoch['SenalesEEG']
+
+    # SELECT DATA
+    # word: 0 to 4, because the 5 is "Seleccionar" (Select), and we are not going to use it.
+    # channel 0:13 because 14, 15, 16 are gyros and marker of start and end.
+    # EEG_array_selected_values is (word, trials, samples, channels)
+    EEG_array_selected_values = np.squeeze(EEG_array[subject_id-1, 0:4, :, :, 0:14])
+
+
+    # reshape x in 3d data(Trials, Channels, Samples) and y in 1d data(Trials)
+    x = np.transpose(EEG_array_selected_values, (0, 1, 3, 2))
+    x = x.reshape(4*33, 14, 421)
+    y = [1, 2, 3, 4]
+    y = np.repeat(y, 33, axis=0)
+
+    event_dict = {"Arriba": 1, "Abajo": 2, "Izquierda": 3, "Derecha": 4}
+    return x, y, event_dict
+
 def coretto_dataset_loader(filepath: str):
     """
     Load data from all .mat files, combine them, eliminate EOG signals, shuffle and seperate
@@ -128,7 +156,9 @@ def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_p
         filepath = os.path.join(*path)
         data, label, event_dict = coretto_dataset_loader(filepath)
     elif dataset_name == 'torres':
-        raise Exception("Torres is not ready yet.")
+        filename = "IndividuosS1-S7(17columnas)-Epocas.mat"
+        filepath = os.path.join(data_path, filename)
+        data, label, event_dict = torres_dataset_loader(filepath, subject_id)
     else:
         raise Exception("Not supported dataset, choose from the following: aguilera, nieto, coretto or torres.")
     if transpose:
@@ -148,13 +178,13 @@ def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_p
 if __name__ == '__main__':
     # Manual Inputs
     subject_id = 1  # Only two things I should be able to change
-    dataset_name = 'nieto'  # Only two things I should be able to change
-    array_format = False
+    dataset_name = 'torres'  # Only two things I should be able to change
+    array_format = True
 
     # Folders and paths
     dataset_foldername = dataset_name + '_dataset'
-    computer_root_path = "/Users/rosit/Documents/MCC/voting_system_platform/Datasets/"  # OMEN
-    # computer_root_path = "/Users/almacuevas/work_projects/voting_system_platform/Datasets/" # MAC
+    #computer_root_path = "/Users/rosit/Documents/MCC/voting_system_platform/Datasets/"  # OMEN
+    computer_root_path = "/Users/almacuevas/work_projects/voting_system_platform/Datasets/" # MAC
     data_path = computer_root_path + dataset_foldername
 
     data, label = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path, array_format=array_format)
