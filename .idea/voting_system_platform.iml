@@ -11,6 +11,13 @@
       <sourceFolder url="file://$MODULE_DIR$/Code/braindecode" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Code" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Datasets" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Datasets/BigProject_dataset" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Datasets/CCSPNet_dataset" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Datasets/aguilera_dataset" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Datasets/coretto_dataset" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Datasets/nieto_dataset" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Datasets/torres_dataset" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/env_voting_system_platform" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.10 (voting_system_platform)" jdkType="Python SDK" />

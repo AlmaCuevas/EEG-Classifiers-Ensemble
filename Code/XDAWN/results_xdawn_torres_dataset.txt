@@ -1,0 +1,91 @@
+subject: 1,
+ report:               precision    recall  f1-score   support
+
+   Izquierda       0.93      0.76      0.83        33
+       Abajo       0.61      0.82      0.70        33
+      Arriba       0.73      0.58      0.64        33
+     Derecha       0.54      0.58      0.56        33
+
+    accuracy                           0.68       132
+   macro avg       0.70      0.68      0.68       132
+weighted avg       0.70      0.68      0.68       132
+
+
+subject: 2,
+ report:               precision    recall  f1-score   support
+
+   Izquierda       0.70      0.42      0.53        33
+       Abajo       0.37      0.52      0.43        33
+      Arriba       0.27      0.39      0.32        33
+     Derecha       0.44      0.24      0.31        33
+
+    accuracy                           0.39       132
+   macro avg       0.45      0.39      0.40       132
+weighted avg       0.45      0.39      0.40       132
+
+
+subject: 3,
+ report:               precision    recall  f1-score   support
+
+   Izquierda       0.91      0.97      0.94        33
+       Abajo       0.74      0.76      0.75        33
+      Arriba       0.81      0.79      0.80        33
+     Derecha       0.84      0.79      0.81        33
+
+    accuracy                           0.83       132
+   macro avg       0.83      0.83      0.82       132
+weighted avg       0.83      0.83      0.82       132
+
+
+subject: 4,
+ report:               precision    recall  f1-score   support
+
+   Izquierda       0.94      1.00      0.97        33
+       Abajo       0.91      0.88      0.89        33
+      Arriba       0.86      0.94      0.90        33
+     Derecha       0.86      0.76      0.81        33
+
+    accuracy                           0.89       132
+   macro avg       0.89      0.89      0.89       132
+weighted avg       0.89      0.89      0.89       132
+
+
+subject: 5,
+ report:               precision    recall  f1-score   support
+
+   Izquierda       0.68      0.76      0.71        33
+       Abajo       0.61      0.58      0.59        33
+      Arriba       0.58      0.45      0.51        33
+     Derecha       0.42      0.48      0.45        33
+
+    accuracy                           0.57       132
+   macro avg       0.57      0.57      0.57       132
+weighted avg       0.57      0.57      0.57       132
+
+
+subject: 6,
+ report:               precision    recall  f1-score   support
+
+   Izquierda       0.50      0.52      0.51        33
+       Abajo       0.34      0.33      0.34        33
+      Arriba       0.45      0.45      0.45        33
+     Derecha       0.52      0.52      0.52        33
+
+    accuracy                           0.45       132
+   macro avg       0.45      0.45      0.45       132
+weighted avg       0.45      0.45      0.45       132
+
+
+subject: 7,
+ report:               precision    recall  f1-score   support
+
+   Izquierda       0.78      0.88      0.83        33
+       Abajo       0.81      0.79      0.80        33
+      Arriba       0.97      0.88      0.92        33
+     Derecha       0.85      0.85      0.85        33
+
+    accuracy                           0.85       132
+   macro avg       0.85      0.85      0.85       132
+weighted avg       0.85      0.85      0.85       132
+
+

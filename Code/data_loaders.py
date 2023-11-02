@@ -133,6 +133,7 @@ def coretto_dataset_loader(filepath: str):
 
     # reshape x in 3d data(Trials, Channels, Samples) and y in 1d data(Trials)
     x = np.transpose(x_transposed_reshaped, (2, 0, 1))
+    x = x[:,:, 0:x.shape[2]:4] # Downsampled to fs = 256Hz
     y = np.asarray(y, dtype=np.int32)
     y = np.repeat(y, 3, axis=0)
     # N, C, H = x.shape # You can use something like this for unit test later.
@@ -178,7 +179,7 @@ def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_p
 if __name__ == '__main__':
     # Manual Inputs
     subject_id = 1  # Only two things I should be able to change
-    dataset_name = 'torres'  # Only two things I should be able to change
+    dataset_name = 'coretto'  # Only two things I should be able to change
     array_format = True
 
     # Folders and paths

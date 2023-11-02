@@ -17,7 +17,7 @@ nieto_info = {'#_class': 4, # arriba, abajo, derecha, izquierda
 '#_channels': 128,
 'samples': 512,
 'sample_rate': 256, # in BDF: 1024, but 256 is what the Python extraction tutorial they provided says.
-'channels_names': [], # PENDING
+'channels_names': ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'A10', 'A11', 'A12', 'A13', 'A14', 'A15', 'A16', 'A17', 'A18', 'A19', 'A20', 'A21', 'A22', 'A23', 'A24', 'A25', 'A26', 'A27', 'A28', 'A29', 'A30', 'A31', 'A32', 'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9', 'B10', 'B11', 'B12', 'B13', 'B14', 'B15', 'B16', 'B17', 'B18', 'B19', 'B20', 'B21', 'B22', 'B23', 'B24', 'B25', 'B26', 'B27', 'B28', 'B29', 'B30', 'B31', 'B32', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'C11', 'C12', 'C13', 'C14', 'C15', 'C16', 'C17', 'C18', 'C19', 'C20', 'C21', 'C22', 'C23', 'C24', 'C25', 'C26', 'C27', 'C28', 'C29', 'C30', 'C31', 'C32', 'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10', 'D11', 'D12', 'D13', 'D14', 'D15', 'D16', 'D17', 'D18', 'D19', 'D20', 'D21', 'D22', 'D23', 'D24', 'D25', 'D26', 'D27', 'D28', 'D29', 'D30', 'D31', 'D32'], # This is 10-5, not 10-20. That's why the channels barely correspond to the other datasets.
 'subjects':10,
 'total_trials':200} # Not really , it varies because some subjects couldn't finish the experiment
 
@@ -27,8 +27,8 @@ nieto_info = {'#_class': 4, # arriba, abajo, derecha, izquierda
 coretto_info = {'#_class': 6, # arriba, abajo, izquierda, derecha, adelante and atrás (last two not counted, but the db also has vocals: a, e, i, o, u)
 'target_names': ["Arriba", "Abajo", "Derecha", "Izquierda"],
 '#_channels': 6,
-'samples': 1365, # =(4096-1)/3 . Originally 4096, that would be 4s. But there were 3 trials inside that, so the first sample was removed and then divided in thirds.
-'sample_rate': 1024, # with 1365 samples, it's 1.3 seconds
+'samples': 342, # Originally 1365=(4096-1)/3 . Originally 4096, that would be 4s. But there were 3 trials inside that, so the first sample was removed and then divided in thirds.
+'sample_rate': 256, # Originally it was 1024 with 1365 samples = 1.3 seconds. But I downsampled to 256.
 'channels_names': ['F3', 'F4', 'C3', 'C4', 'P3', 'P4'],
 'subjects':15,
 'total_trials':606} # TODO: Read the paper and find if this is right
