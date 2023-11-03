@@ -89,6 +89,15 @@ class EEG_MI_dataset(Dataset):
         data, label = load_data_labels_based_on_dataset(dataset_name, subject, data_path, array_format=array_format)
         data = np.asarray([data])
         data = np.transpose(data, (1, 0, 2, 3))
+        label_copy = label.copy()
+        for i, label_i in enumerate(label_copy):
+            if label_i == 1:
+                label[i] = 1
+            else:
+                label[i] = 0
+
+
+
         if mode != 'Stability':
             subject_idx = int(subject) - 1
             subject = f'{int(subject):02d}'

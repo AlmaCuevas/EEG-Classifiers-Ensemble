@@ -1,11 +1,11 @@
 # Voting system EEG Data Classification
 
 All the codes here are from other contributors:
-* LMDA-Net
+* LMDA-Net -> It didn't run
 * BigProject
-* CCSPNet
+* CCSPNet -> Only runs for pairs. It is still useful, but multiple trains will be done.
 * pyRiemann
-* XDAWN
+* XDAWN -> Good for 4 classes
 
 They were modified to accomodate the needs for the project.
 

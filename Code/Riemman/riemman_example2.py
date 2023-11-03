@@ -11,8 +11,8 @@ from share import datasets_basic_infos
 if __name__ == '__main__':
     # Manual Inputs
 
-    subject_id = 1  # Only two things I should be able to change
-    dataset_name = 'aguilera'  # Only two things I should be able to change
+    #subject_id = 1  # Only two things I should be able to change
+    dataset_name = 'coretto'  # Only two things I should be able to change
 
     # Folders and paths
     dataset_foldername = dataset_name + '_dataset'
@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     for subject_id in range(1, dataset_info['subjects']+1):
         # load your data
-        X, y = load_data_labels_based_on_dataset(dataset_name, subject_id, dataset_info, data_path, array_format=True)
+        X, y = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path, array_format=True)
 
         # build your pipeline
         covest = Covariances()
