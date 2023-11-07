@@ -8,9 +8,6 @@ from Code.Inner_Speech_Dataset.Python_Processing.Data_extractions import Extract
 from Code.Inner_Speech_Dataset.Python_Processing.Data_processing import Select_time_window, Transform_for_classificator, Split_trial_in_time
 from mne import io, Epochs, events_from_annotations, EpochsArray
 
-
-# TODO: Create a DataLoader for Torres
-
 def aguilera_dataset_loader(data_path: str):
     raw = io.read_raw_edf(data_path, preload=True, verbose=40, exclude=['Channel 21', 'Channel 22', 'Gyro 1', 'Gyro 2', 'Gyro 3'])
     events, event_id = events_from_annotations(raw)
