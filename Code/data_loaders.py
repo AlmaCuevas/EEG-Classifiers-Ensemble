@@ -5,19 +5,26 @@ import os
 from Code.data_preprocess import mne_apply, bandpass_cnt
 from share import datasets_basic_infos
 from Code.Inner_Speech_Dataset.Python_Processing.Data_extractions import Extract_data_from_subject
-from Code.Inner_Speech_Dataset.Python_Processing.Data_processing import Select_time_window, Transform_for_classificator, Split_trial_in_time
+from Code.Inner_Speech_Dataset.Python_Processing.Data_processing import Select_time_window, Transform_for_classificator
 from mne import io, Epochs, events_from_annotations, EpochsArray
+#todo:you have to observe the events of the gamified, they have to match 0,1,2,3 in the right order
+def aguilera_dataset_loader(data_path: str, gamified: bool):
+    # '1':'FP1', '2':'FP2', '3':'F3', '4':'F4', '5':'C3', '6':'C4', '7':'P3', '8':'P4', '9':'O1', '10':'O2', '11':'F7', '12':'F8', '13':'T7', '14':'T8', '15':'P7', '16':'P8', '17':'Fz', '18':'Cz', '19':'Pz', '20':'M1', '21':'M2', '22':'AFz', '23':'CPz', '24':POz
+    # include=['Channel 3', 'Channel 4', 'Channel 5', 'Channel 6', 'Channel 7', 'Channel 8', 'Channel 11', 'Channel 12', 'Channel 13', 'Channel 14', 'Channel 15', 'Channel 16', 'Channel 17', 'Channel 18', 'Channel 19', 'Channel 23'] #this is the left and important right
+    raw = io.read_raw_edf(data_path, preload=True, verbose=40, exclude=['Gyro 1', 'Gyro 2', 'Gyro 3'])
+    #raw = raw.copy().set_eeg_reference(ref_channels="average") # If I do this it, the XDAWN doesn't run.
 
-def aguilera_dataset_loader(data_path: str):
-    raw = io.read_raw_edf(data_path, preload=True, verbose=40, exclude=['Channel 21', 'Channel 22', 'Gyro 1', 'Gyro 2', 'Gyro 3'])
     events, event_id = events_from_annotations(raw)
-
-    event_id.pop('OVTK_StimulationId_Label_05') # This is not a command
+    if gamified:
+        pass # There are lots of events. Find what they are.
+    else:
+        event_id.pop('OVTK_StimulationId_Label_05') # This is not a command
     events = events[3:] # From the one that is not a command
 
     # Read epochs
-    epochs = Epochs(raw, events, event_id, preload=True, tmin=0, tmax=1.4, baseline=None)
+    epochs = Epochs(raw, events, event_id, preload=True, tmin=0, tmax=1.4, baseline=None) # Better results when there is no baseline
     label = epochs.events[:, -1]
+    label = label -1 # So it goes from 0 to 3
     return epochs, label
 
 def nieto_dataset_loader(root_dir: str, N_S: int):
@@ -73,10 +80,10 @@ def torres_dataset_loader(filepath: str, subject_id: int): # TODO: Flag or somet
     # reshape x in 3d data(Trials, Channels, Samples) and y in 1d data(Trials)
     x = np.transpose(EEG_array_selected_values, (0, 1, 3, 2))
     x = x.reshape(4*33, 14, 421)
-    y = [1, 2, 3, 4]
+    y = [0, 1, 2, 3]
     y = np.repeat(y, 33, axis=0)
 
-    event_dict = {"Arriba": 1, "Abajo": 2, "Izquierda": 3, "Derecha": 4}
+    event_dict = {"Arriba": 0, "Abajo": 1, "Izquierda": 2, "Derecha": 3}
     return x, y, event_dict
 
 def coretto_dataset_loader(filepath: str):
@@ -133,19 +140,30 @@ def coretto_dataset_loader(filepath: str):
     x = x[:,:, 0:x.shape[2]:4] # Downsampled to fs = 256Hz
     y = np.asarray(y, dtype=np.int32)
     y = np.repeat(y, 3, axis=0)
+
+    y[y == 6] = 0
+    y[y == 7] = 1
+    y[y == 10] = 2
+    y[y == 11] = 3
     # N, C, H = x.shape # You can use something like this for unit test later.
-    event_dict = {"Arriba": 6, "Abajo": 7, "Derecha": 10, "Izquierda": 11}
+    event_dict = {"Arriba": 0, "Abajo": 1, "Derecha": 2, "Izquierda": 3}
     return x, y, event_dict
 
 def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_path: str, transpose: bool = False, array_format: bool = True):
+    if dataset_name not in ['aguilera_traditional', 'aguilera_gamified', 'nieto', 'coretto', 'torres']:
+        raise Exception(
+            f"Not supported dataset named '{dataset_name}', choose from the following: aguilera_traditional, aguilera_gamified, nieto, coretto or torres.")
     dataset_info = datasets_basic_infos[dataset_name]
-    if dataset_name == 'aguilera':
+    if 'aguilera' in dataset_name:
         filename = F"S{subject_id}.edf"
         filepath = os.path.join(data_path, filename)
-        data, label = aguilera_dataset_loader(filepath) # The output is epochs
+        if 'gamified' in dataset_name:
+            data, label = aguilera_dataset_loader(filepath, True) # The output is epochs
+        else:
+            data, label = aguilera_dataset_loader(filepath, False)  # The output is epochs
         if array_format:
             data = data.get_data()
-    elif dataset_name == 'nieto': # Checar sample
+    elif dataset_name == 'nieto':
         data, label, event_dict = nieto_dataset_loader(data_path, subject_id)
     elif dataset_name == 'coretto':
         foldername = "S{:02d}".format(subject_id)
@@ -157,12 +175,9 @@ def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_p
         filename = "IndividuosS1-S7(17columnas)-Epocas.mat"
         filepath = os.path.join(data_path, filename)
         data, label, event_dict = torres_dataset_loader(filepath, subject_id)
-    else:
-        raise Exception("Not supported dataset, choose from the following: aguilera, nieto, coretto or torres.")
     if transpose:
         data = np.transpose(data, (0, 2, 1))
-    if not array_format and dataset_name != 'aguilera':
-        #raise Exception("For now epoch is only available for Aguilera")
+    if not array_format and 'aguilera' not in dataset_name:
         events = np.column_stack((
             np.arange(0, dataset_info['sample_rate'] * data.shape[0], dataset_info['sample_rate']),
             np.zeros(len(label), dtype=int),
@@ -175,8 +190,8 @@ def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_p
 
 if __name__ == '__main__':
     # Manual Inputs
-    subject_id = 1  # Only two things I should be able to change
-    dataset_name = 'coretto'  # Only two things I should be able to change
+    subject_id = 3  # Only two things I should be able to change
+    dataset_name = 'aguilera_traditional'  # Only two things I should be able to change
     array_format = True
 
     # Folders and paths

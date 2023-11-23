@@ -88,7 +88,7 @@ def ccspnet_test(model, epoch, best_model_state):
     #loaded_model = pickle.load(open(filename, 'rb'))
 
     # To see the array of predictions
-    dataloader =EEG_dataset_online(epoch)
+    dataset = EEG_dataset_online(epoch)
     dataloader = DataLoader(dataset, batch_size=5300,
                             num_workers=workers, pin_memory=True,
                             shuffle=True)
@@ -98,7 +98,7 @@ def ccspnet_test(model, epoch, best_model_state):
 
 if __name__ == '__main__':
     # Manual Inputs
-    subject_id = 1  # Only two things I should be able to change
+    subject_id = 10  # Only two things I should be able to change
     dataset_name = 'aguilera'  # Only two things I should be able to change
     array_format = True
 
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     data, label = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path, array_format=array_format)
     target_names = dataset_info['target_names']
 
-    dataset = EEG_dataset(data, label, 1) # true_label=1, so 1 wil be 1 and everyone else 0
+    dataset = EEG_dataset(data, label, 2) # true_label=1, so 1 wil be 1 and everyone else 0
     ### Define Dataloader
     dataloader = DataLoader(dataset, batch_size=5300,
                             num_workers=workers, pin_memory=True,
@@ -131,5 +131,5 @@ if __name__ == '__main__':
     end = time.time()
     print("One epoch, testing time: ", end - start)
     print(target_names)
-    print("Probability: " , answer)
+    print("Answer: " , answer)
     print("Real: ", label[epoch_number])

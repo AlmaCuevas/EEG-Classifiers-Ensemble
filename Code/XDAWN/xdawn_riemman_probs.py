@@ -60,7 +60,7 @@ def riemman_test(clf, epoch):
 
 if __name__ == '__main__':
     # Manual Inputs
-    subject_id = 1  # Only two things I should be able to change
+    subject_id = 3  # Only two things I should be able to change
     dataset_name = 'aguilera'  # Only two things I should be able to change
     array_format = True
 

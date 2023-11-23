@@ -32,7 +32,7 @@ print(__doc__)
 
 # This one needs the data to be load in epochs, not in dimensions
 #subject_id = 1
-dataset_name = 'torres'
+dataset_name = 'aguilera_traditional'
 
 
 dataset_foldername = dataset_name + '_dataset'
@@ -73,7 +73,7 @@ for subject_id in range(1, dataset_info['subjects'] + 1):
     target_names = dataset_info['target_names']
     report = classification_report(labels, preds, target_names=target_names)
     print(report)
-    with open(f'/Users/almacuevas/work_projects/voting_system_platform/Code/XDAWN/results_xdawn_{dataset_foldername}.txt', 'a') as f:
+    with open(f'/Users/almacuevas/work_projects/voting_system_platform/Code/XDAWN/results_xdawn_{dataset_name}.txt', 'a') as f:
         f.write(f'subject: {subject_id},\n report: {report}\n\n')
 
     # Normalized confusion matrix
