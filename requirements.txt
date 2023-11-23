@@ -14,3 +14,8 @@ torchsummary==1.5.1
 torchvision==0.16.0
 tqdm==4.66.1
 wget==3.2
+skorch==0.15.0
+moabb==1.0.0
+braindecode==0.4.85
+ema-pytorch==0.3.0
+einops==0.7.0

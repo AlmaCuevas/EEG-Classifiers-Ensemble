@@ -1,13 +1,23 @@
 
 # DATASETS BASIC INFO
 
-# Edgar Aguilera Tradicional
-aguilera_info = {'#_class': 4, # avanzar, retroceder, derecha and izquierda
+# Edgar Aguilera Traditional
+aguilera_traditional_info = {'#_class': 4, # avanzar, retroceder, derecha and izquierda
 'target_names': ["Avanzar", "Retroceder", "Derecha", "Izquierda"],
-'#_channels': 22, # Deleting the references. Andrea did this, you could try bringing them back maybe.
-'samples': 700, # sample_rate * duration in seconds = 500*1.4=700
+'#_channels': 24,
+'samples': 701, # sample_rate * duration in seconds = 500*1.4=700
 'sample_rate': 500,
-'channels_names': ['FP1', 'FP2', 'F3', 'F4', 'C3', 'C4', 'P3', 'P4', 'O1', 'O2', 'F7', 'F8', 'T7', 'T8', 'P7', 'P8', 'Fz', 'Cz', 'Pz', 'AFz', 'CPz'], # in the channels order, 21 and 22 are  'M1', 'M2'
+'channels_names': ['FP1', 'FP2', 'F3', 'F4', 'C3', 'C4', 'P3', 'P4', 'O1', 'O2', 'F7', 'F8', 'T7', 'T8', 'P7', 'P8', 'Fz', 'Cz', 'Pz', 'M1', 'M2', 'AFz', 'CPz', 'POz'], # in the channels order, 20 and 21 are  'M1', 'M2'
+'subjects':16,
+'total_trials':120} # 30 per class
+
+# Edgar Aguilera Gamified
+aguilera_gamified_info = {'#_class': 4, # avanzar, retroceder, derecha and izquierda
+'target_names': ["Avanzar", "Retroceder", "Derecha", "Izquierda"],
+'#_channels': 24,
+'samples': 701, # sample_rate * duration in seconds = 500*1.4=700
+'sample_rate': 500,
+'channels_names':['FP1', 'FP2', 'F3', 'F4', 'C3', 'C4', 'P3', 'P4', 'O1', 'O2', 'F7', 'F8', 'T7', 'T8', 'P7', 'P8', 'Fz', 'Cz', 'Pz', 'M1', 'M2', 'AFz', 'CPz', 'POz'], # in the channels order, 21 and 22 are  'M1', 'M2'
 'subjects':15,
 'total_trials':120} # 30 per class
 
@@ -37,9 +47,10 @@ coretto_info = {'#_class': 6, # arriba, abajo, izquierda, derecha, adelante and 
 torres_info = {'#_class': 5, # 'arriba', 'abajo', 'izquierda', 'derecha'. They also did 'seleccionar', but we are not going to use that one.
 "target_names": {"Arriba", "Abajo", "Izquierda", "Derecha"},
 '#_channels': 14, # CHECK
-'samples': 0, # PENDING
+'samples': 421, # PENDING
 'sample_rate': 128,
 'channels_names': ['AF3', 'F7', 'F3', 'FC5', 'T7', 'P7', 'O1', 'O2', 'P8', 'T8', 'FC6', 'F4', 'F8', 'AF4'],
-'subjects':7} # Total of 27, but 7 because they haven't give me the full array.
+'subjects':7, # Total of 27, but 7 because they haven't give me the full array.
+'total_trials':606}
 
-datasets_basic_infos = {'aguilera':aguilera_info, 'nieto':nieto_info, 'coretto':coretto_info, 'torres':torres_info} # If one day I decide to run all experiments at once
+datasets_basic_infos = {'aguilera_traditional': aguilera_traditional_info, 'aguilera_gamified': aguilera_gamified_info, 'nieto':nieto_info, 'coretto':coretto_info, 'torres':torres_info} # If one day I decide to run all experiments at once

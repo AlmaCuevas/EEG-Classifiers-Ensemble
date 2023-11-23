@@ -1,11 +1,16 @@
 # Voting system EEG Data Classification
 
 All the codes here are from other contributors:
-* LMDA-Net -> It didn't run
-* BigProject
 * CCSPNet -> Only runs for pairs. It is still useful, but multiple trains will be done.
 * pyRiemann
 * XDAWN -> Good for 4 classes
+* TCACNet -> https://github.com/LiuXiaolin-lxl/TCACNet
+
+Abandonded:
+* BigProject 
+* LMDA-Net -> It didn't run
+* EEGNET and cousins
+* LSTM, at least that project in particular, you could try with other LSTM libraries. It gave bad results, but maybe other will be better.
 
 They were modified to accomodate the needs for the project.
 
