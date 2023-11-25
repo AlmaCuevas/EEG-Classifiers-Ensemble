@@ -20,11 +20,16 @@ else:
     workers = 0
 print(f'Device is set to {device}\nNumber of workers: {workers}')
 
-def ccspnet_train(dataset, dataloader):
+def ccspnet_train(data, labels, dataset_info, true_label=1): # true_label=1, so 1 wil be 1 and everyone else 0
     """#Run Network
-
     Mode parameter: 'SD' for subject-dependent
     """
+
+    dataset = EEG_dataset(data, labels, true_label)
+    ### Define Dataloader
+    dataloader = DataLoader(dataset, batch_size=5300,
+                            num_workers=workers, pin_memory=True,
+                            shuffle=True)
 
     hists_acc = []
     hists_loss = []
@@ -99,7 +104,7 @@ def ccspnet_test(model, epoch, best_model_state):
 if __name__ == '__main__':
     # Manual Inputs
     subject_id = 10  # Only two things I should be able to change
-    dataset_name = 'aguilera'  # Only two things I should be able to change
+    dataset_name = 'aguilera_traditional'  # Only two things I should be able to change
     array_format = True
 
     # Folders and paths
@@ -109,27 +114,21 @@ if __name__ == '__main__':
     data_path = computer_root_path + dataset_foldername
     dataset_info = datasets_basic_infos[dataset_name]
 
-    data, label = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path, array_format=array_format)
+    data, labels = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path, array_format=array_format)
     target_names = dataset_info['target_names']
-
-    dataset = EEG_dataset(data, label, 2) # true_label=1, so 1 wil be 1 and everyone else 0
-    ### Define Dataloader
-    dataloader = DataLoader(dataset, batch_size=5300,
-                            num_workers=workers, pin_memory=True,
-                            shuffle=True)
 
     print("******************************** Training ********************************")
     start = time.time()
-    model, best_model_state = ccspnet_train(dataset, dataloader)
+    model, best_model_state = ccspnet_train(data, labels, dataset_info, true_label=0)
     end = time.time()
     print("Training time: ", end - start)
 
     print("******************************** Test ********************************")
     epoch_number = 0
     start = time.time()
-    answer = ccspnet_test(model, data[epoch_number], best_model_state)
+    answer = ccspnet_test(model, np.asarray([data[epoch_number]]), best_model_state)
     end = time.time()
     print("One epoch, testing time: ", end - start)
     print(target_names)
     print("Answer: " , answer)
-    print("Real: ", label[epoch_number])
+    print("Real: ", labels[epoch_number])

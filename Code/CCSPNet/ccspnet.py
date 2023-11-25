@@ -70,11 +70,11 @@ from Code.data_utils import train_test_val_split
 
 
 class EEG_dataset(Dataset):
-    def __init__(self, data, label, true_label=1):
+    def __init__(self, data, label_original, true_label=1):
         data = np.asarray([data])
         data = np.transpose(data, (1, 0, 2, 3))
-        label_copy = label.copy()
-        for i, label_i in enumerate(label_copy): #TODO: Fix this to work with the categorical generalized labels
+        label = label_original.copy()
+        for i, label_i in enumerate(label): #TODO: Fix this to work with the categorical generalized labels
             if label_i == true_label:
                 label[i] = 1
             else:
@@ -118,8 +118,8 @@ class EEG_dataset(Dataset):
 class EEG_dataset_online(Dataset):
     def __init__(self, data):
         self.section = "val"
-        self.data_val = np.asarray([[data]])
-        self.labels_val = [1] # Dummy, not really
+        self.data_val = np.asarray(data)
+        self.labels_val = [1] # Dummy, just to not fail. It doesn't affect anything.
     def val(self):
         self.section = "val"
 

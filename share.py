@@ -51,6 +51,6 @@ torres_info = {'#_class': 5, # 'arriba', 'abajo', 'izquierda', 'derecha'. They a
 'sample_rate': 128,
 'channels_names': ['AF3', 'F7', 'F3', 'FC5', 'T7', 'P7', 'O1', 'O2', 'P8', 'T8', 'FC6', 'F4', 'F8', 'AF4'],
 'subjects':7, # Total of 27, but 7 because they haven't give me the full array.
-'total_trials':606}
+'total_trials':132} # why did I thought that my trials were 606?
 
 datasets_basic_infos = {'aguilera_traditional': aguilera_traditional_info, 'aguilera_gamified': aguilera_gamified_info, 'nieto':nieto_info, 'coretto':coretto_info, 'torres':torres_info} # If one day I decide to run all experiments at once

@@ -19,3 +19,6 @@ moabb==1.0.0
 braindecode==0.4.85
 ema-pytorch==0.3.0
 einops==0.7.0
+emd==0.4.0
+brainflow==2.4.0
+keras-preprocessing==1.1.2

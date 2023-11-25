@@ -1,36 +1,36 @@
 import numpy as np
 
-from pyriemann.estimation import Covariances
-from pyriemann.tangentspace import TangentSpace
+from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.metrics import classification_report
-
-from sklearn.pipeline import make_pipeline
-from sklearn.svm import SVC
-from sklearn.model_selection import cross_val_score, StratifiedKFold
 from share import datasets_basic_infos
 from data_loaders import load_data_labels_based_on_dataset
 import time
+import pickle
+from sklearn.pipeline import Pipeline
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from mne.decoding import CSP
+from sklearn.model_selection import KFold
 
-def riemman_train(data, labels, target_names):
-    covest = Covariances()
-    ts = TangentSpace()
-    svc = SVC(kernel='linear', probability=True)
-    clf = make_pipeline(covest, ts, svc)
+def CSP_LDA_train(data, labels, target_names):
+    # Create classification pipeline
+    lda = LinearDiscriminantAnalysis()
+    csp = CSP(n_components=4, reg=None, log=True, norm_trace=False)
 
-    # Cross validator
-    cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
+    # Use scikit-learn Pipeline with cross_val_score function
+    clf = Pipeline([("CSP", csp), ("LDA", lda)])
 
-    # Do cross-validation
-    preds = np.empty(len(labels))
-    for train, test in cv.split(data, labels):
-        clf.fit(data[train], labels[train])
-        preds[test] = clf.predict(data[test])
+    preds = np.zeros(len(labels))
+    cv = KFold(n_splits=10, shuffle=True, random_state=42)
+    for train_idx, test_idx in cv.split(data):
+        y_train, y_test = labels[train_idx], labels[test_idx]
 
+        clf.fit(data[train_idx], y_train)
+        preds[test_idx] = clf.predict(data[test_idx])
     report = classification_report(labels, preds, target_names=target_names)
     print(report)
     return clf
 
-def riemman_test(clf, epoch):
+def CSP_LDA_test(clf, epoch):
     """
     This is what the real-time BCI will call.
     Parameters
@@ -62,21 +62,21 @@ if __name__ == '__main__':
     data_path = computer_root_path + dataset_foldername
     dataset_info = datasets_basic_infos[dataset_name]
 
-    data, y = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path, array_format=array_format)
+    data, labels = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path, array_format=array_format)
     target_names = dataset_info['target_names']
 
     print("******************************** Training ********************************")
     start = time.time()
-    clf = riemman_train(data, y, dataset_info, target_names)
+    clf = CSP_LDA_train(data, labels, target_names)
     end = time.time()
     print("Training time: ", end - start)
 
     print("******************************** Test ********************************")
     epoch_number = 0
     start = time.time()
-    array = riemman_test(clf, np.asarray([data[epoch_number]]))
+    array = CSP_LDA_test(clf, np.asarray([data[epoch_number]]))
     end = time.time()
     print("One epoch, testing time: ", end - start)
     print(target_names)
-    print("Probability: " , array[epoch_number]) # We select the last one, the last epoch which is the current one.
-    print("Real: ", y[epoch_number])
+    print("Probability: " , array)
+    print("Real: ", labels[epoch_number])

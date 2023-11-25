@@ -28,6 +28,7 @@
       <sourceFolder url="file://$MODULE_DIR$/Datasets/aguilera_traditional_dataset" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Code/DiffE" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Code/Random" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Code/AugmentBrain" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/env_voting_system_platform" />
       <excludeFolder url="file://$MODULE_DIR$/Results" />
     </content>

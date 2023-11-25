@@ -13,10 +13,7 @@ from share import datasets_basic_infos
 from data_loaders import load_data_labels_based_on_dataset
 import time
 
-# Note: Riemmann can only test with a minimum of 2 epochs, so you have to give the current epoch and the last too.
-# TODO: Verify that this works in real time
-
-def riemman_train(data, labels):
+def xdawn_riemman_train(data, labels, target_names):
     n_components = 2  # pick some components
 
     # Define a monte-carlo cross-validation generator (reduce variance):
@@ -39,7 +36,7 @@ def riemman_train(data, labels):
     print(report)
     return clf
 
-def riemman_test(clf, epoch):
+def xdawn_riemman_test(clf, epoch):
     """
     This is what the real-time BCI will call.
     Parameters
@@ -61,7 +58,7 @@ def riemman_test(clf, epoch):
 if __name__ == '__main__':
     # Manual Inputs
     subject_id = 3  # Only two things I should be able to change
-    dataset_name = 'aguilera'  # Only two things I should be able to change
+    dataset_name = 'aguilera_traditional'  # Only two things I should be able to change
     array_format = True
 
     # Folders and paths
@@ -76,16 +73,16 @@ if __name__ == '__main__':
 
     print("******************************** Training ********************************")
     start = time.time()
-    clf = riemman_train(data, y)
+    clf = xdawn_riemman_train(data, y, target_names)
     end = time.time()
     print("Training time: ", end - start)
 
     print("******************************** Test ********************************")
-    epoch_number = [0, 1]
+    epoch_number = 0
     start = time.time()
-    array = riemman_test(clf, data[epoch_number])
+    array = xdawn_riemman_test(clf, np.asarray([data[epoch_number]]))
     end = time.time()
     print("One epoch, testing time: ", end - start)
     print(target_names)
-    print("Probability: " , array[1]) # We select the last one, the last epoch which is the current one.
-    print("Real: ", y[1])
+    print("Probability: " , array[0]) # We select the last one, the last epoch which is the current one.
+    print("Real: ", y[0])

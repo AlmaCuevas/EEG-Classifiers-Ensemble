@@ -13,7 +13,7 @@ from data_loaders import load_data_labels_based_on_dataset
 import time
 import pickle
 
-def xdawn_train(epochs, labels):
+def xdawn_train(epochs, labels, target_names):
     n_filter = 5
     # Create classification pipeline
     clf = make_pipeline(
@@ -35,7 +35,6 @@ def xdawn_train(epochs, labels):
     # save the model to disk
     #filename = f'/Users/almacuevas/work_projects/voting_system_platform/Results/xdawn_model_{dataset_name}_sub{subject_id}.sav'
     #pickle.dump(clf, open(filename, 'wb'))
-    target_names = dataset_info['target_names']
     report = classification_report(labels, preds, target_names=target_names)
     print(report)
     return clf
@@ -77,7 +76,7 @@ if __name__ == '__main__':
 
     print("******************************** Training ********************************")
     start = time.time()
-    clf = xdawn_train(epochs, labels)
+    clf = xdawn_train(epochs, labels, target_names)
     end = time.time()
     print("Training time: ", end - start)
 
