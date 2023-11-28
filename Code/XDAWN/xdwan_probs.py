@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import make_pipeline
@@ -13,7 +12,7 @@ from data_loaders import load_data_labels_based_on_dataset
 import time
 import pickle
 
-def xdawn_train(epochs, labels, target_names):
+def xdawn_train(epochs, labels, target_names): # It has to be Epochs or Xdawn won't run
     n_filter = 5
     # Create classification pipeline
     clf = make_pipeline(
@@ -37,7 +36,11 @@ def xdawn_train(epochs, labels, target_names):
     #pickle.dump(clf, open(filename, 'wb'))
     report = classification_report(labels, preds, target_names=target_names)
     print(report)
-    return clf
+    acc = np.mean(preds == labels)
+    print(acc)
+    if acc <= 0.25:
+        acc = np.nan
+    return clf, acc
 
 def xdawn_test(clf, epoch):
     """
@@ -76,7 +79,7 @@ if __name__ == '__main__':
 
     print("******************************** Training ********************************")
     start = time.time()
-    clf = xdawn_train(epochs, labels, target_names)
+    clf, acc = xdawn_train(epochs, labels, target_names)
     end = time.time()
     print("Training time: ", end - start)
 

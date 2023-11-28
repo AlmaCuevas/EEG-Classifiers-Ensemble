@@ -103,8 +103,8 @@ def ccspnet_test(model, epoch, best_model_state):
 
 if __name__ == '__main__':
     # Manual Inputs
-    subject_id = 10  # Only two things I should be able to change
-    dataset_name = 'aguilera_traditional'  # Only two things I should be able to change
+    subject_id = 1  # Only two things I should be able to change
+    dataset_name = 'aguilera_gamified'  # Only two things I should be able to change
     array_format = True
 
     # Folders and paths
@@ -119,16 +119,16 @@ if __name__ == '__main__':
 
     print("******************************** Training ********************************")
     start = time.time()
-    model, best_model_state = ccspnet_train(data, labels, dataset_info, true_label=0)
+    model, best_model_state = ccspnet_train(data, labels, dataset_info, true_label=2)
     end = time.time()
     print("Training time: ", end - start)
 
     print("******************************** Test ********************************")
-    epoch_number = 0
-    start = time.time()
-    answer = ccspnet_test(model, np.asarray([data[epoch_number]]), best_model_state)
-    end = time.time()
-    print("One epoch, testing time: ", end - start)
-    print(target_names)
-    print("Answer: " , answer)
-    print("Real: ", labels[epoch_number])
+    for epoch_number in range(0, dataset_info['total_trials']):
+        start = time.time()
+        answer = ccspnet_test(model, np.asarray([data[epoch_number]]), best_model_state)
+        end = time.time()
+        print("One epoch, testing time: ", end - start)
+        print(target_names)
+        print("Answer: " , answer)
+        print("Real: ", labels[epoch_number])

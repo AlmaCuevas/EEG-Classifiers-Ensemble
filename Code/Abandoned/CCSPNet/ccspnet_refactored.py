@@ -72,7 +72,7 @@ class EEG_MI_dataset(Dataset):
         # Folders and paths
         dataset_foldername = dataset_name + '_dataset'
         # computer_root_path = "/Users/rosit/Documents/MCC/voting_system_platform/Datasets/"  # OMEN
-        computer_root_path = "/Users/almacuevas/work_projects/voting_system_platform/Datasets/"  # MAC
+        computer_root_path = "//"  # MAC
         data_path = computer_root_path + dataset_foldername
 
         data, label = load_data_labels_based_on_dataset(dataset_name, subject, data_path, array_format=array_format)

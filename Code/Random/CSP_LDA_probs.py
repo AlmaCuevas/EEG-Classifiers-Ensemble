@@ -1,6 +1,6 @@
 import numpy as np
 
-from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import classification_report
 from share import datasets_basic_infos
 from data_loaders import load_data_labels_based_on_dataset
@@ -9,7 +9,6 @@ import pickle
 from sklearn.pipeline import Pipeline
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from mne.decoding import CSP
-from sklearn.model_selection import KFold
 
 def CSP_LDA_train(data, labels, target_names):
     # Create classification pipeline
@@ -20,15 +19,19 @@ def CSP_LDA_train(data, labels, target_names):
     clf = Pipeline([("CSP", csp), ("LDA", lda)])
 
     preds = np.zeros(len(labels))
-    cv = KFold(n_splits=10, shuffle=True, random_state=42)
-    for train_idx, test_idx in cv.split(data):
+    cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
+    for train_idx, test_idx in cv.split(data, labels):
         y_train, y_test = labels[train_idx], labels[test_idx]
 
-        clf.fit(data[train_idx], y_train)
+        clf.fit(data[train_idx], y_train) # Does this means that everytime that I fit it, it forget the previous? so when I save the clf, I only save the last one?
         preds[test_idx] = clf.predict(data[test_idx])
     report = classification_report(labels, preds, target_names=target_names)
     print(report)
-    return clf
+    acc = np.mean(preds == labels)
+    print(acc)
+    if acc <= 0.25:
+        acc = np.nan
+    return clf, acc
 
 def CSP_LDA_test(clf, epoch):
     """
@@ -67,7 +70,7 @@ if __name__ == '__main__':
 
     print("******************************** Training ********************************")
     start = time.time()
-    clf = CSP_LDA_train(data, labels, target_names)
+    clf, acc = CSP_LDA_train(data, labels, target_names)
     end = time.time()
     print("Training time: ", end - start)
 

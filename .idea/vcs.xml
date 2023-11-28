@@ -9,5 +9,7 @@
     <mapping directory="$PROJECT_DIR$/Code/Inner_Speech_Dataset" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Code/TCACNet" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Code/arl-eegmodels" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/Code/eeglib" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/eeglib" vcs="Git" />
   </component>
 </project>

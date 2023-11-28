@@ -4,7 +4,7 @@ from pyriemann.estimation import XdawnCovariances
 from pyriemann.tangentspace import TangentSpace
 
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import KFold
+from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from sklearn.pipeline import make_pipeline
 
@@ -30,7 +30,7 @@ for subject_id in range(1, dataset_info['subjects'] + 1):
     n_components = 2  # pick some components
 
     # Define a monte-carlo cross-validation generator (reduce variance):
-    cv = KFold(n_splits=10, shuffle=True, random_state=42)
+    cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
     epochs_data = epochs.get_data()
 
     clf = make_pipeline(

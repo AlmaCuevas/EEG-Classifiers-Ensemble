@@ -12,18 +12,31 @@ def aguilera_dataset_loader(data_path: str, gamified: bool):
     # '1':'FP1', '2':'FP2', '3':'F3', '4':'F4', '5':'C3', '6':'C4', '7':'P3', '8':'P4', '9':'O1', '10':'O2', '11':'F7', '12':'F8', '13':'T7', '14':'T8', '15':'P7', '16':'P8', '17':'Fz', '18':'Cz', '19':'Pz', '20':'M1', '21':'M2', '22':'AFz', '23':'CPz', '24':POz
     # include=['Channel 3', 'Channel 4', 'Channel 5', 'Channel 6', 'Channel 7', 'Channel 8', 'Channel 11', 'Channel 12', 'Channel 13', 'Channel 14', 'Channel 15', 'Channel 16', 'Channel 17', 'Channel 18', 'Channel 19', 'Channel 23'] #this is the left and important middle
     raw = io.read_raw_edf(data_path, preload=True, verbose=40, exclude=['Gyro 1', 'Gyro 2', 'Gyro 3'])
-    #raw = raw.copy().set_eeg_reference(ref_channels="average") # If I do this it, the XDAWN doesn't run.
+    #raw.set_eeg_reference(ref_channels="average") # If I do this it, the XDAWN doesn't run.
+    #raw.filter(l_freq=1, h_freq=None)
+    #bad_annot = mne.Annotations()
+    #raw.set_annotations(bad)
+    # reject_by_annotation=True,
 
     events, event_id = events_from_annotations(raw)
-    if gamified:
-        pass # There are lots of events. Find what they are.
+    extra_label=False
+    if gamified: # We are removing the Speaking events
+        if 'OVTK_StimulationId_EndOfFile' in event_id:
+            event_id.pop('OVTK_StimulationId_EndOfFile')
+            extra_label = True
+        event_id.pop('OVTK_StimulationId_Number_05') # Spoke Avanzar
+        event_id.pop('OVTK_StimulationId_Number_06') # Spoke Derecha
+        event_id.pop('OVTK_StimulationId_Number_07') # Spoke Izquierda
+        event_id.pop('OVTK_StimulationId_Number_08') # Spoke Retroceder
     else:
         event_id.pop('OVTK_StimulationId_Label_05') # This is not a command
-    events = events[3:] # From the one that is not a command
+        events = events[3:] # From the one that is not a command
 
     # Read epochs
-    epochs = Epochs(raw, events, event_id, preload=True, tmin=0, tmax=1.4, baseline=None) # Better results when there is no baseline
+    epochs = Epochs(raw, events, event_id, preload=True, tmin=0, tmax=1.4, baseline=None) # Better results when there is no baseline for traditional
     label = epochs.events[:, -1]
+    if extra_label:
+        label = label - 1
     label = label -1 # So it goes from 0 to 3
     return epochs, label
 
@@ -190,7 +203,7 @@ def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_p
 
 if __name__ == '__main__':
     # Manual Inputs
-    subject_id = 1  # Only two things I should be able to change
+    subject_id = 7  # Only two things I should be able to change
     dataset_name = 'aguilera_gamified'  # Only two things I should be able to change
     array_format = True
 

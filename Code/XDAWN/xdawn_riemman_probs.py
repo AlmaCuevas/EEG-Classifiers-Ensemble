@@ -4,11 +4,10 @@ from pyriemann.estimation import XdawnCovariances
 from pyriemann.tangentspace import TangentSpace
 
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import KFold
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, classification_report
+from sklearn.metrics import classification_report
+from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import make_pipeline
 
-from matplotlib import pyplot as plt
 from share import datasets_basic_infos
 from data_loaders import load_data_labels_based_on_dataset
 import time
@@ -17,7 +16,7 @@ def xdawn_riemman_train(data, labels, target_names):
     n_components = 2  # pick some components
 
     # Define a monte-carlo cross-validation generator (reduce variance):
-    cv = KFold(n_splits=10, shuffle=True, random_state=42)
+    cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
 
     clf = make_pipeline(
         XdawnCovariances(n_components),
@@ -27,14 +26,18 @@ def xdawn_riemman_train(data, labels, target_names):
 
     preds = np.zeros(len(labels))
 
-    for train_idx, test_idx in cv.split(data):
+    for train_idx, test_idx in cv.split(data, labels):
         y_train, y_test = labels[train_idx], labels[test_idx]
 
         clf.fit(data[train_idx], y_train)
         preds[test_idx] = clf.predict(data[test_idx])
     report = classification_report(labels, preds, target_names=target_names)
     print(report)
-    return clf
+    acc = np.mean(preds == labels)
+    print(acc)
+    if acc <= 0.25:
+        acc = np.nan
+    return clf, acc
 
 def xdawn_riemman_test(clf, epoch):
     """
@@ -73,7 +76,7 @@ if __name__ == '__main__':
 
     print("******************************** Training ********************************")
     start = time.time()
-    clf = xdawn_riemman_train(data, y, target_names)
+    clf, acc = xdawn_riemman_train(data, y, target_names)
     end = time.time()
     print("Training time: ", end - start)
 

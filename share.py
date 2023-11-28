@@ -13,7 +13,7 @@ aguilera_traditional_info = {'#_class': 4, # avanzar, retroceder, derecha and iz
 
 # Edgar Aguilera Gamified
 aguilera_gamified_info = {'#_class': 4, # avanzar, retroceder, derecha and izquierda
-'target_names': ["Avanzar", "Retroceder", "Derecha", "Izquierda"],
+'target_names': ["Avanzar", "Derecha", "Izquierda", "Retroceder"], # Avanzar:1, Derecha:2, Izquierda:3, Retroceder: 4
 '#_channels': 24,
 'samples': 701, # sample_rate * duration in seconds = 500*1.4=700
 'sample_rate': 500,

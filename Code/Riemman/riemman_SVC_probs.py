@@ -6,7 +6,7 @@ from sklearn.metrics import classification_report
 
 from sklearn.pipeline import make_pipeline
 from sklearn.svm import SVC
-from sklearn.model_selection import cross_val_score, StratifiedKFold
+from sklearn.model_selection import StratifiedKFold
 from share import datasets_basic_infos
 from data_loaders import load_data_labels_based_on_dataset
 import time
@@ -28,7 +28,11 @@ def riemman_train(data, labels, target_names):
 
     report = classification_report(labels, preds, target_names=target_names)
     print(report)
-    return clf
+    acc = np.mean(preds == labels)
+    print(acc)
+    if acc <= 0.25:
+        acc = np.nan
+    return clf, acc
 
 def riemman_test(clf, epoch):
     """
@@ -67,7 +71,7 @@ if __name__ == '__main__':
 
     print("******************************** Training ********************************")
     start = time.time()
-    clf = riemman_train(data, y, dataset_info, target_names)
+    clf, acc = riemman_train(data, y, dataset_info, target_names)
     end = time.time()
     print("Training time: ", end - start)
 

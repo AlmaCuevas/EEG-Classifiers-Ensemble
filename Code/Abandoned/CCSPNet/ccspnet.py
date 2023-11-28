@@ -73,8 +73,8 @@ class EEG_dataset(Dataset):
     def __init__(self, data, label_original, true_label=1):
         data = np.asarray([data])
         data = np.transpose(data, (1, 0, 2, 3))
-        label = label_original.copy()
-        for i, label_i in enumerate(label): #TODO: Fix this to work with the categorical generalized labels
+        label = copy.deepcopy(label_original)
+        for i, label_i in enumerate(label_original): #TODO: Fix this to work with the categorical generalized labels
             if label_i == true_label:
                 label[i] = 1
             else:
