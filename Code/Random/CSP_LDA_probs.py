@@ -9,6 +9,9 @@ import pickle
 from sklearn.pipeline import Pipeline
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from mne.decoding import CSP
+from pathlib import Path
+
+ROOT_VOTING_SYSTEM_PATH: Path = Path(__file__).parent.parent.resolve()
 
 def CSP_LDA_train(data, labels, target_names):
     # Create classification pipeline
@@ -32,6 +35,7 @@ def CSP_LDA_train(data, labels, target_names):
     if acc <= 0.25:
         acc = np.nan
     return clf, acc
+
 
 def CSP_LDA_test(clf, epoch):
     """
@@ -60,12 +64,11 @@ if __name__ == '__main__':
 
     # Folders and paths
     dataset_foldername = dataset_name + '_dataset'
-    # computer_root_path = "/Users/rosit/Documents/MCC/voting_system_platform/Datasets/"  # OMEN
-    computer_root_path = "/Users/almacuevas/work_projects/voting_system_platform/Datasets/"  # MAC
+    computer_root_path = str(ROOT_VOTING_SYSTEM_PATH) + "/Datasets/"
     data_path = computer_root_path + dataset_foldername
     dataset_info = datasets_basic_infos[dataset_name]
 
-    data, labels = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path, array_format=array_format)
+    data, labels = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
     target_names = dataset_info['target_names']
 
     print("******************************** Training ********************************")

@@ -72,10 +72,10 @@ class EEG_MI_dataset(Dataset):
         # Folders and paths
         dataset_foldername = dataset_name + '_dataset'
         # computer_root_path = "/Users/rosit/Documents/MCC/voting_system_platform/Datasets/"  # OMEN
-        computer_root_path = "//"  # MAC
+        computer_root_path = "/Users/almacuevas/work_projects/voting_system_platform/Datasets/"  # MAC
         data_path = computer_root_path + dataset_foldername
 
-        data, label = load_data_labels_based_on_dataset(dataset_name, subject, data_path, array_format=array_format)
+        data, label = load_data_labels_based_on_dataset(dataset_name, subject, data_path)
         data = np.asarray([data])
         data = np.transpose(data, (1, 0, 2, 3))
         label_copy = label.copy()
@@ -765,7 +765,7 @@ if __name__ == '__main__':
     manual_seed(2045)
 
 
-    dataset_name = 'aguilera'  # Only two things I should be able to change
+    dataset_name = 'aguilera_gamified'  # Only two things I should be able to change
     dataset_info = datasets_basic_infos[dataset_name]
     for i in range(1,dataset_info['subjects']):
         subject = i

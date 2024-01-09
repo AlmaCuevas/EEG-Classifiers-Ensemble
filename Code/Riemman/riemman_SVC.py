@@ -23,7 +23,7 @@ if __name__ == '__main__':
     sum_acc = []
     for subject_id in range(1, dataset_info['subjects']+1):
         # load your data
-        X, y = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path, array_format=True)
+        X, y = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
 
         # build your pipeline
         covest = Covariances()

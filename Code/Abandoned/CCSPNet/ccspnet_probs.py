@@ -103,7 +103,7 @@ def ccspnet_test(model, epoch, best_model_state):
 
 if __name__ == '__main__':
     # Manual Inputs
-    subject_id = 1  # Only two things I should be able to change
+    subject_id = 2  # Only two things I should be able to change
     dataset_name = 'aguilera_gamified'  # Only two things I should be able to change
     array_format = True
 
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     data_path = computer_root_path + dataset_foldername
     dataset_info = datasets_basic_infos[dataset_name]
 
-    data, labels = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path, array_format=array_format)
+    data, labels = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
     target_names = dataset_info['target_names']
 
     print("******************************** Training ********************************")
@@ -130,5 +130,5 @@ if __name__ == '__main__':
         end = time.time()
         print("One epoch, testing time: ", end - start)
         print(target_names)
-        print("Answer: " , answer)
+        print("Answer: ", answer)
         print("Real: ", labels[epoch_number])

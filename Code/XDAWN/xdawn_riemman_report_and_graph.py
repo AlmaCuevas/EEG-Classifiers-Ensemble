@@ -26,7 +26,7 @@ data_path = computer_root_path + dataset_foldername
 dataset_info = datasets_basic_infos[dataset_name]
 sum_accu = []
 for subject_id in range(1, dataset_info['subjects'] + 1):
-    epochs, labels = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path, array_format=False)
+    epochs, labels = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
     n_components = 2  # pick some components
 
     # Define a monte-carlo cross-validation generator (reduce variance):

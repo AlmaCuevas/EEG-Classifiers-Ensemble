@@ -2,22 +2,58 @@ import numpy as np
 import mne
 from scipy.io import loadmat
 import os
-from Code.data_preprocess import mne_apply, bandpass_cnt
 from share import datasets_basic_infos
 from Code.Inner_Speech_Dataset.Python_Processing.Data_extractions import Extract_data_from_subject
 from Code.Inner_Speech_Dataset.Python_Processing.Data_processing import Select_time_window, Transform_for_classificator
 from mne import io, Epochs, events_from_annotations, EpochsArray
-#todo:you have to observe the events of the gamified, they have to match 0,1,2,3 in the right order
+from mne.preprocessing import ICA, create_eog_epochs
+from autoreject import AutoReject
+from pathlib import Path
+
+ROOT_VOTING_SYSTEM_PATH: Path = Path(__file__).parent.parent.resolve()
+
 def aguilera_dataset_loader(data_path: str, gamified: bool):
-    # '1':'FP1', '2':'FP2', '3':'F3', '4':'F4', '5':'C3', '6':'C4', '7':'P3', '8':'P4', '9':'O1', '10':'O2', '11':'F7', '12':'F8', '13':'T7', '14':'T8', '15':'P7', '16':'P8', '17':'Fz', '18':'Cz', '19':'Pz', '20':'M1', '21':'M2', '22':'AFz', '23':'CPz', '24':POz
+    # '1':'FP1', '2':'FP2', '3':'F3', '4':'F4', '5':'C3', '6':'C4', '7':'P3', '8':'P4', '9':'O1', '10':'O2', '11':'F7', '12':'F8', '13':'T7', '14':'T8', '15':'P7', '16':'P8', '17':'Fz', '18':'Cz', '19':'Pz', '20':'M1', '21':'M2', '22':'AFz', '23':'CPz', '24':'POz'
     # include=['Channel 3', 'Channel 4', 'Channel 5', 'Channel 6', 'Channel 7', 'Channel 8', 'Channel 11', 'Channel 12', 'Channel 13', 'Channel 14', 'Channel 15', 'Channel 16', 'Channel 17', 'Channel 18', 'Channel 19', 'Channel 23'] #this is the left and important middle
     raw = io.read_raw_edf(data_path, preload=True, verbose=40, exclude=['Gyro 1', 'Gyro 2', 'Gyro 3'])
-    #raw.set_eeg_reference(ref_channels="average") # If I do this it, the XDAWN doesn't run.
-    #raw.filter(l_freq=1, h_freq=None)
+    #1, 3, 8, 10, 11, 13, 15, 18, 21, 23
+    # include=['FP1', 'F3', 'P4', 'O2', 'F7', 'T7', 'P7', 'Cz', 'M2', 'CPz'] # electrodes that I think have an ERP
+    if gamified:
+        try:
+            raw.rename_channels({'Fp1':'FP1', 'Fp2':'FP2'}) # do it for traditional too, that doesn't include the names
+        except:
+            pass
+    else:
+        raw.rename_channels({'Channel 1':'FP1', 'Channel 2':'FP2', 'Channel 3':'F3', 'Channel 4':'F4', 'Channel 5':'C3', 'Channel 6':'C4', 'Channel 7':'P3', 'Channel 8':'P4', 'Channel 9':'O1', 'Channel 10':'O2', 'Channel 11':'F7', 'Channel 12':'F8', 'Channel 13':'T7', 'Channel 14':'T8', 'Channel 15':'P7', 'Channel 16':'P8', 'Channel 17':'Fz', 'Channel 18':'Cz', 'Channel 19':'Pz', 'Channel 20':'M1', 'Channel 21':'M2', 'Channel 22':'AFz', 'Channel 23':'CPz', 'Channel 24':'POz'})
+    channel_location = str(ROOT_VOTING_SYSTEM_PATH) + "/mBrain_24ch_locations.txt"
+    raw.set_montage(mne.channels.read_custom_montage(channel_location))
+    raw.set_eeg_reference(ref_channels=['M1', 'M2']) # If I do this it, the XDAWN doesn't run.
+    raw.filter(l_freq=0.5, h_freq=100)
+    raw.notch_filter(freqs=60)
     #bad_annot = mne.Annotations()
     #raw.set_annotations(bad)
     # reject_by_annotation=True,
+    filt_raw = raw.copy().filter(l_freq=1.0, h_freq=None)
+    #raw.plot(show_scrollbars=False, scalings=dict(eeg=100))
+    ica = ICA(n_components=15, max_iter="auto", random_state=42)
+    ica.fit(filt_raw)
 
+    #ica.plot_sources(raw, show_scrollbars=False)
+    # MUSCLE
+    muscle_idx_auto, scores = ica.find_bads_muscle(raw, threshold=0.7)
+    #ica.plot_scores(scores, exclude=muscle_idx_auto)
+    # EOG
+    eog_evoked = create_eog_epochs(raw, ch_name=['FP1', 'FP2']).average()
+    eog_evoked.apply_baseline(baseline=(None, -0.2))
+    #eog_evoked.plot_joint()
+    eog_indices, eog_scores = ica.find_bads_eog(raw, ch_name='FP1', threshold=0.15)
+
+    #ica.plot_scores(eog_scores)
+    muscle_idx_auto.extend(eog_indices)
+    ica.exclude = list(set(muscle_idx_auto))
+    ica.apply(raw)
+    #raw.plot(show_scrollbars=False, scalings=dict(eeg=20))
+    ar = AutoReject()
     events, event_id = events_from_annotations(raw)
     extra_label=False
     if gamified: # We are removing the Speaking events
@@ -33,12 +69,14 @@ def aguilera_dataset_loader(data_path: str, gamified: bool):
         events = events[3:] # From the one that is not a command
 
     # Read epochs
-    epochs = Epochs(raw, events, event_id, preload=True, tmin=0, tmax=1.4, baseline=None) # Better results when there is no baseline for traditional
-    label = epochs.events[:, -1]
+    epochs = Epochs(raw, events, event_id, preload=True, tmin=0, tmax=1.4, baseline=(None, None))#, detrend=1)#, decim=2) # Better results when there is no baseline for traditional. Decim is for lowering the sample rate
+    epochs_clean = ar.fit_transform(epochs)
+    #epochs.average().plot()
+    label = epochs_clean.events[:, -1]
     if extra_label:
         label = label - 1
     label = label -1 # So it goes from 0 to 3
-    return epochs, label
+    return epochs_clean, label
 
 def nieto_dataset_loader(root_dir: str, N_S: int):
     ### Hyperparameters
@@ -162,7 +200,7 @@ def coretto_dataset_loader(filepath: str):
     event_dict = {"Arriba": 0, "Abajo": 1, "Derecha": 2, "Izquierda": 3}
     return x, y, event_dict
 
-def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_path: str, transpose: bool = False, array_format: bool = True):
+def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_path: str, transpose: bool = False):
     if dataset_name not in ['aguilera_traditional', 'aguilera_gamified', 'nieto', 'coretto', 'torres']:
         raise Exception(
             f"Not supported dataset named '{dataset_name}', choose from the following: aguilera_traditional, aguilera_gamified, nieto, coretto or torres.")
@@ -171,11 +209,10 @@ def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_p
         filename = F"S{subject_id}.edf"
         filepath = os.path.join(data_path, filename)
         if 'gamified' in dataset_name:
-            data, label = aguilera_dataset_loader(filepath, True) # The output is epochs
+            epochs, label = aguilera_dataset_loader(filepath, True)
         else:
-            data, label = aguilera_dataset_loader(filepath, False)  # The output is epochs
-        if array_format:
-            data = data.get_data()
+            epochs, label = aguilera_dataset_loader(filepath, False)
+        data = epochs.get_data()
     elif dataset_name == 'nieto':
         data, label, event_dict = nieto_dataset_loader(data_path, subject_id)
     elif dataset_name == 'coretto':
@@ -188,39 +225,34 @@ def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_p
         filename = "IndividuosS1-S7(17columnas)-Epocas.mat"
         filepath = os.path.join(data_path, filename)
         data, label, event_dict = torres_dataset_loader(filepath, subject_id)
-    if transpose:
-        data = np.transpose(data, (0, 2, 1))
-    if not array_format and 'aguilera' not in dataset_name:
+    if 'aguilera' not in dataset_name:
         events = np.column_stack((
             np.arange(0, dataset_info['sample_rate'] * data.shape[0], dataset_info['sample_rate']),
             np.zeros(len(label), dtype=int),
             np.array(label),
         ))
-        data = EpochsArray(data, info=mne.create_info(dataset_info['#_channels'],
+        epochs = EpochsArray(data, info=mne.create_info(dataset_info['#_channels'],
                                                         sfreq=dataset_info['sample_rate'], ch_types='eeg'), events=events,
                              event_id=event_dict)
-    return data, label
+    if transpose:
+        data = np.transpose(data, (0, 2, 1))
+    return epochs, data, label
 
 if __name__ == '__main__':
     # Manual Inputs
-    subject_id = 7  # Only two things I should be able to change
-    dataset_name = 'aguilera_gamified'  # Only two things I should be able to change
-    array_format = True
+    subject_id = 2  # Only two things I should be able to change
+    dataset_name = 'torres'  # Only two things I should be able to change
 
     # Folders and paths
     dataset_foldername = dataset_name + '_dataset'
-    #computer_root_path = "/Users/rosit/Documents/MCC/voting_system_platform/Datasets/"  # OMEN
-    computer_root_path = "/Users/almacuevas/work_projects/voting_system_platform/Datasets/" # MAC
+    computer_root_path = str(ROOT_VOTING_SYSTEM_PATH) + "/Datasets/"
     data_path = computer_root_path + dataset_foldername
 
-    data, label = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path, array_format=array_format)
+    epochs, data, label = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
 
-    if array_format:
-        print(data.shape)
-        print(label.shape)
-    else:
-        print(data)
-    print("Congrats! You were able to load data. You can now use this in a processing method.") #TODO: CHECK GAMIFIED, LABELS ARE WRONG
+    print(data.shape)
+    print(label.shape)
+    print("Congrats! You were able to load data. You can now use this in a processing method.")
 
 
 
