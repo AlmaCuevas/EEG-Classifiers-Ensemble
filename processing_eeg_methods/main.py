@@ -1,5 +1,9 @@
-from models import *
-from utils import *
+from pathlib import Path
+
+from diffE_models import *
+from share import datasets_basic_infos
+from data_loaders import load_data_labels_based_on_dataset
+from diffE_utils import *
 
 import random
 import argparse
@@ -17,6 +21,8 @@ from sklearn.metrics import (
     recall_score,
     top_k_accuracy_score,
 )
+
+ROOT_VOTING_SYSTEM_PATH: Path = Path(__file__).parent.parent.resolve()
 
 # Evaluate function
 def evaluate(encoder, fc, generator, device):
@@ -55,9 +61,8 @@ def evaluate(encoder, fc, generator, device):
 
 
 def train(args):
-    subject = args.subject
-    device = args.device
-    device = torch.device(device)
+    subject_id = args.subject_id
+    device = torch.device(args.device)
     batch_size = 32
     batch_size2 = 260
     seed = 42
@@ -65,36 +70,36 @@ def train(args):
     torch.manual_seed(seed)
     print("Random Seed: ", seed)
 
-    # EEG data path
-    root_dir = "Path-to-the-data"
-    # Write performance metrics to file
-    # output_dir = "performance-metric-path"
-    # output_file = f"{output_dir}/{subject}.txt"
+    dataset_name = "aguilera_gamified"  # Only two things I should be able to change
 
-    # Load data
-    X, Y = load_data(root_dir=root_dir, subject=subject, session=1)
+    # Folders and paths
+    dataset_foldername = dataset_name + "_dataset"
+    computer_root_path = str(ROOT_VOTING_SYSTEM_PATH) + "/Datasets/"
+    data_path = computer_root_path + dataset_foldername
+    print(data_path)
+    dataset_info = datasets_basic_infos[dataset_name]
+
+    epochs, X, Y = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
+
     # Dataloader
     train_loader, test_loader = get_dataloader(
         X, Y, batch_size, batch_size2, seed, shuffle=True
     )
 
     # Define model
-    num_classes = 13
+    num_classes = dataset_info['#_class']
     channels = X.shape[1]
 
     n_T = 1000
     ddpm_dim = 128
     encoder_dim = 256
     fc_dim = 512
+    num_groups = 8
 
-    ddpm_model = ConditionalUNet(in_channels=channels, n_feat=ddpm_dim).to(device)
-    ddpm = DDPM(nn_model=ddpm_model, betas=(1e-6, 1e-2), n_T=n_T, device=device).to(
-        device
-    )
-    encoder = Encoder(in_channels=channels, dim=encoder_dim).to(device)
-    decoder = Decoder(
-        in_channels=channels, n_feat=ddpm_dim, encoder_dim=encoder_dim
-    ).to(device)
+    ddpm_model = ConditionalUNet(in_channels=channels, n_feat=ddpm_dim, num_groups=num_groups).to(device)
+    ddpm = DDPM(nn_model=ddpm_model, betas=(1e-6, 1e-2), n_T=n_T, device=device).to(device)
+    encoder = Encoder(in_channels=channels, dim=encoder_dim, num_groups=num_groups).to(device)
+    decoder = Decoder(in_channels=channels, n_feat=ddpm_dim, encoder_dim=encoder_dim, num_groups=num_groups).to(device)
     fc = LinearClassifier(encoder_dim, fc_dim, emb_dim=num_classes).to(device)
     diffe = DiffE(encoder, decoder, fc).to(device)
 
@@ -135,7 +140,7 @@ def train(args):
         gamma=0.9998,
     )
     # Train & Evaluate
-    num_epochs = 500
+    num_epochs = dataset_info['total_trials']
     test_period = 1
     start_test = test_period
     alpha = 0.1
@@ -147,7 +152,7 @@ def train(args):
     best_auc = 0
 
     with tqdm(
-        total=num_epochs, desc=f"Method ALL - Processing subject {subject}"
+        total=num_epochs, desc=f"Method ALL - Processing subject_id {subject_id}"
     ) as pbar:
         for epoch in range(num_epochs):
             ddpm.train()
@@ -156,11 +161,13 @@ def train(args):
             ############################## Train ###########################################
             for x, y in train_loader:
                 x, y = x.to(device), y.type(torch.LongTensor).to(device)
-                y_cat = F.one_hot(y, num_classes=13).type(torch.FloatTensor).to(device)
+                y_cat = F.one_hot(y, num_classes=num_classes).type(torch.FloatTensor).to(device)
                 # Train DDPM
                 optim1.zero_grad()
+                print('got here before ddpm')
                 x_hat, down, up, noise, t = ddpm(x)
 
+                print('got here after ddpm')
                 loss_ddpm = F.l1_loss(x_hat, x, reduction="none")
                 loss_ddpm.mean().backward()
                 optim1.step()
@@ -207,7 +214,7 @@ def train(args):
 
                     if best_acc_bool:
                         best_acc = acc
-                        # torch.save(diffe.state_dict(), f'./models/diffe_{subject}.pt')
+                        # torch.save(diffe.state_dict(), f'./models/diffe_{subject_id}.pt')
                     if best_f1_bool:
                         best_f1 = f1
                     if best_recall_bool:
@@ -217,7 +224,7 @@ def train(args):
                     if best_auc_bool:
                         best_auc = auc
 
-                    # print("Subject: {0}".format(subject))
+                    # print("Subject: {0}".format(subject_id))
                     # # print("ddpm test loss: {0:.4f}".format(t_test_loss_ddpm/len(test_generator)))
                     # # print("encoder test loss: {0:.4f}".format(t_test_loss_ed/len(test_generator)))
                     # print("accuracy:  {0:.2f}%".format(acc*100), "best: {0:.2f}%".format(best_acc*100))
@@ -225,14 +232,14 @@ def train(args):
                     # print("recall:    {0:.2f}%".format(recall*100), "best: {0:.2f}%".format(best_recall*100))
                     # print("precision: {0:.2f}%".format(precision*100), "best: {0:.2f}%".format(best_precision*100))
                     # print("auc:       {0:.2f}%".format(auc*100), "best: {0:.2f}%".format(best_auc*100))
-                    # writer.add_scalar(f"EEGNet/Accuracy/subject_{subject}", acc*100, epoch)
-                    # writer.add_scalar(f"EEGNet/F1-score/subject_{subject}", f1*100, epoch)
-                    # writer.add_scalar(f"EEGNet/Recall/subject_{subject}", recall*100, epoch)
-                    # writer.add_scalar(f"EEGNet/Precision/subject_{subject}", precision*100, epoch)
-                    # writer.add_scalar(f"EEGNet/AUC/subject_{subject}", auc*100, epoch)
+                    # writer.add_scalar(f"EEGNet/Accuracy/subject_{subject_id}", acc*100, epoch)
+                    # writer.add_scalar(f"EEGNet/F1-score/subject_{subject_id}", f1*100, epoch)
+                    # writer.add_scalar(f"EEGNet/Recall/subject_{subject_id}", recall*100, epoch)
+                    # writer.add_scalar(f"EEGNet/Precision/subject_{subject_id}", precision*100, epoch)
+                    # writer.add_scalar(f"EEGNet/AUC/subject_{subject_id}", auc*100, epoch)
 
                     # if best_acc_bool or best_f1_bool or best_recall_bool or best_precision_bool or best_auc_bool:
-                    #     performance = {'subject': subject,
+                    #     performance = {'subject_id': subject_id,
                     #                 'epoch': epoch,
                     #                 'accuracy': best_acc*100,
                     #                 'f1_score': best_f1*100,
@@ -241,10 +248,10 @@ def train(args):
                     #                 'auc': best_auc*100
                     #                 }
                     #     with open(output_file, 'a') as f:
-                    #         f.write(f"{performance['subject']}, {performance['epoch']}, {performance['accuracy']}, {performance['f1_score']}, {performance['recall']}, {performance['precision']}, {performance['auc']}\n")
+                    #         f.write(f"{performance['subject_id']}, {performance['epoch']}, {performance['accuracy']}, {performance['f1_score']}, {performance['recall']}, {performance['precision']}, {performance['auc']}\n")
                     description = f"Best accuracy: {best_acc*100:.2f}%"
                     pbar.set_description(
-                        f"Method ALL - Processing subject {subject} - {description}"
+                        f"Method ALL - Processing subject_id {subject_id} - {description}"
                     )
             pbar.update(1)
 
@@ -253,15 +260,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train a machine learning model")
     # Define command-line arguments
     parser.add_argument(
-        "--num_subjects", type=int, default=22, help="number of subjects to process"
+        "--num_subjects", type=int, default=16, help="number of subjects to process"
     )
     parser.add_argument(
         "--device", type=str, default="cuda:0", help="Device to use (default: cuda:0)"
     )
-
+    print(f'CUDA is available? {torch.cuda.is_available()}')
     # Parse command-line arguments
     args = parser.parse_args()
-    for i in range(2, args.num_subjects + 1):
-        subject = i
-        args.subject = subject
+    for i in range(1, args.num_subjects + 1):
+        subject_id = i
+        args.subject_id = subject_id
         train(args)
