@@ -1,9 +1,11 @@
 /Datasets/
-/Code/Abandoned/LMDA_Code/aguilera_dataset/
-/Code/Abandoned/LMDA_Code/BCI4_2A/
-/Code/Abandoned/LMDA_Code/BCICIV_2a_edf/
-/Code/Abandoned/LMDA_Code/BCICIV_2a_gdf/
+/processing_eeg_methods/Abandoned/LMDA_Code/BCI4_2A/
+/processing_eeg_methods/Abandoned/LMDA_Code/BCICIV_2a_edf/
+/processing_eeg_methods/Abandoned/LMDA_Code/BCICIV_2a_gdf/
+/processing_eeg_methods/Abandoned/LMDA_Code/aguilera_gamified_dataset/
+/processing_eeg_methods/Abandoned/LMDA_Code/nieto_dataset/
+/processing_eeg_methods/Abandoned/LMDA_Code/coretto_dataset/
 /Results/
-/Code/trying_stuff.ipynb
-/Code/TCACNet/MIEEG data/
-/Code/TCACNet/MIEEG data.zip
+/processing_eeg_methods/trying_stuff.ipynb
+/processing_eeg_methods/TCACNet/MIEEG data/
+/processing_eeg_methods/TCACNet/MIEEG data.zip
