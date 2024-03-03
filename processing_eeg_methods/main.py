@@ -89,15 +89,16 @@ def train(args):
     # Define model
     num_classes = dataset_info['#_class']
     channels = X.shape[1]
+    print(channels)
 
-    n_T = 1000
+    n_T = 1000 # Steps in the diffusion process, Timesteps for the Betas
     ddpm_dim = 128
     encoder_dim = 256
     fc_dim = 512
     num_groups = 8
 
     ddpm_model = ConditionalUNet(in_channels=channels, n_feat=ddpm_dim, num_groups=num_groups).to(device)
-    ddpm = DDPM(nn_model=ddpm_model, betas=(1e-6, 1e-2), n_T=n_T, device=device).to(device)
+    ddpm = DDPM(nn_model=ddpm_model, betas=(1e-6, 1e-2), n_T=n_T, device=device).to(device) # Betas tell us how much noise we want to add. It starts at 1.e-6 at increases up to 1e-2
     encoder = Encoder(in_channels=channels, dim=encoder_dim, num_groups=num_groups).to(device)
     decoder = Decoder(in_channels=channels, n_feat=ddpm_dim, encoder_dim=encoder_dim, num_groups=num_groups).to(device)
     fc = LinearClassifier(encoder_dim, fc_dim, emb_dim=num_classes).to(device)

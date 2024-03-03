@@ -109,13 +109,11 @@ def group_methods_train(
         )
     if methods["diffE"]:
         print("diffE")
-        print("Not implemented")
+        print("Not implemented yet")
 
     if methods["feature_extraction"]:
         print("feature_extraction")
-        models_outputs["CNN_LSTM_clf"], models_outputs["CNN_LSTM_accuracy"] = CNN_LSTM_train(
-            data, labels
-        )
+        print("Not implemented yet")
 
     return models_outputs
 
@@ -182,7 +180,11 @@ def group_methods_test(methods: dict, models_outputs: dict, data_array, data_epo
         ))
     if methods["diffE"]:
         print("diffE")
-        print("Not implemented")
+        print("Not implemented yet")
+
+    if methods["feature_extraction"]:
+        print("feature_extraction")
+        print("Not implemented yet")
 
     probs_list = [
         np.multiply(
@@ -208,9 +210,9 @@ if __name__ == "__main__":
     # Initialize
     methods = {
         "CSP_LDA": True,
-        "RIEMMAN_SVC": False,
-        "XDAWN_RIEMMAN": False,
-        "XDAWN_LogReg": False,
+        "RIEMMAN_SVC": True,
+        "XDAWN_RIEMMAN": True,
+        "XDAWN_LogReg": True,
         "TCANET_Global_Model": False,
         "TCANET": False, #todo It always gives answer 0. Even when the training is high. why?
         "diffE": False,
