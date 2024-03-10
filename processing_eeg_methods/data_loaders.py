@@ -28,32 +28,32 @@ def aguilera_dataset_loader(data_path: str, gamified: bool):
     channel_location = str(ROOT_VOTING_SYSTEM_PATH) + "/mBrain_24ch_locations.txt"
     raw.set_montage(mne.channels.read_custom_montage(channel_location))
     raw.set_eeg_reference(ref_channels=['M1', 'M2']) # If I do this it, the XDAWN doesn't run.
-    raw.filter(l_freq=7, h_freq=100)
+    raw.filter(l_freq=0.5, h_freq=100)
     raw.notch_filter(freqs=60)
     #bad_annot = mne.Annotations()
     #raw.set_annotations(bad)
     # reject_by_annotation=True,
-    #filt_raw = raw.copy().filter(l_freq=1.0, h_freq=None)
+    filt_raw = raw.copy().filter(l_freq=1.0, h_freq=None)
     #raw.plot(show_scrollbars=False, scalings=dict(eeg=100))
-    #ica = ICA(n_components=15, max_iter="auto", random_state=42)
-    #ica.fit(filt_raw)
+    ica = ICA(n_components=15, max_iter="auto", random_state=42)
+    ica.fit(filt_raw)
 
     #ica.plot_sources(raw, show_scrollbars=False)
     # MUSCLE
-    #muscle_idx_auto, scores = ica.find_bads_muscle(raw, threshold=0.7)
+    muscle_idx_auto, scores = ica.find_bads_muscle(raw, threshold=0.7)
     #ica.plot_scores(scores, exclude=muscle_idx_auto)
     # EOG
     eog_evoked = create_eog_epochs(raw, ch_name=['FP1', 'FP2']).average()
     eog_evoked.apply_baseline(baseline=(None, -0.2))
     #eog_evoked.plot_joint()
-    #eog_indices, eog_scores = ica.find_bads_eog(raw, ch_name='FP1', threshold=0.15)
+    eog_indices, eog_scores = ica.find_bads_eog(raw, ch_name='FP1', threshold=0.15)
 
     #ica.plot_scores(eog_scores)
-    #muscle_idx_auto.extend(eog_indices)
-    #ica.exclude = list(set(muscle_idx_auto))
-    #ica.apply(raw)
+    muscle_idx_auto.extend(eog_indices)
+    ica.exclude = list(set(muscle_idx_auto))
+    ica.apply(raw)
     #raw.plot(show_scrollbars=False, scalings=dict(eeg=20))
-    #ar = AutoReject()
+    ar = AutoReject()
     events, event_id = events_from_annotations(raw)
     extra_label=False
     if gamified: # We are removing the Speaking events
@@ -70,14 +70,14 @@ def aguilera_dataset_loader(data_path: str, gamified: bool):
 
     # Read epochs
     epochs = Epochs(raw, events, event_id, preload=True, tmin=0, tmax=1.4, baseline=(None, None))#, detrend=1)#, decim=2) # Better results when there is no baseline for traditional. Decim is for lowering the sample rate
-    #epochs_clean = ar.fit_transform(epochs)
+    epochs_clean = ar.fit_transform(epochs)
     #epochs.average().plot()
-    label = epochs.events[:, -1]
+    label = epochs_clean.events[:, -1]
     if extra_label:
         label = label - 1
     label = label -1 # So it goes from 0 to 3
     event_dict = {'Avanzar': 0, 'Retroceder': 1, 'Derecha': 2, 'Izquierda': 3}
-    return epochs, label, event_dict
+    return epochs_clean, label, event_dict
 
 def nieto_dataset_loader(root_dir: str, N_S: int):
     ### Hyperparameters
@@ -206,6 +206,10 @@ def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_p
         raise Exception(
             f"Not supported dataset named '{dataset_name}', choose from the following: aguilera_traditional, aguilera_gamified, nieto, coretto or torres.")
     dataset_info = datasets_basic_infos[dataset_name]
+
+    event_dict: dict = {}
+    label: list = []
+
     if 'aguilera' in dataset_name:
         filename = F"S{subject_id}.edf"
         filepath = os.path.join(data_path, filename)
@@ -226,18 +230,18 @@ def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_p
         filename = "IndividuosS1-S7(17columnas)-Epocas.mat"
         filepath = os.path.join(data_path, filename)
         data, label, event_dict = torres_dataset_loader(filepath, subject_id)
-    if True:#'aguilera' not in dataset_name:
+    if 'aguilera' not in dataset_name:
         events = np.column_stack((
             np.arange(0, dataset_info['sample_rate'] * data.shape[0], dataset_info['sample_rate']),
             np.zeros(len(label), dtype=int),
             np.array(label),
         ))
 
-        def optimize_float(series):
-            low_consumption = series.astype('float16')
-            return low_consumption
+        #def optimize_float(series):
+        #    low_consumption = series.astype('float16')
+        #    return low_consumption
 
-        data = optimize_float(data)
+        #data = optimize_float(data)
         epochs = EpochsArray(data, info=mne.create_info(dataset_info['#_channels'],
                                                         sfreq=dataset_info['sample_rate'], ch_types='eeg'), events=events,
                              event_id=event_dict)
@@ -256,11 +260,11 @@ if __name__ == '__main__':
     computer_root_path = str(ROOT_VOTING_SYSTEM_PATH) + "/Datasets/"
     data_path = computer_root_path + dataset_foldername
 
-    epochs, data, label = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
+    epochs, data, labels = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
 
 
     print(data.shape)
-    print(label.shape)
+    print(labels.shape)
     print("Congrats! You were able to load data. You can now use this in a processing method.")
 
 

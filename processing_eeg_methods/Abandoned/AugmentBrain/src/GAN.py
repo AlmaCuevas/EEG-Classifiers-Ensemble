@@ -1,3 +1,6 @@
+# The are 3000 epochs, this didn't work with the tensorflow-gpu==2.4.1 in python 3.8
+# and when using the python 3.10 it asks to save the model, but I couldn't do it, I tried but even if I was able,
+# there are too many epochs and I don't think it will be useful.
 import json
 from datetime import datetime
 from pathlib import Path
@@ -12,7 +15,7 @@ from tensorflow.keras.layers import Conv2D, BatchNormalization, AveragePooling2D
     SpatialDropout2D, SeparableConv2D
 from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Input, DepthwiseConv2D
 from tensorflow.keras.models import Sequential
-from tensorflow.python.keras.layers import Concatenate, Reshape, LeakyReLU, UpSampling2D, Embedding, \
+from tensorflow.keras.layers import Concatenate, Reshape, LeakyReLU, UpSampling2D, Embedding, \
     Multiply, LayerNormalization
 
 from custom_callbacks import GANMonitor
@@ -451,7 +454,7 @@ def fit_WGAN(train_X, train_y, gan_hyperparameters_dict):
         d_loss_fn=wgan_discriminator_loss,
     )
 
-    training_start = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    training_start = datetime.now().strftime("%Y-%m-%d %H_%M_%S")
     model_path: Path = Path(f"../WGAN_{training_start}")
     model_path.mkdir(exist_ok=True, parents=True)
     callbacks_list = get_callback_lists(model_path, latent_dim)

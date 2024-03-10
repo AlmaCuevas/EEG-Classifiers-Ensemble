@@ -7,6 +7,7 @@ from sklearn.metrics import classification_report
 from sklearn.preprocessing import MinMaxScaler
 from mne.preprocessing import Xdawn
 from mne.decoding import Vectorizer
+
 from share import datasets_basic_infos
 from data_loaders import load_data_labels_based_on_dataset
 import time
@@ -14,20 +15,19 @@ import pickle
 
 def xdawn_train(epochs, labels, target_names): # It has to be Epochs or Xdawn won't run
     n_filter = 5
-    # Create classification pipeline
-    clf = make_pipeline(
-        Xdawn(n_components=n_filter),
-        Vectorizer(),
-        MinMaxScaler(),
-        LogisticRegression(penalty="l2", solver="lbfgs", multi_class="auto"),
-    )
 
     # Cross validator
-    cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
+    cv = StratifiedKFold(n_splits=4, shuffle=True, random_state=42)
 
     # Do cross-validation
     preds = np.empty(len(labels))
     for train, test in cv.split(epochs, labels):
+        clf = make_pipeline(
+            Xdawn(n_components=n_filter),
+            Vectorizer(),
+            MinMaxScaler(),
+            LogisticRegression(penalty="l2", solver="lbfgs", multi_class="auto"),
+        )
         clf.fit(epochs[train], labels[train])
         preds[test] = clf.predict(epochs[test])
 
@@ -64,7 +64,7 @@ def xdawn_test(clf, epoch):
 if __name__ == '__main__':
     # Manual Inputs
     subject_id = 1  # Only two things I should be able to change
-    dataset_name = 'aguilera'  # Only two things I should be able to change
+    dataset_name = 'aguilera_traditional'  # Only two things I should be able to change
     array_format = False
 
     # Folders and paths
