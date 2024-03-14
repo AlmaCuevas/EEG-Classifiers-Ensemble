@@ -1,3 +1,6 @@
+import sys
+sys.path.append("D:\\Users\\NewUser\\Documents\\GitHub\\voting_system_platform\\")
+
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
@@ -90,7 +93,7 @@ def get_hjorth(data):
         Complexity_values.append(np.mean(Complexity_trial))
     return values, Complexity_values
 
-def get_XXXX(data):
+# def get_XXXX(data):
     entropy_values = []
     for data_trial in data:
         entropy_trial = []
@@ -103,10 +106,13 @@ def extractions_train(data, labels, target_names):
     # Create classification pipeline
     entropy = get_entropy(data)
     Mobility_values, Complexity_values = get_hjorth(data)
-    XXXX_values = get_XXXX(data)
-    df = pd.DataFrame({"entropy": entropy, "XXXX":XXXX_values, "Complexity":Complexity_values, "Mobility":Mobility_values, "labels": labels})
-    df.to_csv("/Users/almacuevas/work_projects/voting_system_platform/Code/df_extractions.csv")
-    print("Done")
+    #XXXX_values = get_XXXX(data)
+    df = pd.DataFrame({"entropy": entropy, "Complexity":Complexity_values, "Mobility":Mobility_values, "labels": labels})
+    # df.to_csv("/Users/almacuevas/work_projects/voting_system_platform/Code/df_extractions.csv")
+    # df= df.to_numpy()
+    print("Characteristics extraction done")
+    print(df)
+    return df
 
     ## Use scikit-learn Pipeline with cross_val_score function
     #clf = Pipeline([])

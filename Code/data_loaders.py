@@ -2,6 +2,10 @@ import numpy as np
 import mne
 from scipy.io import loadmat
 import os
+from pathlib import Path
+import sys
+sys.path.append("D:\\Users\\NewUser\\Documents\\GitHub\\voting_system_platform\\")
+
 from share import datasets_basic_infos
 from Code.Inner_Speech_Dataset.Python_Processing.Data_extractions import Extract_data_from_subject
 from Code.Inner_Speech_Dataset.Python_Processing.Data_processing import Select_time_window, Transform_for_classificator
@@ -241,7 +245,7 @@ def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_p
 if __name__ == '__main__':
     # Manual Inputs
     subject_id = 2  # Only two things I should be able to change
-    dataset_name = 'torres'  # Only two things I should be able to change
+    dataset_name = 'aguilera_traditional'  # Only two things I should be able to change
 
     # Folders and paths
     dataset_foldername = dataset_name + '_dataset'

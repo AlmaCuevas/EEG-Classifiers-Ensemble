@@ -4,6 +4,9 @@
 import copy
 
 from sklearn.model_selection import StratifiedKFold
+from pathlib import Path
+import sys
+sys.path.append("D:\\Users\\NewUser\\Documents\\GitHub\\voting_system_platform\\")
 
 from CNN_LSTM_probs import CNN_LSTM_test, CNN_LSTM_train
 from CSP_LDA_probs import CSP_LDA_train, CSP_LDA_test
