@@ -9,27 +9,25 @@ from sklearn.gaussian_process.kernels import RBF
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
-from pyriemann.classification import MDM
+#from pyriemann.classification import MDM
+#from sklearn.tree import DecisionTreeClassifier
 
 classifiers = [
     KNeighborsClassifier(3),
     SVC(kernel='linear', probability=True),
-    GaussianProcessClassifier(1.0 * RBF(1.0), random_state=42),
-    DecisionTreeClassifier(max_depth=5, random_state=42),
-    RandomForestClassifier(
-        max_depth=5, n_estimators=10, max_features=1, random_state=42
-    ),
-    MLPClassifier(alpha=1, max_iter=1000, random_state=42),
+    GaussianProcessClassifier(1.0 * RBF(1.0), random_state=42), # It doesn't have .coef
+    DecisionTreeClassifier(max_depth=5, random_state=42), # It doesn't have .coef
+    RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1, random_state=42), # It doesn't have .coef
+    MLPClassifier(alpha=1, max_iter=1000, random_state=42), #'MLPClassifier' object has no attribute 'coef_'. Did you mean: 'coefs_'?
     AdaBoostClassifier(algorithm="SAMME", random_state=42),
     GaussianNB(),
     QuadraticDiscriminantAnalysis(),
     LinearDiscriminantAnalysis(),
     LogisticRegression(),
-    MDM()
+    # MDM() Always nan at the end
 ]
 
 
@@ -108,3 +106,6 @@ class ClfSwitcher(BaseEstimator):
 
     def score(self, X, y):
         return self.estimator.score(X, y)
+
+    def coef_(self):
+        return self.estimator.coef_

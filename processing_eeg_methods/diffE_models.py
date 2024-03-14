@@ -160,20 +160,13 @@ class ConditionalUNet(nn.Module):
         self.out = nn.Conv1d(self.u4_out + in_channels, in_channels, 1)
 
     def forward(self, x, t):
-        print(" \n\n\n\naqui")
-        print(f'x = {len(x)}')
         down1 = self.down1(x)  # 2000 -> 1000
-        print(f'x = {len(down1)}')
         down2 = self.down2(down1)  # 1000 -> 500
-        print(f'x = {len(down2)}')
         down3 = self.down3(down2)  # 500 -> 250
-        print(f'x = {len(down2)}')
 
         temb = self.sin_emb(t).view(-1, self.n_feat, 1)  # [b, n_feat, 1]
-        print(f'x = {len(temb)}')
 
         up1 = self.up2(down3)  # 250 -> 500
-        print(f'x = {len(up1)}')
         up2 = self.up3(torch.cat([up1 + temb, down2], 1))  # 500 -> 1000
         up3 = self.up4(torch.cat([up2 + temb, down1], 1))  # 1000 -> 2000
         out = self.out(torch.cat([up3, x], 1))  # 2000 -> 2000
@@ -426,7 +419,7 @@ def ddpm_schedules(beta1, beta2, T):
 class DDPM(nn.Module):
     def __init__(self, nn_model, betas, n_T, device):
         super(DDPM, self).__init__()
-        self.nn_model = nn_model.to(device).double()
+        self.nn_model = nn_model.to(device)#.double()
 
         for k, v in ddpm_schedules(betas[0], betas[1], n_T).items():
             self.register_buffer(k, v)

@@ -80,7 +80,7 @@ def train(args):
     dataset_info = datasets_basic_infos[dataset_name]
 
     epochs, X, Y = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
-
+    X = X[:, :, :-5] # The X time needs to be even because the down and ups are in halves.
     # Dataloader
     train_loader, test_loader = get_dataloader(
         X, Y, batch_size, batch_size2, seed, shuffle=True

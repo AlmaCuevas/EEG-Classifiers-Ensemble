@@ -11,33 +11,45 @@ from share import datasets_basic_infos
 from data_loaders import load_data_labels_based_on_dataset
 import time
 import pickle
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import Pipeline, FeatureUnion
 from pathlib import Path
 from mne.decoding import Vectorizer
-from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from pyriemann.estimation import ERPCovariances, XdawnCovariances, Covariances
 from pyriemann.tangentspace import TangentSpace
 from mne.decoding import CSP
+from sklearn.decomposition import PCA
 
 ROOT_VOTING_SYSTEM_PATH: Path = Path(__file__).parent.parent.parent.resolve()
 
-# todo: add the test template
-# todo: do the deap thing about the FFT: https://github.com/tongdaxu/EEG_Emotion_Classifier_DEAP/blob/master/Preprocess_Deap.ipynb
+# todo: the arrays doesn't match when I try to do this. I need a way to get the features, save them in a table.
+#  and do it multiple times for delta, alpha, beta, gamma, all. For the features mentiones below
+#  and for the feature extraction like entropy and stuff.
+
+# todo: Only after getting the table I'll be able to run the feature selection
+#  and then finally select the characteristics. Trying to run it here hasn't work and I should move on.
 
 threshold_for_bug = 0.00000001  # could be any value, ex numpy.min
 
 def customized_train(data, labels): # v1
+    combined_features = FeatureUnion([
+        ("Vectorizer", Vectorizer()),
+        ("ERPcova", ERPCovariances(estimator='oas')),
+        ("XdawnCova", XdawnCovariances(estimator='oas')),
+        ("CSP", CSP(n_components=4, reg=None, log=True, norm_trace=False)),
+        ("Cova", Covariances()),
+                          ])
+
+    # Use combined features to transform dataset:
+    X_features = combined_features.fit(data, labels).transform(data)
+    print("Combined space has", X_features.shape[1], "features")
+
 
     estimators = OrderedDict()
-    estimators['Vect + StandScaler'] = Pipeline([("Vectorizer", Vectorizer()), ("StandScaler", StandardScaler()), ('clf', ClfSwitcher())])
-    estimators['Vect'] = Pipeline([("Vectorizer", Vectorizer()), ('clf', ClfSwitcher())])
-    estimators['ERPCov + TS'] = Pipeline([("ERPcova", ERPCovariances(estimator='oas')), ("ts", TangentSpace()), ('clf', ClfSwitcher())])
-    estimators['ERPCov'] = Pipeline([("ERPcova", ERPCovariances(estimator='oas')), ('clf', ClfSwitcher())])
-    estimators['XdawnCov + TS'] = Pipeline([("XdawnCova", XdawnCovariances(estimator='oas')), ("ts", TangentSpace()), ('clf', ClfSwitcher())])
-    estimators['CSP'] = Pipeline([("CSP", CSP(n_components=4, reg=None, log=True, norm_trace=False)), ('clf', ClfSwitcher())])
-    estimators['Cova + TS'] = Pipeline([("Cova", Covariances()), ("ts", TangentSpace()), ('clf', ClfSwitcher())]) # This is probably the best one, at least for Torres
+    estimators['Vect + StandScaler'] = Pipeline([("Union", combined_features), ("StandScaler", StandardScaler()), ('clf', ClfSwitcher())])
+    estimators['ERPCov + TS'] = Pipeline([("Union", combined_features), ("ts", TangentSpace()), ('clf', ClfSwitcher())])
+    estimators['CSP'] = Pipeline([("Union", combined_features), ('clf', ClfSwitcher())])
+    #estimators['Cova + TS'] = Pipeline([("Cova", Covariances()), ("ts", TangentSpace()), ('clf', ClfSwitcher())]) # probably the best one, at least for Torres, is this combination
 
     parameters = []
     for classificator in classifiers:
