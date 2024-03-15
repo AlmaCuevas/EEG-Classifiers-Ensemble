@@ -8,6 +8,7 @@ from sklearn.metrics import classification_report
 from share import datasets_basic_infos
 from data_loaders import load_data_labels_based_on_dataset
 from sklearn.pipeline import Pipeline
+import Code.EEGExtract.EEGExtract as eeg
 import time
 import antropy as ant
 from pathlib import Path

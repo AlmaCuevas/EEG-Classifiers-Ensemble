@@ -88,6 +88,12 @@ if __name__ == '__main__':
     dataset_info = datasets_basic_infos[dataset_name]
 
     epochs,data, y = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
+    print("epochs")
+    print (epochs)
+    print("data")
+    print(data)
+    print("y")
+    print(y)
     target_names = dataset_info['target_names']
     df= extractions_train(data, y, target_names)
     df= df.to_numpy()
