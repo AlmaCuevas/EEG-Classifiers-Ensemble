@@ -202,7 +202,7 @@ def group_methods_test(methods: dict, models_outputs: dict, data_array, data_epo
     if methods["diffE"]:
         print("diffE")
         start_time = time.time()
-        print("Not implemented yet")
+        models_outputs["diffE_probabilities"] = diffE_test(subject_id=subject_id, X=data_array, dataset_info=dataset_info)
         models_outputs["diffE_test_timer"] = time.time() - start_time
 
     if methods["feature_extraction"]:

@@ -71,7 +71,7 @@ The following Python packages are required to run this project:
 5. Now you can run the `main.py` script within the conda environment:
 
 ```bash
-$ python main.py --num_subjects <number_of_subjects> --device <device_to_use>
+$ python diffE_training.py --num_subjects <number_of_subjects> --device <device_to_use>
 ```
 Replace `<number_of_subjects>` with the number of subjects you wish to process and `<device_to_use>` with the device you want to use for training, such as `'cuda:0'` for the first available GPU.
 

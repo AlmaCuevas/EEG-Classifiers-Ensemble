@@ -25,8 +25,8 @@ from sklearn.metrics import (
 ROOT_VOTING_SYSTEM_PATH: Path = Path(__file__).parent.parent.resolve()
 
 # Evaluate function
-def evaluate(encoder, fc, generator, device):
-    labels = np.arange(0, 13)
+def evaluate(encoder, fc, generator, device, number_of_labels: int = 4):
+    labels = np.arange(0, number_of_labels)
     Y = []
     Y_hat = []
     for x, y in generator:
@@ -60,28 +60,17 @@ def evaluate(encoder, fc, generator, device):
     return metrics
 
 
-def train(args):
-    subject_id = args.subject_id
-    device = torch.device(args.device)
+def diffE_train(subject_id: int, X, Y, dataset_info, device: str =  "cuda:0"):
+    X = X[:, :, : -1 * (X.shape[2] % 8)] # 2^3=8 because there are 3 downs and ups halves.
+
+    # Dataloader
+    device = torch.device(device)
     batch_size = 32
     batch_size2 = 260
     seed = 42
     random.seed(seed)
     torch.manual_seed(seed)
     print("Random Seed: ", seed)
-
-    dataset_name = "aguilera_gamified"  # Only two things I should be able to change
-
-    # Folders and paths
-    dataset_foldername = dataset_name + "_dataset"
-    computer_root_path = str(ROOT_VOTING_SYSTEM_PATH) + "/Datasets/"
-    data_path = computer_root_path + dataset_foldername
-    print(data_path)
-    dataset_info = datasets_basic_infos[dataset_name]
-
-    epochs, X, Y = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
-    X = X[:, :, :-5] # The X time needs to be even because the down and ups are in halves.
-    # Dataloader
     train_loader, test_loader = get_dataloader(
         X, Y, batch_size, batch_size2, seed, shuffle=True
     )
@@ -95,7 +84,7 @@ def train(args):
     ddpm_dim = 128
     encoder_dim = 256
     fc_dim = 512
-    num_groups = 8
+    num_groups = 1# 8 for aguilera
 
     ddpm_model = ConditionalUNet(in_channels=channels, n_feat=ddpm_dim, num_groups=num_groups).to(device)
     ddpm = DDPM(nn_model=ddpm_model, betas=(1e-6, 1e-2), n_T=n_T, device=device).to(device) # Betas tell us how much noise we want to add. It starts at 1.e-6 at increases up to 1e-2
@@ -161,14 +150,13 @@ def train(args):
 
             ############################## Train ###########################################
             for x, y in train_loader:
-                x, y = x.to(device), y.type(torch.LongTensor).to(device)
+                x, y = x.to(device).float(), y.type(torch.LongTensor).to(device)
                 y_cat = F.one_hot(y, num_classes=num_classes).type(torch.FloatTensor).to(device)
                 # Train DDPM
                 optim1.zero_grad()
-                print('got here before ddpm')
+
                 x_hat, down, up, noise, t = ddpm(x)
 
-                print('got here after ddpm')
                 loss_ddpm = F.l1_loss(x_hat, x, reduction="none")
                 loss_ddpm.mean().backward()
                 optim1.step()
@@ -199,7 +187,7 @@ def train(args):
                     ddpm.eval()
                     diffe.eval()
 
-                    metrics_test = evaluate(diffe.encoder, fc_ema, test_loader, device)
+                    metrics_test = evaluate(diffe.encoder, fc_ema, test_loader, device, num_classes)
 
                     acc = metrics_test["accuracy"]
                     f1 = metrics_test["f1"]
@@ -215,7 +203,7 @@ def train(args):
 
                     if best_acc_bool:
                         best_acc = acc
-                        # torch.save(diffe.state_dict(), f'./models/diffe_{subject_id}.pt')
+                        torch.save(diffe.state_dict(), f'/Users/rosit/Documents/workprojects/bci_complete/voting_system_platform/Results/diffe_{dataset_name}_{subject_id}.pt')
                     if best_f1_bool:
                         best_f1 = f1
                     if best_recall_bool:
@@ -258,18 +246,17 @@ def train(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Train a machine learning model")
-    # Define command-line arguments
-    parser.add_argument(
-        "--num_subjects", type=int, default=16, help="number of subjects to process"
-    )
-    parser.add_argument(
-        "--device", type=str, default="cuda:0", help="Device to use (default: cuda:0)"
-    )
     print(f'CUDA is available? {torch.cuda.is_available()}')
-    # Parse command-line arguments
-    args = parser.parse_args()
-    for i in range(1, args.num_subjects + 1):
-        subject_id = i
-        args.subject_id = subject_id
-        train(args)
+
+    dataset_name = "aguilera_traditional"  # Only two things I should be able to change
+
+    # Folders and paths
+    dataset_foldername = dataset_name + "_dataset"
+    computer_root_path = str(ROOT_VOTING_SYSTEM_PATH) + "/Datasets/"
+    data_path = computer_root_path + dataset_foldername
+    print(data_path)
+    dataset_info = datasets_basic_infos[dataset_name]
+
+    for subject_id in range(1, dataset_info['subjects'] + 1):
+        _, X, Y = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
+        diffE_train(subject_id=subject_id, X=X, Y=Y, dataset_info=dataset_info)
