@@ -1,5 +1,5 @@
 import numpy as np
-import mne
+import mne 
 from scipy.io import loadmat
 import os
 from share import datasets_basic_infos
@@ -12,7 +12,7 @@ from pathlib import Path
 
 ROOT_VOTING_SYSTEM_PATH: Path = Path(__file__).parent.parent.resolve()
 
-def aguilera_dataset_loader(data_path: str, gamified: bool):
+def aguilera_dataset_loader(data_path: str, gamified: bool): #typed
     # '1':'FP1', '2':'FP2', '3':'F3', '4':'F4', '5':'C3', '6':'C4', '7':'P3', '8':'P4', '9':'O1', '10':'O2', '11':'F7', '12':'F8', '13':'T7', '14':'T8', '15':'P7', '16':'P8', '17':'Fz', '18':'Cz', '19':'Pz', '20':'M1', '21':'M2', '22':'AFz', '23':'CPz', '24':'POz'
     # include=['Channel 3', 'Channel 4', 'Channel 5', 'Channel 6', 'Channel 7', 'Channel 8', 'Channel 11', 'Channel 12', 'Channel 13', 'Channel 14', 'Channel 15', 'Channel 16', 'Channel 17', 'Channel 18', 'Channel 19', 'Channel 23'] #this is the left and important middle
     raw = io.read_raw_edf(data_path, preload=True, verbose=40, exclude=['Gyro 1', 'Gyro 2', 'Gyro 3'])

@@ -21,7 +21,7 @@ aguilera_gamified_info = {'#_class': 4, # avanzar, retroceder, derecha and izqui
 'subjects':15,
 'total_trials':120} # 30 per class
 
-# Nieto
+# Nieto (no prestar tanta atención)
 nieto_info = {'#_class': 4, # arriba, abajo, derecha, izquierda
 'target_names': ["Arriba", "Abajo", "Derecha", "Izquierda"],
 '#_channels': 128,
@@ -31,7 +31,7 @@ nieto_info = {'#_class': 4, # arriba, abajo, derecha, izquierda
 'subjects':10,
 'total_trials':200} # Not really , it varies because some subjects couldn't finish the experiment
 
-# Coretto
+# Coretto (no prestar tanta atención)
 # La frecuencia de muestreo se estrablecio en 1024Hz. De modo que cada intervalo de habla imaginada consta de 4096 muestras (4 segundos). Se implementaron filtrado digital pasabanda con frecuencias de paso de 2 y 45 HZ.
 # De modo que el registro de una palabra esta constituido por 24576 muestras correspondientes a los canales de EEG, más tres muestras adicionales que indican la modalidad, estimulo y la presencia de artefactos oculares.
 coretto_info = {'#_class': 6, # arriba, abajo, izquierda, derecha, adelante and atrás (last two not counted, but the db also has vocals: a, e, i, o, u)
