@@ -226,7 +226,8 @@ def group_methods_test(methods: dict, models_outputs: dict, data_array, data_epo
 if __name__ == "__main__":
     # Manual Inputs
     #dataset_name = "torres"  # Only two things I should be able to change
-    datasets = ['aguilera_gamified', 'aguilera_traditional', 'torres']
+   # datasets = ['aguilera_gamified', 'aguilera_traditional', 'torres']
+    datasets = ['aguilera_traditional']
     for dataset_name in datasets:
         version_name = "multiple_classifier" # To keep track what the output processing alteration went through
 

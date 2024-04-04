@@ -1,8 +1,12 @@
+from pathlib import Path
+
+ROOT_VOTING_SYSTEM_PATH: str = str(Path(__file__).parent.parent.resolve())
 
 # DATASETS BASIC INFO
-
 # Edgar Aguilera Traditional
-aguilera_traditional_info = {'#_class': 4, # avanzar, retroceder, derecha and izquierda
+aguilera_traditional_info = {
+'dataset_name': 'aguilera_traditional',
+'#_class': 4, # avanzar, retroceder, derecha and izquierda
 'target_names': ["Avanzar", "Retroceder", "Derecha", "Izquierda"],
 '#_channels': 24,
 'samples': 701, # sample_rate * duration in seconds = 500*1.4=700
@@ -12,7 +16,9 @@ aguilera_traditional_info = {'#_class': 4, # avanzar, retroceder, derecha and iz
 'total_trials':120} # 30 per class
 
 # Edgar Aguilera Gamified
-aguilera_gamified_info = {'#_class': 4, # avanzar, retroceder, derecha and izquierda
+aguilera_gamified_info = {
+'dataset_name': 'aguilera_gamified',
+'#_class': 4, # avanzar, retroceder, derecha and izquierda
 'target_names': ["Avanzar", "Derecha", "Izquierda", "Retroceder"], # Avanzar:1, Derecha:2, Izquierda:3, Retroceder: 4
 '#_channels': 24,
 'samples': 701, # sample_rate * duration in seconds = 500*1.4=700
@@ -22,7 +28,9 @@ aguilera_gamified_info = {'#_class': 4, # avanzar, retroceder, derecha and izqui
 'total_trials':120} # 30 per class
 
 # Nieto
-nieto_info = {'#_class': 4, # arriba, abajo, derecha, izquierda
+nieto_info = {
+'dataset_name': 'nieto',
+'#_class': 4, # arriba, abajo, derecha, izquierda
 'target_names': ["Arriba", "Abajo", "Derecha", "Izquierda"],
 '#_channels': 128,
 'samples': 512,
@@ -34,7 +42,9 @@ nieto_info = {'#_class': 4, # arriba, abajo, derecha, izquierda
 # Coretto
 # La frecuencia de muestreo se estrablecio en 1024Hz. De modo que cada intervalo de habla imaginada consta de 4096 muestras (4 segundos). Se implementaron filtrado digital pasabanda con frecuencias de paso de 2 y 45 HZ.
 # De modo que el registro de una palabra esta constituido por 24576 muestras correspondientes a los canales de EEG, más tres muestras adicionales que indican la modalidad, estimulo y la presencia de artefactos oculares.
-coretto_info = {'#_class': 6, # arriba, abajo, izquierda, derecha, adelante and atrás (last two not counted, but the db also has vocals: a, e, i, o, u)
+coretto_info = {
+'dataset_name': 'coretto',
+'#_class': 6, # arriba, abajo, izquierda, derecha, adelante and atrás (last two not counted, but the db also has vocals: a, e, i, o, u)
 'target_names': ["Arriba", "Abajo", "Derecha", "Izquierda"],
 '#_channels': 6,
 'samples': 342, # Originally 1365=(4096-1)/3 . Originally 4096, that would be 4s. But there were 3 trials inside that, so the first sample was removed and then divided in thirds.
@@ -44,13 +54,15 @@ coretto_info = {'#_class': 6, # arriba, abajo, izquierda, derecha, adelante and 
 'total_trials':606} # TODO: Read the paper and find if this is right
 
 # Torres
-torres_info = {'#_class': 5, # 'arriba', 'abajo', 'izquierda', 'derecha'. They also did 'seleccionar', but we are not going to use that one.
+torres_info = {
+'dataset_name': 'torres',
+'#_class': 5, # 'arriba', 'abajo', 'izquierda', 'derecha'. They also did 'seleccionar', but we are not going to use that one.
 "target_names": {"Arriba", "Abajo", "Izquierda", "Derecha"},
 '#_channels': 14, # CHECK
 'samples': 421, # PENDING
 'sample_rate': 128,
 'channels_names': ['AF3', 'F7', 'F3', 'FC5', 'T7', 'P7', 'O1', 'O2', 'P8', 'T8', 'FC6', 'F4', 'F8', 'AF4'],
 'subjects':7, # Total of 27, but 7 because they haven't give me the full array.
-'total_trials':132} # why did I thought that my trials were 606?
+'total_trials':132}
 
 datasets_basic_infos = {'aguilera_traditional': aguilera_traditional_info, 'aguilera_gamified': aguilera_gamified_info, 'nieto':nieto_info, 'coretto':coretto_info, 'torres':torres_info} # If one day I decide to run all experiments at once

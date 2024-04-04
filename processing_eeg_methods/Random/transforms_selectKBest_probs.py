@@ -5,8 +5,7 @@ import pandas as pd
 
 from sklearn.model_selection import StratifiedKFold, GridSearchCV, train_test_split
 from sklearn.metrics import classification_report
-from sklearn.feature_selection import SelectKBest
-from sklearn.feature_selection import f_classif
+
 from data_utils import get_best_classificator_and_test_accuracy, ClfSwitcher
 from share import datasets_basic_infos
 from data_loaders import load_data_labels_based_on_dataset
@@ -21,10 +20,11 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from pyriemann.estimation import ERPCovariances, XdawnCovariances, Covariances
 from pyriemann.tangentspace import TangentSpace
 from mne.decoding import CSP
-from sklearn.pipeline import FeatureUnion
-from sklearn.preprocessing import FunctionTransformer
 from scipy import signal
 import mne
+from sklearn.feature_selection import SelectKBest
+from sklearn.feature_selection import f_classif
+
 
 ROOT_VOTING_SYSTEM_PATH: Path = Path(__file__).parent.parent.parent.resolve()
 
@@ -32,66 +32,74 @@ ROOT_VOTING_SYSTEM_PATH: Path = Path(__file__).parent.parent.parent.resolve()
 # todo: do the deap thing about the FFT: https://github.com/tongdaxu/EEG_Emotion_Classifier_DEAP/blob/master/Preprocess_Deap.ipynb
 
 threshold_for_bug = 0.00000001  # could be any value, ex numpy.min
-frequency_ranges: dict = {
-    "complete": [0, 140],
-    "delta": [0, 3],
-    "theta": [3, 7],
-    "alpha": [7, 13],
-    "beta 1": [13, 16],
-    "beta 2": [16, 20],
-    "beta 3": [20, 35],
-    "gamma": [35, 140],
-}
 
-def custom_feature_engineering(X): # ('feature_engineering', FunctionTransformer(custom_feature_engineering)),
-    for frequency_bandwidth_name, frequency_bandwidth in frequency_ranges.items():
-        print(frequency_bandwidth)
-        iir_params = dict(order=8, ftype="butter")
-        filt = mne.filter.create_filter(
-            X, dataset_info['sample_rate'], l_freq=frequency_bandwidth[0], h_freq=frequency_bandwidth[1],
-            method="iir", iir_params=iir_params, verbose=True
-        )
-        filtered = signal.sosfiltfilt(filt["sos"], X)
-    return X # todo: i do not know how to use it
+def transform_data(data, labels=None, methods: dict = {}) -> tuple[pd.DataFrame, dict]:
+    features: dict = {
+    "Vectorizer": Pipeline([("Vectorizer", Vectorizer())]),
+    "ERPcova": Pipeline([("ERPcova", ERPCovariances(estimator='oas')), ("ts", TangentSpace())]), # Add TangentSpace, otherwise the dimensions are not 2D.
+    "XdawnCova": Pipeline([("XdawnCova", XdawnCovariances(estimator='oas')), ("ts", TangentSpace())]), # Add TangentSpace, otherwise the dimensions are not 2D.
+    "CSP": Pipeline([("Vectorizer", CSP(n_components=4, reg=None, log=True, norm_trace=False))]),
+    "Cova": Pipeline([("Cova", Covariances()), ("ts", TangentSpace())]), # Add TangentSpace, otherwise the dimensions are not 2D.
+            }
+    frequency_ranges: dict = {
+        "complete": [0, 140],
+        "delta": [0, 3],
+        "theta": [3, 7],
+        "alpha": [7, 13],
+        "beta 1": [13, 16],
+        "beta 2": [16, 20],
+        "beta 3": [20, 35],
+        "gamma": [35, 140],
+    }
 
-def customized_train(data, labels): # v1
+    features_df = pd.DataFrame()
 
-    estimators = OrderedDict()
-    estimators['Vect + StandScaler'] = Pipeline([("Vectorizer", Vectorizer()), ("StandScaler", StandardScaler()), ('clf', ClfSwitcher())])
-    estimators['Vect'] = Pipeline([("Vectorizer", Vectorizer()), ('clf', ClfSwitcher())])
-    estimators['ERPCov + TS'] = Pipeline([("ERPcova", ERPCovariances(estimator='oas')), ("ts", TangentSpace()), ('clf', ClfSwitcher())])
-    estimators['XdawnCov + TS'] = Pipeline([("XdawnCova", XdawnCovariances(estimator='oas')), ("ts", TangentSpace()), ('clf', ClfSwitcher())])
-    estimators['CSP'] = Pipeline( [ ("CSP", CSP(n_components=4, reg=None, log=True, norm_trace=False)), ('clf', ClfSwitcher())])
-    estimators['Cova + TS'] = Pipeline([("Cova", Covariances()), ("ts", TangentSpace()), ('clf', ClfSwitcher())]) # This is probably the best one, at least for Torres
+    for feature_name, feature_method in features.items():
+        if labels is not None:
+            methods[feature_name] = Pipeline([(feature_name, feature_method)])
+        for frequency_bandwidth_name, frequency_bandwidth in frequency_ranges.items():
+            print(frequency_bandwidth)
+            iir_params = dict(order=8, ftype="butter")
+            filt = mne.filter.create_filter(
+                data, dataset_info['sample_rate'], l_freq=frequency_bandwidth[0], h_freq=frequency_bandwidth[1],
+                method="iir", iir_params=iir_params, verbose=True
+            )
+            filtered = signal.sosfiltfilt(filt["sos"], data)
+            if labels is not None:
+                X_features = methods[feature_name].fit_transform(filtered, labels)
+            else:
+                X_features = methods[feature_name].transform(filtered)
+            print("Combined space has", X_features.shape[1], "features")
+            column_name = [f'{frequency_bandwidth_name}_{feature_name}_{num}' for num in range(0, X_features.shape[1])]
+            temp_features_df = pd.DataFrame(X_features, columns=column_name)
+            features_df = pd.concat([features_df, temp_features_df], axis=1)
+    return features_df, methods
 
-    accuracy_list = []
-    classifiers_list=[]
-    for name, clf  in estimators.items():
-        print(name)
-        classifier, acc = get_best_classificator_and_test_accuracy(data, labels, clf)
-        accuracy_list.append(acc)
-        classifiers_list.append(classifier)
-    print(estimators.keys())
-    print(accuracy_list)
-    return classifiers_list[np.argmax(accuracy_list)], accuracy_list[np.argmax(accuracy_list)], list(estimators.keys())[np.argmax(accuracy_list)]
 
-def customized_test(clf, trial):
+def selected_transformers_train(features_df, labels): # v1
+    X_SelectKBest = SelectKBest(f_classif, k=100)
+    X_new = X_SelectKBest.fit_transform(features_df, labels)
+    columns_list = X_SelectKBest.get_feature_names_out()
+    X_new_df = pd.DataFrame(X_new, columns=columns_list)
+
+    classifier, acc = get_best_classificator_and_test_accuracy(X_new_df, labels, Pipeline([('clf', ClfSwitcher())]))
+    return classifier, acc, columns_list
+
+def selected_transformers_test(clf, features_df):
     """
     This is what the real-time BCI will call.
     Parameters
     ----------
     clf : classifier trained for the specific subject
-    trial: one epoch, the current one that represents the intention of movement of the user.
+    features_df: one epoch, the current one that represents the intention of movement of the user.
 
     Returns Array of classification with 4 floats representing the target classification
     -------
 
     """
-    # To load the model, just in case
-    # loaded_model = pickle.load(open(filename, 'rb'))
 
-    # To see the array of predictions
-    array = clf.predict_proba(trial)
+    array = clf.predict_proba(features_df)
+
     return array
 
 
@@ -100,7 +108,7 @@ if __name__ == "__main__":
     #dataset_name = "torres"  # Only two things I should be able to change
     datasets = ['aguilera_traditional', 'aguilera_gamified', 'torres']
     for dataset_name in datasets:
-        version_name = "customized_only" # To keep track what the output processing alteration went through
+        version_name = "one_transforms_table_of_selectKbest" # To keep track what the output processing alteration went through
 
         # Folders and paths
         dataset_foldername = dataset_name + "_dataset"
@@ -108,7 +116,6 @@ if __name__ == "__main__":
         data_path = computer_root_path + dataset_foldername
         print(data_path)
         # Initialize
-        processing_name: str = ''
         if dataset_name not in [
             "aguilera_traditional",
             "aguilera_gamified",
@@ -146,13 +153,13 @@ if __name__ == "__main__":
                     "******************************** Training ********************************"
                 )
                 start = time.time()
-                clf, accuracy, processing_name = customized_train(data[train], labels[train])
+                features_train_df, methods = transform_data(data[train], labels[train])
+                clf, accuracy, columns_list = selected_transformers_train(features_train_df, labels[train])
                 training_time.append(time.time() - start)
                 with open(
                     f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{dataset_name}.txt",
                     "a",
                 ) as f:
-                    f.write(f"{processing_name}\n")
                     f.write(f"Accuracy of training: {accuracy}\n")
                 print(
                     "******************************** Test ********************************"
@@ -161,7 +168,8 @@ if __name__ == "__main__":
                 testing_time = []
                 for epoch_number in test:
                     start = time.time()
-                    array = customized_test(clf, np.asarray([data[epoch_number]]))
+                    features_test_df, _ = transform_data(np.asarray([data[epoch_number]]), labels=None, methods=methods)
+                    array = selected_transformers_test(clf, features_test_df[columns_list])
                     end = time.time()
                     testing_time.append(end - start)
                     print(dataset_info["target_names"])
@@ -192,7 +200,7 @@ if __name__ == "__main__":
                 f.write(f"Final acc: {mean_acc_over_cv}\n\n\n\n")
             print(f"Final acc: {mean_acc_over_cv}")
 
-            temp = pd.DataFrame({'Methods': [processing_name] * len(acc_over_cv), 'Subject ID': [subject_id] * len(acc_over_cv),
+            temp = pd.DataFrame({'Subject ID': [subject_id] * len(acc_over_cv),
                                  'Version': [version_name] * len(acc_over_cv), 'Training Accuracy': [accuracy] * len(acc_over_cv), 'Training Time': training_time,
                                  'Testing Accuracy': acc_over_cv, 'Testing Time': testing_time_over_cv}) # The idea is that the most famous one is the one I use for this dataset
             results_df = pd.concat([results_df, temp])

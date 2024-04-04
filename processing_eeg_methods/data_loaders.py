@@ -2,15 +2,12 @@ import numpy as np
 import mne
 from scipy.io import loadmat
 import os
-from share import datasets_basic_infos
+from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 from Inner_Speech_Dataset.Python_Processing.Data_extractions import Extract_data_from_subject
 from Inner_Speech_Dataset.Python_Processing.Data_processing import Select_time_window, Transform_for_classificator
 from mne import io, Epochs, events_from_annotations, EpochsArray
 from mne.preprocessing import ICA, create_eog_epochs
 from autoreject import AutoReject
-from pathlib import Path
-
-ROOT_VOTING_SYSTEM_PATH: Path = Path(__file__).parent.parent.resolve()
 
 def aguilera_dataset_loader(data_path: str, gamified: bool):
     # '1':'FP1', '2':'FP2', '3':'F3', '4':'F4', '5':'C3', '6':'C4', '7':'P3', '8':'P4', '9':'O1', '10':'O2', '11':'F7', '12':'F8', '13':'T7', '14':'T8', '15':'P7', '16':'P8', '17':'Fz', '18':'Cz', '19':'Pz', '20':'M1', '21':'M2', '22':'AFz', '23':'CPz', '24':'POz'
@@ -28,7 +25,7 @@ def aguilera_dataset_loader(data_path: str, gamified: bool):
     channel_location = str(ROOT_VOTING_SYSTEM_PATH) + "/mBrain_24ch_locations.txt"
     raw.set_montage(mne.channels.read_custom_montage(channel_location))
     raw.set_eeg_reference(ref_channels=['M1', 'M2']) # If I do this it, the XDAWN doesn't run.
-    raw.filter(l_freq=0.5, h_freq=100)
+    raw.filter(l_freq=0.5, h_freq=140)
     raw.notch_filter(freqs=60)
     #bad_annot = mne.Annotations()
     #raw.set_annotations(bad)
@@ -213,6 +210,8 @@ def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_p
     if 'aguilera' in dataset_name:
         filename = F"S{subject_id}.edf"
         filepath = os.path.join(data_path, filename)
+        print('aquiiiiii')
+        print(filepath)
         if 'gamified' in dataset_name:
             epochs, label, event_dict = aguilera_dataset_loader(filepath, True)
         else:

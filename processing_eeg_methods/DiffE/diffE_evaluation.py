@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from data_loaders import load_data_labels_based_on_dataset
 from diffE_models import *
 from diffE_utils import *
@@ -21,9 +19,7 @@ from sklearn.metrics import (
     recall_score,
     top_k_accuracy_score,
 )
-from share import datasets_basic_infos
-
-ROOT_VOTING_SYSTEM_PATH: Path = Path(__file__).parent.parent.resolve()
+from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 
 dataset_name = "aguilera_traditional"  # Only two things I should be able to change
 
@@ -35,10 +31,7 @@ data_path = computer_root_path + dataset_foldername
 dataset_info = datasets_basic_infos[dataset_name]
 
 
-def diffE_evaluation(subject_id: int, X, Y, dataset_info, device: str =  "cuda:0"):
-
-        # create an argument parser for the data loader path
-        model_path: str = f'{ROOT_VOTING_SYSTEM_PATH}/Results/diffe_{dataset_name}_{subject_id}.pt'  # diffE_{subject_ID}.pt
+def diffE_evaluation(model_path: str, X, Y, dataset_info, device: str =  "cuda:0"):
 
         X = X[:, :, : -1 * (X.shape[2] % 8)] # 2^3=8 because there are 3 downs and ups halves.
         # Dataloader
@@ -105,7 +98,9 @@ if __name__ == "__main__":
         print(f"\nSubject: {subject_id}")
         _, X, Y = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
 
-        Y_returned, Y_hat = diffE_evaluation(subject_id=subject_id, X=X, Y=Y, dataset_info=dataset_info)
+        # create an argument parser for the data loader path
+        model_path: str = f'{ROOT_VOTING_SYSTEM_PATH}/Results/Diffe/diffe_{dataset_name}_{subject_id}.pt'  # diffE_{subject_ID}.pt
+        Y_returned, Y_hat = diffE_evaluation(model_path=model_path, X=X, Y=Y, dataset_info=dataset_info) # todo: Y is in array form already, use it in the probs
 
         # Accuracy and Confusion Matrix
         accuracy = top_k_accuracy_score(Y_returned, Y_hat, k=1, labels=np.arange(0, dataset_info['#_class']))
