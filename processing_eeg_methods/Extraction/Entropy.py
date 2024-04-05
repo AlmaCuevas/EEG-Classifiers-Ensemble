@@ -90,23 +90,69 @@ def get_hjorth(data):
         Complexity_values.append(np.mean(Complexity_trial))
     return values, Complexity_values
 
+<<<<<<< Updated upstream:processing_eeg_methods/Extraction/Entropy.py
 def get_XXXX(data):
     entropy_values = []
+=======
+def get_ratio(data):
+    ratio_values = []
+>>>>>>> Stashed changes:Code/Extraction/Entropy.py
     for data_trial in data:
-        entropy_trial = []
+        ratio_trial = []
         for data_channel in data_trial:
+<<<<<<< Updated upstream:processing_eeg_methods/Extraction/Entropy.py
             entropy_trial.append(getXXXX(data_channel))
         entropy_values.append(np.mean(entropy_trial)) # The fastest one
     return entropy_values
+=======
+            ratio_trial.append(eeg.eegRatio(data_channel,fs=500))
+        ratio_values.append(np.mean(ratio_trial)) # The fastest one
+    return ratio_values
+
+def get_lyapunov(data):
+    lyapunov_values = []
+    for data_trial in data:
+        lyapunov_values.append(eeg.lyapunov(data_trial)) # The fastest one
+    return lyapunov_values
+
+def get_coherence(data):
+    coherence_values = eeg.coherence(data,fs=500)
+    return coherence_values
+
+
+def get_regularity(data):
+    regularity_values = []
+    for data_trial in data:
+        regularity_values.append(eeg.eegRegularity(data_trial, Fs=500)) # The fastest one
+    return regularity_values
+>>>>>>> Stashed changes:Code/Extraction/Entropy.py
 
 def extractions_train(data, labels, target_names):
     # Create classification pipeline
     entropy = get_entropy(data)
     Mobility_values, Complexity_values = get_hjorth(data)
+<<<<<<< Updated upstream:processing_eeg_methods/Extraction/Entropy.py
     XXXX_values = get_XXXX(data)
     df = pd.DataFrame({"entropy": entropy, "XXXX":XXXX_values, "Complexity":Complexity_values, "Mobility":Mobility_values, "labels": labels})
     df.to_csv("/Users/almacuevas/work_projects/voting_system_platform/Code/df_extractions.csv")
     print("Done")
+=======
+    ratio_values = get_ratio(data)
+    lyapunov_values=get_lyapunov(data)
+    lyapunov_values=np.array(lyapunov_values)
+    coherence_values=get_coherence(data)
+    coherence_values=np.array(coherence_values)
+    # regularity_values=get_regularity(data)
+    #XXXX_values = get_XXXX(data)
+    df = pd.DataFrame({"entropy": entropy, "Complexity":Complexity_values, "Mobility":Mobility_values,
+                       "α/δ Ratio":ratio_values, "labels": labels})
+    # df.to_csv("/Users/almacuevas/work_projects/voting_system_platform/Code/df_extractions.csv")
+    # df= df.to_numpy()
+    print("Characteristics extraction done")
+    print(coherence_values)
+    
+    return df,lyapunov_values
+>>>>>>> Stashed changes:Code/Extraction/Entropy.py
 
     ## Use scikit-learn Pipeline with cross_val_score function
     #clf = Pipeline([])

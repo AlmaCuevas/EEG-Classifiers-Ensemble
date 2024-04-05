@@ -27,7 +27,7 @@ def filt_data(eegData, lowcut, highcut, fs, order=7):
     low = lowcut / nyq
     high = highcut / nyq
     b, a = signal.butter(order, [low, high], btype='band')
-    filt_eegData = signal.lfilter(b, a, eegData, axis = 1)
+    filt_eegData = signal.lfilter(b, a, eegData, axis = 0)
     return filt_eegData
 
 #########
@@ -362,8 +362,8 @@ def medianFreq(eegData,fs):
 # calculate band power
 def bandPower(eegData, lowcut, highcut, fs):
 	eegData_band = filt_data(eegData, lowcut, highcut, fs, order=7)
-	freqs, powers = signal.periodogram(eegData_band, fs, axis=1)
-	bandPwr = np.mean(powers,axis=1)
+	freqs, powers = signal.periodogram(eegData_band, fs, axis=0)
+	bandPwr = np.mean(powers,axis=0)
 	return bandPwr
 
 ##########
