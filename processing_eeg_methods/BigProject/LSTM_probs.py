@@ -8,7 +8,7 @@ from scipy.fftpack import dct, idct
 from scipy import signal
 
 from data_loaders import load_data_labels_based_on_dataset
-from share import datasets_basic_infos
+from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 from data_utils import train_test_val_split
 import time
 
@@ -99,7 +99,7 @@ def LSTM_train(dataset_name, data, labels):
 
     # saves the model weights after each epoch if the validation loss decreased
     checkpointer = ModelCheckpoint(
-        filepath=f'/Users/almacuevas/work_projects/voting_system_platform/Code/BigProject/LSTM_model_{dataset_name}.hdf5',
+        filepath=f'{ROOT_VOTING_SYSTEM_PATH}/processing_eeg_methods/BigProject/LSTM_model_{dataset_name}.hdf5',
         monitor='val_acc', verbose=1)  # , initial_value_threshold=0.4)
 
     callbacks_list = [earlystop, checkpointer]
@@ -131,8 +131,7 @@ if __name__ == '__main__':
 
     # Folders and paths
     dataset_foldername = dataset_name + '_dataset'
-    # computer_root_path = "/Users/rosit/Documents/MCC/voting_system_platform/Datasets/"  # OMEN
-    computer_root_path = "/Users/almacuevas/work_projects/voting_system_platform/Datasets/"  # MAC
+    computer_root_path = f"{ROOT_VOTING_SYSTEM_PATH}/Datasets/"
     data_path = computer_root_path + dataset_foldername
     dataset_info = datasets_basic_infos[dataset_name]
 

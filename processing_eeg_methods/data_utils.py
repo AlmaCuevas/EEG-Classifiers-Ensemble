@@ -16,17 +16,17 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
 classifiers = [
-    KNeighborsClassifier(3),
-    SVC(kernel='linear', probability=True),
-    GaussianProcessClassifier(1.0 * RBF(1.0), random_state=42), # It doesn't have .coef
-    DecisionTreeClassifier(max_depth=5, random_state=42), # It doesn't have .coef
-    RandomForestClassifier(max_depth=5, n_estimators=100, max_features=1, random_state=42), # It doesn't have .coef
-    MLPClassifier(alpha=1, max_iter=1000, random_state=42), #'MLPClassifier' object has no attribute 'coef_'. Did you mean: 'coefs_'?
-    AdaBoostClassifier(algorithm="SAMME", random_state=42),
-    GaussianNB(),
-    QuadraticDiscriminantAnalysis(),
-    LinearDiscriminantAnalysis(),
-    LogisticRegression(),
+    # KNeighborsClassifier(3), # 0.20
+    # SVC(kernel='linear', probability=True), # 0.17
+    # GaussianProcessClassifier(1.0 * RBF(1.0), random_state=42), # 0.20 # It doesn't have .coef
+    # DecisionTreeClassifier(max_depth=5, random_state=42), # 0.17 # It doesn't have .coef
+    RandomForestClassifier(max_depth=5, n_estimators=100, max_features=1, random_state=42), # 0.25 It doesn't have .coef
+    # MLPClassifier(alpha=1, max_iter=1000, random_state=42), #'MLPClassifier' object has no attribute 'coef_'. Did you mean: 'coefs_'?
+    # AdaBoostClassifier(algorithm="SAMME", random_state=42),
+    # GaussianNB(),
+    # QuadraticDiscriminantAnalysis(),
+    # LinearDiscriminantAnalysis(),
+    # LogisticRegression(),
     # MDM() Always nan at the end
 ]
 

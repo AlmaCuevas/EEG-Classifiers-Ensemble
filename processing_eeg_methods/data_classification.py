@@ -6,26 +6,24 @@ import copy
 from sklearn.model_selection import StratifiedKFold
 
 from BigProject.CNN_LSTM_probs import CNN_LSTM_test, CNN_LSTM_train
-from Random.customized_probs import customized_train, customized_test
-from Random.customized_probs import customized_train
+from multiple_transforms_with_models.customized_probs import customized_train, customized_test
+from multiple_transforms_with_models.transforms_selectKBest_probs import selected_transformers_train, transform_data, selected_transformers_test
 from data_loaders import load_data_labels_based_on_dataset
 from arl_eegmodels.examples.ERP_probs import ERP_train, ERP_test
 from BigProject.GRU_probs import GRU_train, GRU_test
 from BigProject.LSTM_probs import LSTM_train, LSTM_test
-from share import datasets_basic_infos
+from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 import numpy as np
 import time
 from TCACNet.tcanet_probs import tcanet_train, tcanet_test
 from XDAWN.xdawn_probs import xdawn_train, xdawn_test
 from sklearn.preprocessing import normalize
-from pathlib import Path
+from diffE_training import diffE_train
+from diffE_evaluation import diffE_evaluation
+
 
 import pandas as pd
 
-ROOT_VOTING_SYSTEM_PATH: Path = Path(__file__).parent.parent.resolve()
-# todo: save the test model and have another file where you load it before using it.
-# todo: classification was meant for all type of projects besides the sklearn, nevertheless only sklearn
-# todo: ... is working so using it directly, in its own file would make more sense to avoid so much verbose in this file
 threshold_for_bug = 0.00000001  # could be any value, ex numpy.min
 
 def group_methods_train(
@@ -41,6 +39,12 @@ def group_methods_train(
     target_names = dataset_info["target_names"]
     processing_name: str = ''
     # Standard methods:
+    if methods["selected_transformers"]:
+        print("selected_transformers")
+        start_time = time.time()
+        features_train_df, methods = transform_data(data, dataset_info=dataset_info, labels=labels)
+        models_outputs["selected_transformers_clf"], models_outputs["selected_transformers_accuracy"], columns_list = selected_transformers_train(features_train_df, labels)
+        models_outputs["selected_transformers_train_timer"] = time.time() - start_time
     if methods["customized"]:
         print("customized")
         start_time = time.time()
@@ -120,7 +124,7 @@ def group_methods_train(
     if methods["diffE"]:
         print("diffE")
         start_time = time.time()
-        print("Not implemented yet")
+        models_outputs["diffE_accuracy"] = diffE_train(subject_id=subject_id, X=data, Y=labels, dataset_info=dataset_info) # The trained clf is saved in a file
         models_outputs["diffE_train_timer"] = time.time() - start_time
 
     if methods["feature_extraction"]:
@@ -129,10 +133,18 @@ def group_methods_train(
         print("Not implemented yet")
         models_outputs["feature_extraction_train_timer"] = time.time() - start_time
 
-    return models_outputs, processing_name
+    return models_outputs, processing_name, columns_list
 
 
-def group_methods_test(methods: dict, models_outputs: dict, data_array, data_epoch):
+def group_methods_test(methods: dict, columns_list: list, models_outputs: dict, data_array, data_epoch):
+    if methods["selected_transformers"] and models_outputs["selected_transformers_clf"]:
+        print("selected_transformers")
+        start_time = time.time()
+        features_test_df, _ = transform_data(data_array, dataset_info=dataset_info, labels=None, methods=methods)
+        models_outputs["selected_transformers_probabilities"] = normalize(
+            selected_transformers_test(models_outputs["selected_transformers_clf"], features_test_df[columns_list])
+        )
+        models_outputs["selected_transformers_test_timer"] = time.time() - start_time
     if methods["customized"] and models_outputs["customized_clf"]:
         print("customized")
         start_time = time.time()
@@ -202,7 +214,7 @@ def group_methods_test(methods: dict, models_outputs: dict, data_array, data_epo
     if methods["diffE"]:
         print("diffE")
         start_time = time.time()
-        models_outputs["diffE_probabilities"] = diffE_test(subject_id=subject_id, X=data_array, dataset_info=dataset_info)
+        _, models_outputs["diffE_probabilities"] = diffE_evaluation(subject_id=subject_id, X=data_array, Y=[1], dataset_info=dataset_info) # Y is just a filling to avoid editing the code further, but its not used
         models_outputs["diffE_test_timer"] = time.time() - start_time
 
     if methods["feature_extraction"]:
@@ -212,22 +224,27 @@ def group_methods_test(methods: dict, models_outputs: dict, data_array, data_epo
         models_outputs["feature_extraction_test_timer"] = time.time() - start_time
 
     probs_list = [
-        np.multiply(
-            models_outputs[f"{method}_probabilities"], models_outputs[f"{method}_accuracy"]
-        )
-        for method in methods
+        np.argmax(models_outputs[f"{method}_probabilities"])
+        for method in methods if models_outputs[f"{method}_accuracy"] is not np.nan
     ]
 
+    # probs_list = [
+    #     np.multiply(
+    #         models_outputs[f"{method}_probabilities"], models_outputs[f"{method}_accuracy"]
+    #     )
+    #     for method in methods
+    # ]
+
     # You need to select at least two for this to work
-    probs = np.nanmean(probs_list, axis=0) # Mean over columns
-    return probs
+    #probs = np.nanmean(probs_list, axis=0) # Mean over columns
+    return max(set(probs_list), key=probs_list.count)
 
 
 if __name__ == "__main__":
     # Manual Inputs
     #dataset_name = "torres"  # Only two things I should be able to change
    # datasets = ['aguilera_gamified', 'aguilera_traditional', 'torres']
-    datasets = ['aguilera_traditional']
+    datasets = ['aguilera_gamified']
     for dataset_name in datasets:
         version_name = "multiple_classifier" # To keep track what the output processing alteration went through
 
@@ -238,15 +255,16 @@ if __name__ == "__main__":
         print(data_path)
         # Initialize
         methods = {
+            "selected_transformers": True, # Like customized but with frequency bands and selected columns
             "customized": True,
             "XDAWN_LogReg": False, #Todo sometimes "numpy.linalg.LinAlgError: SVD did not converge", maybe we have to normalize?
-            "TCANET_Global_Model": False,
-            "TCANET": False, #todo It always gives answer 0. Even when the training is high. why?
-            "diffE": False,
-            "DeepConvNet": False,
-            "LSTM": False,
-            "GRU": False,
-            "CNN_LSTM": False,
+            "TCANET_Global_Model": False, # BAD
+            "TCANET": False, # BAD #todo It always gives answer 0. Even when the training is high. why?
+            "diffE": True,
+            "DeepConvNet": False, # BAD
+            "LSTM": True,
+            "GRU": False, # BAD
+            "CNN_LSTM": False, # BAD
             "feature_extraction": False,
         }
         keys = list(methods.keys())
@@ -278,7 +296,7 @@ if __name__ == "__main__":
         ):  # Only two things I should be able to change
             print(subject_id)
             with open(
-                f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{'_'.join(activated_methods)}_{dataset_name}.txt",
+                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{'_'.join(activated_methods)}_{dataset_name}.txt",
                 "a",
             ) as f:
                 f.write(f"Subject: {subject_id}\n\n")
@@ -297,7 +315,7 @@ if __name__ == "__main__":
                     "******************************** Training ********************************"
                 )
                 # start = time.time()
-                models_outputs, processing_name = group_methods_train(
+                models_outputs, processing_name, columns_list = group_methods_train(
                     dataset_name,
                     subject_id,
                     methods,
@@ -331,8 +349,9 @@ if __name__ == "__main__":
                 all_methods_pred_list = []
                 for epoch_number in test:
                     # start = time.time()
-                    array = group_methods_test(
+                    voting_system_pred = group_methods_test(
                         methods,
+                        columns_list,
                         models_outputs,
                         np.asarray([data[epoch_number]]),
                         epochs[epoch_number],
@@ -340,7 +359,7 @@ if __name__ == "__main__":
                     # end = time.time()
                     # print("One epoch, testing time: ", end - start)
                     print(dataset_info["target_names"])
-                    print("Probability voting system: ", array)
+                    #print("Probability voting system: ", array)
 
                     for k, v in models_outputs.items():
                         if 'probabilities' in k and k[:-14] in activated_methods:
@@ -348,7 +367,7 @@ if __name__ == "__main__":
                         if 'test_timer' in k and k[:-11] in activated_methods:
                             test_timer_methods[f'{k[:-11]}_test_timer'].append(v)
 
-                    voting_system_pred = np.argmax(array)
+                    # voting_system_pred = np.argmax(array)
                     pred_list.append(voting_system_pred)
                     print("Prediction: ", voting_system_pred)
                     print("Real: ", labels[epoch_number])

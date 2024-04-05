@@ -210,8 +210,6 @@ def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_p
     if 'aguilera' in dataset_name:
         filename = F"S{subject_id}.edf"
         filepath = os.path.join(data_path, filename)
-        print('aquiiiiii')
-        print(filepath)
         if 'gamified' in dataset_name:
             epochs, label, event_dict = aguilera_dataset_loader(filepath, True)
         else:

@@ -31,22 +31,18 @@ data_path = computer_root_path + dataset_foldername
 dataset_info = datasets_basic_infos[dataset_name]
 
 
-def diffE_evaluation(model_path: str, X, Y, dataset_info, device: str =  "cuda:0"):
+def diffE_evaluation(subject_id: int, X, Y, dataset_info, device: str =  "cuda:0"):
 
         X = X[:, :, : -1 * (X.shape[2] % 8)] # 2^3=8 because there are 3 downs and ups halves.
         # Dataloader
-        batch_size = 32
         batch_size2 = 260
-        seed = 42
-        train_loader, test_loader = get_dataloader(
-            X, Y, batch_size, batch_size2, seed, shuffle=True
-        )
+        train_loader = DataLoader(EEGDataset(X, Y), batch_size=batch_size2, shuffle=False)
 
-        n_T = 1000
         ddpm_dim = 128
         encoder_dim = 256
         fc_dim = 512
         # Define model
+        model_path: str = f'{ROOT_VOTING_SYSTEM_PATH}/Results/Diffe/diffe_{dataset_info["dataset_name"]}_{subject_id}.pt'  # diffE_{subject_ID}.pt
         num_classes = dataset_info['#_class']
         channels = dataset_info['#_channels']
 
@@ -99,8 +95,8 @@ if __name__ == "__main__":
         _, X, Y = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
 
         # create an argument parser for the data loader path
-        model_path: str = f'{ROOT_VOTING_SYSTEM_PATH}/Results/Diffe/diffe_{dataset_name}_{subject_id}.pt'  # diffE_{subject_ID}.pt
-        Y_returned, Y_hat = diffE_evaluation(model_path=model_path, X=X, Y=Y, dataset_info=dataset_info) # todo: Y is in array form already, use it in the probs
+
+        Y_returned, Y_hat = diffE_evaluation(subject_id=subject_id, X=X, Y=Y, dataset_info=dataset_info)
 
         # Accuracy and Confusion Matrix
         accuracy = top_k_accuracy_score(Y_returned, Y_hat, k=1, labels=np.arange(0, dataset_info['#_class']))

@@ -1,12 +1,11 @@
 from pathlib import Path
 
 from diffE_models import *
-from share import datasets_basic_infos
+from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 from data_loaders import load_data_labels_based_on_dataset
 from diffE_utils import *
 
 import random
-import argparse
 import numpy as np
 import torch
 import torch.nn as nn
@@ -22,7 +21,6 @@ from sklearn.metrics import (
     top_k_accuracy_score,
 )
 
-ROOT_VOTING_SYSTEM_PATH: Path = Path(__file__).parent.parent.resolve()
 
 # Evaluate function
 def evaluate(encoder, fc, generator, device, number_of_labels: int = 4):
@@ -61,6 +59,7 @@ def evaluate(encoder, fc, generator, device, number_of_labels: int = 4):
 
 
 def diffE_train(subject_id: int, X, Y, dataset_info, device: str =  "cuda:0"):
+    # This saves the training in a file
     X = X[:, :, : -1 * (X.shape[2] % 8)] # 2^3=8 because there are 3 downs and ups halves.
 
     # Dataloader
@@ -203,7 +202,7 @@ def diffE_train(subject_id: int, X, Y, dataset_info, device: str =  "cuda:0"):
 
                     if best_acc_bool:
                         best_acc = acc
-                        torch.save(diffe.state_dict(), f'/Users/rosit/Documents/workprojects/bci_complete/voting_system_platform/Results/diffe_{dataset_name}_{subject_id}.pt')
+                        torch.save(diffe.state_dict(), f'{ROOT_VOTING_SYSTEM_PATH}/Results/Diffe/diffe_{dataset_info["dataset_name"]}_{subject_id}.pt')
                     if best_f1_bool:
                         best_f1 = f1
                     if best_recall_bool:
@@ -243,6 +242,7 @@ def diffE_train(subject_id: int, X, Y, dataset_info, device: str =  "cuda:0"):
                         f"Method ALL - Processing subject_id {subject_id} - {description}"
                     )
             pbar.update(1)
+    return best_acc
 
 
 if __name__ == "__main__":
