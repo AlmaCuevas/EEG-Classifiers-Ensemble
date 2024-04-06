@@ -42,7 +42,7 @@ def group_methods_train(
     if methods["selected_transformers"]:
         print("selected_transformers")
         start_time = time.time()
-        features_train_df, methods = transform_data(data, dataset_info=dataset_info, labels=labels)
+        features_train_df, transform_methods = transform_data(data, dataset_info=dataset_info, labels=labels)
         models_outputs["selected_transformers_clf"], models_outputs["selected_transformers_accuracy"], columns_list = selected_transformers_train(features_train_df, labels)
         models_outputs["selected_transformers_train_timer"] = time.time() - start_time
     if methods["customized"]:
@@ -133,14 +133,15 @@ def group_methods_train(
         print("Not implemented yet")
         models_outputs["feature_extraction_train_timer"] = time.time() - start_time
 
-    return models_outputs, processing_name, columns_list
+    return models_outputs, processing_name, columns_list, transform_methods
 
 
-def group_methods_test(methods: dict, columns_list: list, models_outputs: dict, data_array, data_epoch):
+def group_methods_test(methods: dict, columns_list: list, transform_methods: dict, models_outputs: dict, data_array, data_epoch):
     if methods["selected_transformers"] and models_outputs["selected_transformers_clf"]:
         print("selected_transformers")
         start_time = time.time()
-        features_test_df, _ = transform_data(data_array, dataset_info=dataset_info, labels=None, methods=methods)
+        features_test_df, _ = transform_data(data_array, dataset_info=dataset_info, labels=None,
+                                             transform_methods=transform_methods)
         models_outputs["selected_transformers_probabilities"] = normalize(
             selected_transformers_test(models_outputs["selected_transformers_clf"], features_test_df[columns_list])
         )
@@ -244,9 +245,9 @@ if __name__ == "__main__":
     # Manual Inputs
     #dataset_name = "torres"  # Only two things I should be able to change
    # datasets = ['aguilera_gamified', 'aguilera_traditional', 'torres']
-    datasets = ['aguilera_gamified']
+    datasets = ['coretto']
     for dataset_name in datasets:
-        version_name = "multiple_classifier" # To keep track what the output processing alteration went through
+        version_name = "multiple_classifier_no_preprocess" # To keep track what the output processing alteration went through
 
         # Folders and paths
         dataset_foldername = dataset_name + "_dataset"
@@ -262,7 +263,7 @@ if __name__ == "__main__":
             "TCANET": False, # BAD #todo It always gives answer 0. Even when the training is high. why?
             "diffE": True,
             "DeepConvNet": False, # BAD
-            "LSTM": True,
+            "LSTM": False, # BAD
             "GRU": False, # BAD
             "CNN_LSTM": False, # BAD
             "feature_extraction": False,
@@ -296,7 +297,7 @@ if __name__ == "__main__":
         ):  # Only two things I should be able to change
             print(subject_id)
             with open(
-                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{'_'.join(activated_methods)}_{dataset_name}.txt",
+                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{'_'.join(activated_methods)}_{dataset_name}.txt",
                 "a",
             ) as f:
                 f.write(f"Subject: {subject_id}\n\n")
@@ -315,7 +316,7 @@ if __name__ == "__main__":
                     "******************************** Training ********************************"
                 )
                 # start = time.time()
-                models_outputs, processing_name, columns_list = group_methods_train(
+                models_outputs, processing_name, columns_list, transform_methods = group_methods_train(
                     dataset_name,
                     subject_id,
                     methods,
@@ -328,7 +329,7 @@ if __name__ == "__main__":
                 # end = time.time()
                 activated_outputs = dict((k, v) for k, v in models_outputs.items() if k[:-9] in activated_methods)
                 with open(
-                    f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{'_'.join(activated_methods)}_{dataset_name}.txt",
+                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{'_'.join(activated_methods)}_{dataset_name}.txt",
                     "a",
                 ) as f:
                     f.write(f"{activated_outputs}\n")
@@ -352,6 +353,7 @@ if __name__ == "__main__":
                     voting_system_pred = group_methods_test(
                         methods,
                         columns_list,
+                        transform_methods,
                         models_outputs,
                         np.asarray([data[epoch_number]]),
                         epochs[epoch_number],
@@ -381,7 +383,7 @@ if __name__ == "__main__":
                 acc = np.mean(pred_list == labels[test])
                 acc_over_cv.append(acc)
                 with open(
-                    f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{'_'.join(activated_methods)}_{dataset_name}.txt",
+                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{'_'.join(activated_methods)}_{dataset_name}.txt",
                     "a",
                 ) as f:
                     f.write(f"Prediction: {pred_list}\n")
@@ -396,7 +398,7 @@ if __name__ == "__main__":
             train_final_timer = dict((k, np.mean(v)) for k, v in train_timer_dict_lists.items())
 
             with open(
-                f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{'_'.join(activated_methods)}_{dataset_name}.txt",
+                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{'_'.join(activated_methods)}_{dataset_name}.txt",
                 "a",
             ) as f:
                 f.write(f"Final acc: {mean_acc_over_cv}\n\n\n\n")
@@ -410,6 +412,6 @@ if __name__ == "__main__":
             temp = pd.DataFrame({'Methods': activated_methods_list, 'Subject ID': [subject_id] * len(activated_methods), 'Version': [version_name] * len(activated_methods), 'Train Accuracy': train_final_accuracy.values(), 'Train Timer': train_final_timer.values(), 'Test Accuracy': test_final_accuracy.values(), 'Test Timer': test_final_timer.values()}) # mean_accuracy_per_subject
             results_df = pd.concat([results_df, temp])
 
-        results_df.to_csv(f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{'_'.join(activated_methods)}_{dataset_name}.csv")
+        results_df.to_csv(f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{'_'.join(activated_methods)}_{dataset_name}.csv")
 
     print("Congrats! The processing methods are done processing.")

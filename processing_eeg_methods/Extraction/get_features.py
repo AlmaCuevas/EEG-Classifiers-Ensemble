@@ -12,7 +12,7 @@ import time
 import antropy as ant
 import numpy
 from sklearn.feature_selection import f_classif
-
+import EEGExtract
 
 def get_entropy(data):
     entropy_values = []
@@ -101,11 +101,13 @@ def get_XXXX(data):
         entropy_values.append(np.mean(entropy_trial)) # The fastest one
     return entropy_values
 
-def get_extractions(data) -> pd.DataFrame:
+def get_extractions(data, dataset_info: dict) -> pd.DataFrame:
     # Create classification pipeline
     entropy = get_entropy(data)
     Mobility_values, Complexity_values = get_hjorth(data)
-    XXXX_values = get_XXXX(data)
+    falseNN = EEGExtract.falseNearestNeighbor(data)
+    coherence_res = EEGExtract.coherence(data, dataset_info["sample_rate"])
+
     df = pd.DataFrame({"entropy": entropy, "Complexity": Complexity_values, "Mobility": Mobility_values})
     return df
 
@@ -169,7 +171,7 @@ if __name__ == "__main__":
         ):  # Only two things I should be able to change
             print(subject_id)
             with open(
-                f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{dataset_name}.txt",
+                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
                 "a",
             ) as f:
                 f.write(f"Subject: {subject_id}\n\n")
@@ -190,7 +192,7 @@ if __name__ == "__main__":
                 clf, accuracy, columns_list = extractions_train(features_train_df, labels[train])
                 training_time.append(time.time() - start)
                 with open(
-                    f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{dataset_name}.txt",
+                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
                     "a",
                 ) as f:
                     f.write(f"Accuracy of training: {accuracy}\n")
@@ -217,7 +219,7 @@ if __name__ == "__main__":
                 testing_time_over_cv.append(np.mean(testing_time))
                 acc_over_cv.append(acc)
                 with open(
-                    f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{dataset_name}.txt",
+                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
                     "a",
                 ) as f:
                     f.write(f"Prediction: {pred_list}\n")
@@ -227,7 +229,7 @@ if __name__ == "__main__":
             mean_acc_over_cv = np.mean(acc_over_cv)
 
             with open(
-                f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{dataset_name}.txt",
+                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
                 "a",
             ) as f:
                 f.write(f"Final acc: {mean_acc_over_cv}\n\n\n\n")

@@ -57,7 +57,7 @@ coretto_info = {
 torres_info = {
 'dataset_name': 'torres',
 '#_class': 5, # 'arriba', 'abajo', 'izquierda', 'derecha'. They also did 'seleccionar', but we are not going to use that one.
-"target_names": {"Arriba", "Abajo", "Izquierda", "Derecha"},
+"target_names": ["Arriba", "Abajo", "Izquierda", "Derecha"],
 '#_channels': 14, # CHECK
 'samples': 421, # PENDING
 'sample_rate': 128,

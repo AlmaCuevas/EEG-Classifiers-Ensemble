@@ -7,7 +7,7 @@ from sklearn.model_selection import StratifiedKFold, GridSearchCV, train_test_sp
 from sklearn.metrics import classification_report
 
 from data_utils import get_best_classificator_and_test_accuracy, ClfSwitcher
-from share import datasets_basic_infos
+from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 from data_loaders import load_data_labels_based_on_dataset
 import time
 import pickle
@@ -25,15 +25,12 @@ import mne
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import f_classif
 
-
-ROOT_VOTING_SYSTEM_PATH: Path = Path(__file__).parent.parent.parent.resolve()
-
 # todo: add the test template
 # todo: do the deap thing about the FFT: https://github.com/tongdaxu/EEG_Emotion_Classifier_DEAP/blob/master/Preprocess_Deap.ipynb
 
 threshold_for_bug = 0.00000001  # could be any value, ex numpy.min
 
-def transform_data(data, dataset_info: dict, labels=None, methods: dict = {}) -> tuple[pd.DataFrame, dict]:
+def transform_data(data, dataset_info: dict, labels=None, transform_methods: dict = {}) -> tuple[pd.DataFrame, dict]:
     features: dict = {
     # Do not use 'Vect' transform, most of the time is nan or 0.25 if anything.
     "ERPcova": Pipeline([("ERPcova", ERPCovariances(estimator='oas')), ("ts", TangentSpace())]), # Add TangentSpace, otherwise the dimensions are not 2D.
@@ -42,21 +39,21 @@ def transform_data(data, dataset_info: dict, labels=None, methods: dict = {}) ->
     "Cova": Pipeline([("Cova", Covariances()), ("ts", TangentSpace())]), # Add TangentSpace, otherwise the dimensions are not 2D.
             }
     frequency_ranges: dict = {
-        "complete": [0, 140],
+        "complete": [0, 50],
         "delta": [0, 3],
         "theta": [3, 7],
         "alpha": [7, 13],
         "beta 1": [13, 16],
         "beta 2": [16, 20],
         "beta 3": [20, 35],
-        "gamma": [35, 140],
+        "gamma": [35, 50], # todo the 50 should be a value to change depending on the max freq, find later a variable that automatically changes it
     }
 
     features_df = pd.DataFrame()
 
     for feature_name, feature_method in features.items():
         if labels is not None:
-            methods[feature_name] = Pipeline([(feature_name, feature_method)])
+            transform_methods[feature_name] = Pipeline([(feature_name, feature_method)])
         for frequency_bandwidth_name, frequency_bandwidth in frequency_ranges.items():
             print(frequency_bandwidth)
             iir_params = dict(order=8, ftype="butter")
@@ -67,14 +64,14 @@ def transform_data(data, dataset_info: dict, labels=None, methods: dict = {}) ->
             filtered = signal.sosfiltfilt(filt["sos"], data)
             filtered[filtered < threshold_for_bug] = threshold_for_bug  # To avoid the error "SVD did not convergence"
             if labels is not None:
-                X_features = methods[feature_name].fit_transform(filtered, labels)
+                X_features = transform_methods[feature_name].fit_transform(filtered, labels)
             else:
-                X_features = methods[feature_name].transform(filtered)
+                X_features = transform_methods[feature_name].transform(filtered)
             print("Combined space has", X_features.shape[1], "features")
             column_name = [f'{frequency_bandwidth_name}_{feature_name}_{num}' for num in range(0, X_features.shape[1])]
             temp_features_df = pd.DataFrame(X_features, columns=column_name)
             features_df = pd.concat([features_df, temp_features_df], axis=1)
-    return features_df, methods
+    return features_df, transform_methods
 
 
 def selected_transformers_train(features_df, labels): # v1
@@ -112,7 +109,7 @@ if __name__ == "__main__":
 
         # Folders and paths
         dataset_foldername = dataset_name + "_dataset"
-        computer_root_path = str(ROOT_VOTING_SYSTEM_PATH) + "/Datasets/"
+        computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
         data_path = computer_root_path + dataset_foldername
         print(data_path)
         # Initialize
@@ -136,7 +133,7 @@ if __name__ == "__main__":
         ):  # Only two things I should be able to change
             print(subject_id)
             with open(
-                f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{dataset_name}.txt",
+                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
                 "a",
             ) as f:
                 f.write(f"Subject: {subject_id}\n\n")
@@ -153,12 +150,12 @@ if __name__ == "__main__":
                     "******************************** Training ********************************"
                 )
                 start = time.time()
-                features_train_df, methods = transform_data(data[train], dataset_info=dataset_info,
+                features_train_df, transform_methods = transform_data(data[train], dataset_info=dataset_info,
                                                             labels=labels[train])
                 clf, accuracy, columns_list = selected_transformers_train(features_train_df, labels[train])
                 training_time.append(time.time() - start)
                 with open(
-                    f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{dataset_name}.txt",
+                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
                     "a",
                 ) as f:
                     f.write(f"Accuracy of training: {accuracy}\n")
@@ -170,7 +167,7 @@ if __name__ == "__main__":
                 for epoch_number in test:
                     start = time.time()
                     features_test_df, _ = transform_data(np.asarray([data[epoch_number]]), dataset_info=dataset_info,
-                                                         labels=None, methods=methods)
+                                                         labels=None, transform_methods=transform_methods)
                     array = selected_transformers_test(clf, features_test_df[columns_list])
                     end = time.time()
                     testing_time.append(end - start)
@@ -186,7 +183,7 @@ if __name__ == "__main__":
                 testing_time_over_cv.append(np.mean(testing_time))
                 acc_over_cv.append(acc)
                 with open(
-                    f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{dataset_name}.txt",
+                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
                     "a",
                 ) as f:
                     f.write(f"Prediction: {pred_list}\n")
@@ -196,7 +193,7 @@ if __name__ == "__main__":
             mean_acc_over_cv = np.mean(acc_over_cv)
 
             with open(
-                f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{dataset_name}.txt",
+                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
                 "a",
             ) as f:
                 f.write(f"Final acc: {mean_acc_over_cv}\n\n\n\n")

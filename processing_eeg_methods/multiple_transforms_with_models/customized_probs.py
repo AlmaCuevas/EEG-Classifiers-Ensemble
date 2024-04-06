@@ -8,7 +8,7 @@ from sklearn.metrics import classification_report
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import f_classif
 from data_utils import get_best_classificator_and_test_accuracy, ClfSwitcher
-from share import datasets_basic_infos
+from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 from data_loaders import load_data_labels_based_on_dataset
 import time
 import pickle
@@ -25,8 +25,6 @@ from sklearn.pipeline import FeatureUnion
 from sklearn.preprocessing import FunctionTransformer
 from scipy import signal
 import mne
-
-ROOT_VOTING_SYSTEM_PATH: Path = Path(__file__).parent.parent.parent.resolve()
 
 # todo: add the test template
 # todo: do the deap thing about the FFT: https://github.com/tongdaxu/EEG_Emotion_Classifier_DEAP/blob/master/Preprocess_Deap.ipynb
@@ -96,14 +94,13 @@ def customized_test(clf, trial):
 
 if __name__ == "__main__":
     # Manual Inputs
-    #dataset_name = "torres"  # Only two things I should be able to change
-    datasets = ['aguilera_traditional', 'aguilera_gamified', 'torres']
+    datasets = ['coretto']
     for dataset_name in datasets:
-        version_name = "customized_only" # To keep track what the output processing alteration went through
+        version_name = "only_customized" # To keep track what the output processing alteration went through
 
         # Folders and paths
         dataset_foldername = dataset_name + "_dataset"
-        computer_root_path = str(ROOT_VOTING_SYSTEM_PATH) + "/Datasets/"
+        computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
         data_path = computer_root_path + dataset_foldername
         print(data_path)
         # Initialize
@@ -128,7 +125,7 @@ if __name__ == "__main__":
         ):  # Only two things I should be able to change
             print(subject_id)
             with open(
-                f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{dataset_name}.txt",
+                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
                 "a",
             ) as f:
                 f.write(f"Subject: {subject_id}\n\n")
@@ -148,7 +145,7 @@ if __name__ == "__main__":
                 clf, accuracy, processing_name = customized_train(data[train], labels[train])
                 training_time.append(time.time() - start)
                 with open(
-                    f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{dataset_name}.txt",
+                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
                     "a",
                 ) as f:
                     f.write(f"{processing_name}\n")
@@ -175,7 +172,7 @@ if __name__ == "__main__":
                 testing_time_over_cv.append(np.mean(testing_time))
                 acc_over_cv.append(acc)
                 with open(
-                    f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{dataset_name}.txt",
+                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
                     "a",
                 ) as f:
                     f.write(f"Prediction: {pred_list}\n")
@@ -185,7 +182,7 @@ if __name__ == "__main__":
             mean_acc_over_cv = np.mean(acc_over_cv)
 
             with open(
-                f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{dataset_name}.txt",
+                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
                 "a",
             ) as f:
                 f.write(f"Final acc: {mean_acc_over_cv}\n\n\n\n")

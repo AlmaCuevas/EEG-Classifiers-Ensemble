@@ -2,6 +2,8 @@ import numpy as np
 import mne
 from scipy.io import loadmat
 import os
+
+from data_preprocess import data_normalization
 from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 from Inner_Speech_Dataset.Python_Processing.Data_extractions import Extract_data_from_subject
 from Inner_Speech_Dataset.Python_Processing.Data_processing import Select_time_window, Transform_for_classificator
@@ -24,9 +26,10 @@ def aguilera_dataset_loader(data_path: str, gamified: bool):
         raw.rename_channels({'Channel 1':'FP1', 'Channel 2':'FP2', 'Channel 3':'F3', 'Channel 4':'F4', 'Channel 5':'C3', 'Channel 6':'C4', 'Channel 7':'P3', 'Channel 8':'P4', 'Channel 9':'O1', 'Channel 10':'O2', 'Channel 11':'F7', 'Channel 12':'F8', 'Channel 13':'T7', 'Channel 14':'T8', 'Channel 15':'P7', 'Channel 16':'P8', 'Channel 17':'Fz', 'Channel 18':'Cz', 'Channel 19':'Pz', 'Channel 20':'M1', 'Channel 21':'M2', 'Channel 22':'AFz', 'Channel 23':'CPz', 'Channel 24':'POz'})
     channel_location = str(ROOT_VOTING_SYSTEM_PATH) + "/mBrain_24ch_locations.txt"
     raw.set_montage(mne.channels.read_custom_montage(channel_location))
-    raw.set_eeg_reference(ref_channels=['M1', 'M2']) # If I do this it, the XDAWN doesn't run.
-    raw.filter(l_freq=0.5, h_freq=140)
-    raw.notch_filter(freqs=60)
+    #raw.set_eeg_reference(ref_channels=['M1', 'M2']) # If I do this it, the XDAWN doesn't run.
+    raw.set_eeg_reference(ref_channels='average')
+    raw.filter(l_freq=0.5, h_freq=50)
+    #raw.notch_filter(freqs=60)
     #bad_annot = mne.Annotations()
     #raw.set_annotations(bad)
     # reject_by_annotation=True,
@@ -198,7 +201,7 @@ def coretto_dataset_loader(filepath: str):
     event_dict = {"Arriba": 0, "Abajo": 1, "Derecha": 2, "Izquierda": 3}
     return x, y, event_dict
 
-def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_path: str, transpose: bool = False):
+def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_path: str, transpose: bool = False, normalize: bool = True):
     if dataset_name not in ['aguilera_traditional', 'aguilera_gamified', 'nieto', 'coretto', 'torres']:
         raise Exception(
             f"Not supported dataset named '{dataset_name}', choose from the following: aguilera_traditional, aguilera_gamified, nieto, coretto or torres.")
@@ -227,29 +230,32 @@ def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_p
         filename = "IndividuosS1-S7(17columnas)-Epocas.mat"
         filepath = os.path.join(data_path, filename)
         data, label, event_dict = torres_dataset_loader(filepath, subject_id)
-    if 'aguilera' not in dataset_name:
-        events = np.column_stack((
-            np.arange(0, dataset_info['sample_rate'] * data.shape[0], dataset_info['sample_rate']),
-            np.zeros(len(label), dtype=int),
-            np.array(label),
-        ))
 
-        #def optimize_float(series):
-        #    low_consumption = series.astype('float16')
-        #    return low_consumption
+    # Convert to epochs
+    events = np.column_stack((
+        np.arange(0, dataset_info['sample_rate'] * data.shape[0], dataset_info['sample_rate']),
+        np.zeros(len(label), dtype=int),
+        np.array(label),
+    ))
 
-        #data = optimize_float(data)
-        epochs = EpochsArray(data, info=mne.create_info(dataset_info['#_channels'],
-                                                        sfreq=dataset_info['sample_rate'], ch_types='eeg'), events=events,
-                             event_id=event_dict)
+    #def optimize_float(series):
+    #    low_consumption = series.astype('float16')
+    #    return low_consumption
+
+    #data = optimize_float(data)
+    epochs = EpochsArray(data, info=mne.create_info(dataset_info['#_channels'],
+                                                    sfreq=dataset_info['sample_rate'], ch_types='eeg'), events=events,
+                         event_id=event_dict)
     if transpose:
         data = np.transpose(data, (0, 2, 1))
+    if normalize:
+        data = data_normalization(data)
     return epochs, data, label
 
 if __name__ == '__main__':
     # Manual Inputs
     subject_id = 2  # Only two things I should be able to change
-    dataset_name = 'aguilera_traditional'  # Only two things I should be able to change
+    dataset_name = 'aguilera_gamified'  # Only two things I should be able to change
 
     print(ROOT_VOTING_SYSTEM_PATH)
     # Folders and paths

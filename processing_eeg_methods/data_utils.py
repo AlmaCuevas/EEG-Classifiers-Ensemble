@@ -12,22 +12,21 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
-#from pyriemann.classification import MDM
 from sklearn.tree import DecisionTreeClassifier
 
-classifiers = [
-    # KNeighborsClassifier(3), # 0.20
-    # SVC(kernel='linear', probability=True), # 0.17
-    # GaussianProcessClassifier(1.0 * RBF(1.0), random_state=42), # 0.20 # It doesn't have .coef
-    # DecisionTreeClassifier(max_depth=5, random_state=42), # 0.17 # It doesn't have .coef
-    RandomForestClassifier(max_depth=5, n_estimators=100, max_features=1, random_state=42), # 0.25 It doesn't have .coef
-    # MLPClassifier(alpha=1, max_iter=1000, random_state=42), #'MLPClassifier' object has no attribute 'coef_'. Did you mean: 'coefs_'?
-    # AdaBoostClassifier(algorithm="SAMME", random_state=42),
-    # GaussianNB(),
-    # QuadraticDiscriminantAnalysis(),
-    # LinearDiscriminantAnalysis(),
-    # LogisticRegression(),
-    # MDM() Always nan at the end
+# MDM() Always nan at the end
+classifiers = [ # The Good, Medium and Bad is decided on Torres dataset. This to avoid most of the processings.
+    # KNeighborsClassifier(3), # Good
+    SVC(kernel='linear', probability=True), # Good
+    # GaussianProcessClassifier(1.0 * RBF(1.0), random_state=42), # Good # It doesn't have .coef
+    # DecisionTreeClassifier(max_depth=5, random_state=42), # Good # It doesn't have .coef
+    # RandomForestClassifier(max_depth=5, n_estimators=100, max_features=1, random_state=42), # Good It doesn't have .coef
+    # MLPClassifier(alpha=1, max_iter=1000, random_state=42), # Good # 'MLPClassifier' object has no attribute 'coef_'. Did you mean: 'coefs_'?
+    # AdaBoostClassifier(algorithm="SAMME", random_state=42), # Medium
+    # GaussianNB(), # Medium
+    # QuadraticDiscriminantAnalysis(), # Bad
+    # LinearDiscriminantAnalysis(), # Bad
+    LogisticRegression(), # Good
 ]
 
 
