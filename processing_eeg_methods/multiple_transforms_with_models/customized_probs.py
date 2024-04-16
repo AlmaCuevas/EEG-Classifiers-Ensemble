@@ -56,9 +56,9 @@ def customized_train(data, labels): # v1
 
     estimators = OrderedDict()
     # Do not use 'Vect' transform, most of the time is nan or 0.25 if anything.
-    estimators['ERPCov + TS'] = Pipeline([("ERPcova", ERPCovariances(estimator='oas')), ("ts", TangentSpace()), ('clf', ClfSwitcher())])
-    estimators['XdawnCov + TS'] = Pipeline([("XdawnCova", XdawnCovariances(estimator='oas')), ("ts", TangentSpace()), ('clf', ClfSwitcher())])
-    estimators['CSP'] = Pipeline( [ ("CSP", CSP(n_components=4, reg=None, log=True, norm_trace=False)), ('clf', ClfSwitcher())])
+    #estimators['ERPCov + TS'] = Pipeline([("ERPcova", ERPCovariances(estimator='oas')), ("ts", TangentSpace()), ('clf', ClfSwitcher())])
+    #estimators['XdawnCov + TS'] = Pipeline([("XdawnCova", XdawnCovariances(estimator='oas')), ("ts", TangentSpace()), ('clf', ClfSwitcher())])
+    #estimators['CSP'] = Pipeline( [ ("CSP", CSP(n_components=4, reg=None, log=True, norm_trace=False)), ('clf', ClfSwitcher())]) # Get into cov.py and do copy='auto' https://stackoverflow.com/questions/76431070/mne-valueerror-data-copying-was-not-requested-by-copy-none-but-it-was-require
     estimators['Cova + TS'] = Pipeline([("Cova", Covariances()), ("ts", TangentSpace()), ('clf', ClfSwitcher())]) # This is probably the best one, at least for Torres
 
     accuracy_list = []
@@ -94,7 +94,7 @@ def customized_test(clf, trial):
 
 if __name__ == "__main__":
     # Manual Inputs
-    datasets = ['coretto']
+    datasets = ['ic_bci_2020']
     for dataset_name in datasets:
         version_name = "only_customized" # To keep track what the output processing alteration went through
 
@@ -105,13 +105,7 @@ if __name__ == "__main__":
         print(data_path)
         # Initialize
         processing_name: str = ''
-        if dataset_name not in [
-            "aguilera_traditional",
-            "aguilera_gamified",
-            "nieto",
-            "coretto",
-            "torres",
-        ]:
+        if dataset_name not in datasets_basic_infos:
             raise Exception(
                 f"Not supported dataset named '{dataset_name}', choose from the following: aguilera_traditional, aguilera_gamified, nieto, coretto or torres."
             )
@@ -129,7 +123,7 @@ if __name__ == "__main__":
                 "a",
             ) as f:
                 f.write(f"Subject: {subject_id}\n\n")
-            epochs, data, labels = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
+            epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
             data[data < threshold_for_bug] = threshold_for_bug # To avoid the error "SVD did not convergence"
             # Do cross-validation
             cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)

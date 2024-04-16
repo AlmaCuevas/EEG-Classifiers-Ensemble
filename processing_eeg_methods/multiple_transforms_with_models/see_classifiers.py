@@ -70,7 +70,7 @@ for ds_cnt, ds in enumerate(datasets):
     print(ROOT_VOTING_SYSTEM_PATH)
     # Folders and paths
     dataset_foldername = ds + '_dataset'
-    computer_root_path = str(ROOT_VOTING_SYSTEM_PATH) + "/Datasets/"
+    computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
     data_path = computer_root_path + dataset_foldername
 
     epochs, data, y  = load_data_labels_based_on_dataset(ds, subject_id, data_path)

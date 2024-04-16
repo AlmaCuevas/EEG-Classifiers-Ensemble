@@ -70,7 +70,7 @@ else:
 print(f'Device is set to {device}\nNumber of workers: {workers}')
 
 from Code.data_loaders import load_data_labels_based_on_dataset
-from share import datasets_basic_infos
+from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 from Code.data_utils import train_test_val_split
 
 """# Importing data and Preprocessing"""
@@ -715,7 +715,7 @@ if __name__ == '__main__':
         computer_root_path = "/Users/almacuevas/work_projects/voting_system_platform/Datasets/"  # MAC
         data_path = computer_root_path + dataset_foldername
 
-        data, label = load_data_labels_based_on_dataset(dataset_name, subject, data_path)
+        data, label = load_data_labels_based_on_dataset(dataset_info, subject, data_path)
         data = np.asarray([data])
         data = np.transpose(data, (1, 0, 2, 3))
 

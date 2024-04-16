@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.linear_model import SGDClassifier
 from sklearn.model_selection import train_test_split, StratifiedKFold, GridSearchCV
-
+from sklearn.base import BaseEstimator
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
 from sklearn.gaussian_process import GaussianProcessClassifier
@@ -26,7 +26,7 @@ classifiers = [ # The Good, Medium and Bad is decided on Torres dataset. This to
     # GaussianNB(), # Medium
     # QuadraticDiscriminantAnalysis(), # Bad
     # LinearDiscriminantAnalysis(), # Bad
-    LogisticRegression(), # Good
+    #LogisticRegression(), # Good
 ]
 
 
@@ -76,8 +76,6 @@ def get_best_classificator_and_test_accuracy(data, labels, estimators):
     if acc <= 0.25:
         acc = np.nan
     return clf.best_estimator_, acc
-
-from sklearn.base import BaseEstimator
 
 class ClfSwitcher(BaseEstimator):
     # https://stackoverflow.com/questions/48507651/multiple-classification-models-in-a-scikit-pipeline-python

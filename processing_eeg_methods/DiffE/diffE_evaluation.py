@@ -25,7 +25,7 @@ dataset_name = "aguilera_traditional"  # Only two things I should be able to cha
 
 # Folders and paths
 dataset_foldername = dataset_name + "_dataset"
-computer_root_path = str(ROOT_VOTING_SYSTEM_PATH) + "/Datasets/"
+computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
 data_path = computer_root_path + dataset_foldername
 
 dataset_info = datasets_basic_infos[dataset_name]
@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
     # Folders and paths
     dataset_foldername = dataset_name + "_dataset"
-    computer_root_path = str(ROOT_VOTING_SYSTEM_PATH) + "/Datasets/"
+    computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
     data_path = computer_root_path + dataset_foldername
     print(data_path)
     dataset_info = datasets_basic_infos[dataset_name]
@@ -92,7 +92,7 @@ if __name__ == "__main__":
 
     for subject_id in range(1, dataset_info['subjects'] + 1):
         print(f"\nSubject: {subject_id}")
-        _, X, Y = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
+        _, X, Y = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
 
         # create an argument parser for the data loader path
 

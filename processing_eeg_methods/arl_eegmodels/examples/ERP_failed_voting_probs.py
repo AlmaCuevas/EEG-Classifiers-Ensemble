@@ -123,7 +123,7 @@ if __name__ == '__main__':
     # to be explicit in case if the user has changed the default ordering
     K.set_image_data_format('channels_last')
 
-    data, label = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
+    data, label = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
     target_names = dataset_info['target_names']
 
     data_train, data_test, _, labels_train, labels_test, _ = train_test_val_split(

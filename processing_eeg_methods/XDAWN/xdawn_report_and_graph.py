@@ -44,7 +44,7 @@ data_path = computer_root_path + dataset_foldername
 dataset_info = datasets_basic_infos[dataset_name]
 
 for subject_id in range(1, dataset_info['subjects'] + 1):
-    epochs, y = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
+    epochs, y = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
     n_filter = 5
     # Create classification pipeline
     clf = make_pipeline(

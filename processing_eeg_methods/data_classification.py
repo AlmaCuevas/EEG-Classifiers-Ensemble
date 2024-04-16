@@ -20,7 +20,7 @@ from XDAWN.xdawn_probs import xdawn_train, xdawn_test
 from sklearn.preprocessing import normalize
 from diffE_training import diffE_train
 from diffE_evaluation import diffE_evaluation
-
+from Extraction.get_features_probs import get_extractions, extractions_train, extractions_test
 
 import pandas as pd
 
@@ -38,6 +38,8 @@ def group_methods_train(
 ):
     target_names = dataset_info["target_names"]
     processing_name: str = ''
+    columns_list: list = []
+    transform_methods: dict = {}
     # Standard methods:
     if methods["selected_transformers"]:
         print("selected_transformers")
@@ -106,19 +108,20 @@ def group_methods_train(
         print("LSTM")
         start_time = time.time()
         models_outputs["LSTM_clf"], models_outputs["LSTM_accuracy"] = LSTM_train(
-            dataset_name, data, labels
+            dataset_name, data, labels, dataset_info['#_class']
         )
         models_outputs["LSTM_train_timer"] = time.time() - start_time
     if methods["GRU"]:
         print("GRU")
         start_time = time.time()
-        models_outputs["GRU_clf"], models_outputs["GRU_accuracy"] = GRU_train(dataset_name, data, labels)
+        models_outputs["GRU_clf"], models_outputs["GRU_accuracy"] = GRU_train(dataset_name, data, labels,
+                                                                              dataset_info['#_class'])
         models_outputs["GRU_train_timer"] = time.time() - start_time
     if methods["CNN_LSTM"]:
         print("CNN_LSTM")
         start_time = time.time()
         models_outputs["CNN_LSTM_clf"], models_outputs["CNN_LSTM_accuracy"] = CNN_LSTM_train(
-            data, labels
+            data, labels, dataset_info['#_class']
         )
         models_outputs["CNN_LSTM_train_timer"] = time.time() - start_time
     if methods["diffE"]:
@@ -130,7 +133,8 @@ def group_methods_train(
     if methods["feature_extraction"]:
         print("feature_extraction")
         start_time = time.time()
-        print("Not implemented yet")
+        features_df = get_extractions(data, dataset_info)
+        models_outputs["feature_extraction_clf"], models_outputs["feature_extraction_accuracy"] =extractions_train(features_df, labels)
         models_outputs["feature_extraction_train_timer"] = time.time() - start_time
 
     return models_outputs, processing_name, columns_list, transform_methods
@@ -215,85 +219,95 @@ def group_methods_test(methods: dict, columns_list: list, transform_methods: dic
     if methods["diffE"]:
         print("diffE")
         start_time = time.time()
-        _, models_outputs["diffE_probabilities"] = diffE_evaluation(subject_id=subject_id, X=data_array, Y=[1], dataset_info=dataset_info) # Y is just a filling to avoid editing the code further, but its not used
+        _, models_outputs["diffE_probabilities"] = normalize(diffE_evaluation(subject_id=subject_id, X=data_array, Y=[1], dataset_info=dataset_info)) # Y is just a filling to avoid editing the code further, but its not used
         models_outputs["diffE_test_timer"] = time.time() - start_time
 
     if methods["feature_extraction"]:
         print("feature_extraction")
         start_time = time.time()
-        print("Not implemented yet")
+        models_outputs["feature_extraction_probabilities"] = normalize(extractions_test(models_outputs["feature_extraction_clf"], data_array))
         models_outputs["feature_extraction_test_timer"] = time.time() - start_time
 
-    probs_list = [
-        np.argmax(models_outputs[f"{method}_probabilities"])
-        for method in methods if models_outputs[f"{method}_accuracy"] is not np.nan
-    ]
+    return methods, models_outputs
 
-    # probs_list = [
-    #     np.multiply(
-    #         models_outputs[f"{method}_probabilities"], models_outputs[f"{method}_accuracy"]
-    #     )
-    #     for method in methods
-    # ]
+def voting_decision(methods: dict, models_outputs: dict, voting_by_mode: bool = False):
+    if voting_by_mode:
+        probs_list = [
+            np.argmax(models_outputs[f"{method}_probabilities"])
+            for method in methods if models_outputs[f"{method}_accuracy"] is not np.nan
+        ]
+        return probs_list
+    else:  # voting_by_array_probabilities
+        probs_list = [
+            np.multiply(
+                models_outputs[f"{method}_probabilities"], models_outputs[f"{method}_accuracy"]
+            )
+            for method in methods
+        ]
 
-    # You need to select at least two for this to work
-    #probs = np.nanmean(probs_list, axis=0) # Mean over columns
-    return max(set(probs_list), key=probs_list.count)
+        # You need to select at least two for this to work
+        probs = np.nanmean(probs_list, axis=0)  # Mean over columns
+
+        return probs
+
+def probabilities_to_answer(probs_list: list, voting_by_mode: bool = False):
+    if voting_by_mode:
+        return max(set(probs_list), key=probs_list.count)
+    else:  # voting_by_array_probabilities
+        probs = np.nanmean(probs_list, axis=0)  # Mean over columns
+        return np.argmax(probs)
 
 
 if __name__ == "__main__":
     # Manual Inputs
     #dataset_name = "torres"  # Only two things I should be able to change
    # datasets = ['aguilera_gamified', 'aguilera_traditional', 'torres']
-    datasets = ['coretto']
+    datasets = ['ic_bci_2020']
+    voting_by_mode = False
     for dataset_name in datasets:
-        version_name = "multiple_classifier_no_preprocess" # To keep track what the output processing alteration went through
+        version_name = "multiple_classifier" # To keep track what the output processing alteration went through
 
         # Folders and paths
         dataset_foldername = dataset_name + "_dataset"
-        computer_root_path = str(ROOT_VOTING_SYSTEM_PATH) + "/Datasets/"
+        computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
         data_path = computer_root_path + dataset_foldername
         print(data_path)
         # Initialize
         methods = {
-            "selected_transformers": True, # Like customized but with frequency bands and selected columns
+            "selected_transformers": False, # Like customized but with frequency bands and selected columns
             "customized": True,
-            "XDAWN_LogReg": False, #Todo sometimes "numpy.linalg.LinAlgError: SVD did not converge", maybe we have to normalize?
+            "XDAWN_LogReg": False, # Todo: ValueError: Cannot apply correct_overlap if epochs were baselined.
             "TCANET_Global_Model": False, # BAD
             "TCANET": False, # BAD #todo It always gives answer 0. Even when the training is high. why?
-            "diffE": True,
-            "DeepConvNet": False, # BAD
+            "diffE": True, #todo: for ic_bci_2020 diffE evaluation doesnt run because the array shape is weird? check!
+            "DeepConvNet": False, # BAD #todo: ValueError: Shapes (None, 5) and (None, 4) are incompatible
             "LSTM": False, # BAD
             "GRU": False, # BAD
             "CNN_LSTM": False, # BAD
             "feature_extraction": False,
         }
         keys = list(methods.keys())
-        models_outputs = dict.fromkeys([key + "_accuracy" for key in keys], np.nan)
-        models_outputs.update(
-            dict.fromkeys(
-                [key + "_probabilities" for key in keys], np.asarray([[0, 0, 0, 0]])
-            )
-        )
+
         processing_name: str = ''
-        if dataset_name not in [
-            "aguilera_traditional",
-            "aguilera_gamified",
-            "nieto",
-            "coretto",
-            "torres",
-        ]:
+        if dataset_name not in datasets_basic_infos:
             raise Exception(
                 f"Not supported dataset named '{dataset_name}', choose from the following: aguilera_traditional, aguilera_gamified, nieto, coretto or torres."
             )
         dataset_info: dict = datasets_basic_infos[dataset_name]
+
+        models_outputs = dict.fromkeys([key + "_accuracy" for key in keys], np.nan)
+        models_outputs.update(
+            dict.fromkeys(
+                [key + "_probabilities" for key in keys], np.asarray([[np.nan] * dataset_info['#_class']])
+            )
+        )
 
         mean_accuracy_per_subject: list = []
         results_df = pd.DataFrame()
         activated_methods: list = [k for k, v in methods.items() if v == True]
 
         for subject_id in range(
-            1, dataset_info["subjects"] + 1 #todo: run not normalized again. I think normalized is better though
+            1, dataset_info["subjects"] + 1
         ):  # Only two things I should be able to change
             print(subject_id)
             with open(
@@ -301,10 +315,10 @@ if __name__ == "__main__":
                 "a",
             ) as f:
                 f.write(f"Subject: {subject_id}\n\n")
-            epochs, data, labels = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
+            epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
             data[data < threshold_for_bug] = threshold_for_bug # To avoid the error "SVD did not convergence"
-            # Do cross-validation
-            cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
+
+            cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42) # Do cross-validation
             acc_over_cv = []
             test_accuracy_dict_lists = dict((f'{k}_acc', []) for k in activated_methods)
             test_timer_dict_lists = dict((f'{k}_test_timer', []) for k in activated_methods)
@@ -350,7 +364,7 @@ if __name__ == "__main__":
                 all_methods_pred_list = []
                 for epoch_number in test:
                     # start = time.time()
-                    voting_system_pred = group_methods_test(
+                    methods, models_outputs = group_methods_test(
                         methods,
                         columns_list,
                         transform_methods,
@@ -358,6 +372,8 @@ if __name__ == "__main__":
                         np.asarray([data[epoch_number]]),
                         epochs[epoch_number],
                     )
+                    probs = voting_decision(methods, models_outputs, voting_by_mode)
+                    voting_system_pred = probabilities_to_answer(probs, voting_by_mode)
                     # end = time.time()
                     # print("One epoch, testing time: ", end - start)
                     print(dataset_info["target_names"])
@@ -369,7 +385,7 @@ if __name__ == "__main__":
                         if 'test_timer' in k and k[:-11] in activated_methods:
                             test_timer_methods[f'{k[:-11]}_test_timer'].append(v)
 
-                    # voting_system_pred = np.argmax(array)
+
                     pred_list.append(voting_system_pred)
                     print("Prediction: ", voting_system_pred)
                     print("Real: ", labels[epoch_number])

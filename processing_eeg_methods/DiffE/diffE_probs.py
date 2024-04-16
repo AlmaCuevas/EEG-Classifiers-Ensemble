@@ -76,18 +76,12 @@ if __name__ == "__main__":
 
         # Folders and paths
         dataset_foldername = dataset_name + "_dataset"
-        computer_root_path = str(ROOT_VOTING_SYSTEM_PATH) + "/Datasets/"
+        computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
         data_path = computer_root_path + dataset_foldername
         print(data_path)
         # Initialize
         processing_name: str = ''
-        if dataset_name not in [
-            "aguilera_traditional",
-            "aguilera_gamified",
-            "nieto",
-            "coretto",
-            "torres",
-        ]:
+        if dataset_name not in datasets_basic_infos:
             raise Exception(
                 f"Not supported dataset named '{dataset_name}', choose from the following: aguilera_traditional, aguilera_gamified, nieto, coretto or torres."
             )
@@ -101,11 +95,11 @@ if __name__ == "__main__":
         ):  # Only two things I should be able to change
             print(subject_id)
             with open(
-                f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{dataset_name}.txt",
+                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
                 "a",
             ) as f:
                 f.write(f"Subject: {subject_id}\n\n")
-            epochs, data, labels = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
+            epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
             data[data < threshold_for_bug] = threshold_for_bug # To avoid the error "SVD did not convergence"
             # Do cross-validation
             cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
@@ -121,7 +115,7 @@ if __name__ == "__main__":
                 clf, accuracy, processing_name = diffE_train(data[train], labels[train])
                 training_time.append(time.time() - start)
                 with open(
-                    f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{dataset_name}.txt",
+                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
                     "a",
                 ) as f:
                     f.write(f"{processing_name}\n")
@@ -148,7 +142,7 @@ if __name__ == "__main__":
                 testing_time_over_cv.append(np.mean(testing_time))
                 acc_over_cv.append(acc)
                 with open(
-                    f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{dataset_name}.txt",
+                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
                     "a",
                 ) as f:
                     f.write(f"Prediction: {pred_list}\n")
@@ -158,7 +152,7 @@ if __name__ == "__main__":
             mean_acc_over_cv = np.mean(acc_over_cv)
 
             with open(
-                f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{dataset_name}.txt",
+                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
                 "a",
             ) as f:
                 f.write(f"Final acc: {mean_acc_over_cv}\n\n\n\n")

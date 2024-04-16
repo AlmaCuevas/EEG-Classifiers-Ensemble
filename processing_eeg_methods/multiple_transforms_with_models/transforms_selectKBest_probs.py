@@ -78,9 +78,9 @@ def selected_transformers_train(features_df, labels): # v1
     X_SelectKBest = SelectKBest(f_classif, k=100)
     X_new = X_SelectKBest.fit_transform(features_df, labels)
     columns_list = X_SelectKBest.get_feature_names_out()
-    X_new_df = pd.DataFrame(X_new, columns=columns_list)
+    features_df = pd.DataFrame(X_new, columns=columns_list)
 
-    classifier, acc = get_best_classificator_and_test_accuracy(X_new_df, labels, Pipeline([('clf', ClfSwitcher())]))
+    classifier, acc = get_best_classificator_and_test_accuracy(features_df, labels, Pipeline([('clf', ClfSwitcher())]))
     return classifier, acc, columns_list
 
 def selected_transformers_test(clf, features_df):
@@ -113,13 +113,7 @@ if __name__ == "__main__":
         data_path = computer_root_path + dataset_foldername
         print(data_path)
         # Initialize
-        if dataset_name not in [
-            "aguilera_traditional",
-            "aguilera_gamified",
-            "nieto",
-            "coretto",
-            "torres",
-        ]:
+        if dataset_name not in datasets_basic_infos:
             raise Exception(
                 f"Not supported dataset named '{dataset_name}', choose from the following: aguilera_traditional, aguilera_gamified, nieto, coretto or torres."
             )
@@ -137,7 +131,7 @@ if __name__ == "__main__":
                 "a",
             ) as f:
                 f.write(f"Subject: {subject_id}\n\n")
-            epochs, data, labels = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
+            epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path, normalize=False) # If I normalize it doesn't run
 
             # Do cross-validation
             cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)

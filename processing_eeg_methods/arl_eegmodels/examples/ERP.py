@@ -27,11 +27,11 @@ array_format = True
 
 # Folders and paths
 dataset_foldername = dataset_name + '_dataset'
-computer_root_path = str(ROOT_VOTING_SYSTEM_PATH) + "/Datasets/"
+computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
 data_path = computer_root_path + dataset_foldername
 dataset_info = datasets_basic_infos[dataset_name]
 
-data, label = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
+data, label = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
 label = label +1 # It can't read 0,1,2,3; it has to be 1,2,3,4
 target_names = dataset_info['target_names']
 

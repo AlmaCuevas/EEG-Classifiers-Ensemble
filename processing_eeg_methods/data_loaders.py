@@ -24,7 +24,7 @@ def aguilera_dataset_loader(data_path: str, gamified: bool): #typed
             pass
     else:
         raw.rename_channels({'Channel 1':'FP1', 'Channel 2':'FP2', 'Channel 3':'F3', 'Channel 4':'F4', 'Channel 5':'C3', 'Channel 6':'C4', 'Channel 7':'P3', 'Channel 8':'P4', 'Channel 9':'O1', 'Channel 10':'O2', 'Channel 11':'F7', 'Channel 12':'F8', 'Channel 13':'T7', 'Channel 14':'T8', 'Channel 15':'P7', 'Channel 16':'P8', 'Channel 17':'Fz', 'Channel 18':'Cz', 'Channel 19':'Pz', 'Channel 20':'M1', 'Channel 21':'M2', 'Channel 22':'AFz', 'Channel 23':'CPz', 'Channel 24':'POz'})
-    channel_location = str(ROOT_VOTING_SYSTEM_PATH) + "/mBrain_24ch_locations.txt"
+    channel_location = ROOT_VOTING_SYSTEM_PATH + "/mBrain_24ch_locations.txt"
     raw.set_montage(mne.channels.read_custom_montage(channel_location))
     #raw.set_eeg_reference(ref_channels=['M1', 'M2']) # If I do this it, the XDAWN doesn't run.
     raw.set_eeg_reference(ref_channels='average')
@@ -201,11 +201,29 @@ def coretto_dataset_loader(filepath: str):
     event_dict = {"Arriba": 0, "Abajo": 1, "Derecha": 2, "Izquierda": 3}
     return x, y, event_dict
 
-def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_path: str, transpose: bool = False, normalize: bool = True):
-    if dataset_name not in ['aguilera_traditional', 'aguilera_gamified', 'nieto', 'coretto', 'torres']:
-        raise Exception(
-            f"Not supported dataset named '{dataset_name}', choose from the following: aguilera_traditional, aguilera_gamified, nieto, coretto or torres.")
-    dataset_info = datasets_basic_infos[dataset_name]
+def ic_bci_2020_dataset_loader(filepath: str):
+    EEG_nested_dict = loadmat(filepath, simplify_cells=True)
+    # PENDING. You have to open it in Matlab and check structure
+    x=EEG_nested_dict['epo_train']['x'] # Raw data (time × channels × trials)
+    x = np.transpose(x, (2, 1, 0)) # Raw data (trials, channels, time)
+    y=EEG_nested_dict['epo_train']['y']
+    y=np.argmax(y.transpose(), axis=1)
+    event_dict = {'Hello': 0, 'Help me': 1, 'Stop': 2, 'Thank you': 3, 'Yes': 4}
+    return x, y, event_dict
+
+def nguyen_2019_dataset_loader(folderpath: str):
+    EEG = []
+    for run_index in range(0,8): # There are 7 runs
+        filename = f"Run{run_index}.mat"
+        filepath = os.path.join(folderpath, filename)
+        EEG[run_index] = loadmat(filepath, simplify_cells=True)
+    x=0
+    y=0
+    event_dict = {'left hand':0, 'concentrate':1, 'right hand':2, 'split':3}
+    return x, y, event_dict
+
+def load_data_labels_based_on_dataset(dataset_info: dict, subject_id: int, data_path: str, transpose: bool = False, normalize: bool = True):
+    dataset_name = dataset_info['dataset_name']
 
     event_dict: dict = {}
     label: list = []
@@ -230,7 +248,14 @@ def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_p
         filename = "IndividuosS1-S7(17columnas)-Epocas.mat"
         filepath = os.path.join(data_path, filename)
         data, label, event_dict = torres_dataset_loader(filepath, subject_id)
-
+    elif dataset_name == 'ic_bci_2020':
+        foldername = "Training set"
+        filename = "Data_Sample{:02d}.mat".format(subject_id)
+        path = [data_path, foldername, filename]
+        filepath = os.path.join(*path)
+        data, label, event_dict = ic_bci_2020_dataset_loader(filepath)
+    elif dataset_name == 'nguyen_2019':
+        data, label, event_dict = nguyen_2019_dataset_loader(data_path, subject_id)
     # Convert to epochs
     events = np.column_stack((
         np.arange(0, dataset_info['sample_rate'] * data.shape[0], dataset_info['sample_rate']),
@@ -245,7 +270,7 @@ def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_p
     #data = optimize_float(data)
     epochs = EpochsArray(data, info=mne.create_info(dataset_info['#_channels'],
                                                     sfreq=dataset_info['sample_rate'], ch_types='eeg'), events=events,
-                         event_id=event_dict)
+                         event_id=event_dict, baseline=(None, None))
     if transpose:
         data = np.transpose(data, (0, 2, 1))
     if normalize:
@@ -255,18 +280,23 @@ def load_data_labels_based_on_dataset(dataset_name: str, subject_id: int, data_p
 if __name__ == '__main__':
     # Manual Inputs
     subject_id = 2  # Only two things I should be able to change
-    dataset_name = 'aguilera_gamified'  # Only two things I should be able to change
+    dataset_name = 'ic_bci_2020'  # Only two things I should be able to change
+
+    if dataset_name not in datasets_basic_infos:
+        raise Exception(
+            f"Not supported dataset named '{dataset_name}', choose from the following: aguilera_traditional, aguilera_gamified, nieto, coretto or torres."
+        )
+    dataset_info: dict = datasets_basic_infos[dataset_name]
 
     print(ROOT_VOTING_SYSTEM_PATH)
     # Folders and paths
     dataset_foldername = dataset_name + '_dataset'
-    computer_root_path = str(ROOT_VOTING_SYSTEM_PATH) + "/Datasets/"
+    computer_root_path = ROOT_VOTING_SYSTEM_PATH + '/Datasets/'
     data_path = computer_root_path + dataset_foldername
 
-    epochs, data, labels = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
+    epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
 
-
-    print(data.shape)
+    print(data.shape) # trials, channels, time
     print(labels.shape)
     print("Congrats! You were able to load data. You can now use this in a processing method.")
 
