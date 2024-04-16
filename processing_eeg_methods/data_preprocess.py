@@ -39,23 +39,18 @@ def bandpass_cnt(data, low_cut_hz, high_cut_hz, fs, filt_order=200, zero_phase=F
     return data_bandpassed
 
 
-def data_norm(data):
-    """
-    对数据进行归一化
-    :param data:   ndarray ,shape[N,channel,samples]
-    :return:
-    """
-    data_copy = np.copy(data)
-    for i in range(len(data)):
-        data_copy[i] = data_copy[i] / np.max(abs(data[i]))
+def data_normalization(data):
+    min_val = np.min(data)
+    max_val = np.max(data)
+    scaled_data = (data - min_val) / (max_val - min_val)
 
-    return data_copy
+    return scaled_data
 
 
 def prepare_data(data):
     # [-1,1]
 
-    data_preprocss = data_norm(data)
+    data_preprocss = data_normalization(data)
     data_ea = preprocess_ea(data_preprocss)
 
     data_pre = np.expand_dims(data_ea, axis=1)

@@ -14,12 +14,11 @@ from tensorflow.keras import backend as K
 import time
 
 from data_utils import train_test_val_split
-from share import datasets_basic_infos
+from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 from data_loaders import load_data_labels_based_on_dataset
 
 from pathlib import Path
 
-ROOT_VOTING_SYSTEM_PATH: Path = Path(__file__).parent.parent.resolve()
 
 def ERP_train(dataset_name, data, label, dataset_info):
     X_train, X_test, X_validate, Y_train, Y_test, Y_validate = train_test_val_split(
@@ -51,7 +50,7 @@ def ERP_train(dataset_name, data, label, dataset_info):
                   metrics=['accuracy'])
 
     # set a valid path for your system to record model checkpoints
-    checkpointer = ModelCheckpoint(filepath=f'/Users/almacuevas/work_projects/voting_system_platform/Code/BigProject/ERP_model_{dataset_name}.h5', verbose=1,
+    checkpointer = ModelCheckpoint(filepath=f'{ROOT_VOTING_SYSTEM_PATH}/processing_eeg_methods/BigProject/ERP_model_{dataset_name}.h5', verbose=1,
                                    save_best_only=True)
 
     ###############################################################################
@@ -75,7 +74,7 @@ def ERP_train(dataset_name, data, label, dataset_info):
                             callbacks=[checkpointer], class_weight=class_weights)
 
     # load optimal weights
-    model.load_weights(f'/Users/almacuevas/work_projects/voting_system_platform/Code/BigProject/ERP_model_{dataset_name}.h5')
+    model.load_weights(f'{ROOT_VOTING_SYSTEM_PATH}/processing_eeg_methods/BigProject/ERP_model_{dataset_name}.h5')
     return model
 
 

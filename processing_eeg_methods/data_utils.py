@@ -12,22 +12,21 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
-#from pyriemann.classification import MDM
-#from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier
 
-classifiers = [
-    KNeighborsClassifier(3),
-    SVC(kernel='linear', probability=True),
-    GaussianProcessClassifier(1.0 * RBF(1.0), random_state=42), # It doesn't have .coef
-    DecisionTreeClassifier(max_depth=5, random_state=42), # It doesn't have .coef
-    RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1, random_state=42), # It doesn't have .coef
-    MLPClassifier(alpha=1, max_iter=1000, random_state=42), #'MLPClassifier' object has no attribute 'coef_'. Did you mean: 'coefs_'?
-    AdaBoostClassifier(algorithm="SAMME", random_state=42),
-    GaussianNB(),
-    QuadraticDiscriminantAnalysis(),
-    LinearDiscriminantAnalysis(),
-    LogisticRegression(),
-    # MDM() Always nan at the end
+# MDM() Always nan at the end
+classifiers = [ # The Good, Medium and Bad is decided on Torres dataset. This to avoid most of the processings.
+    # KNeighborsClassifier(3), # Good
+    SVC(kernel='linear', probability=True), # Good
+    # GaussianProcessClassifier(1.0 * RBF(1.0), random_state=42), # Good # It doesn't have .coef
+    # DecisionTreeClassifier(max_depth=5, random_state=42), # Good # It doesn't have .coef
+    # RandomForestClassifier(max_depth=5, n_estimators=100, max_features=1, random_state=42), # Good It doesn't have .coef
+    # MLPClassifier(alpha=1, max_iter=1000, random_state=42), # Good # 'MLPClassifier' object has no attribute 'coef_'. Did you mean: 'coefs_'?
+    # AdaBoostClassifier(algorithm="SAMME", random_state=42), # Medium
+    # GaussianNB(), # Medium
+    # QuadraticDiscriminantAnalysis(), # Bad
+    # LinearDiscriminantAnalysis(), # Bad
+    LogisticRegression(), # Good
 ]
 
 
@@ -62,7 +61,11 @@ def train_test_val_split(dataX, dataY, valid_flag: bool = False):
         y_val = None
     return x_train, x_test, x_val, y_train, y_test, y_val
 
-def get_best_classificator_and_test_accuracy(data, labels, estimators, param_grid={}):
+def get_best_classificator_and_test_accuracy(data, labels, estimators):
+    param_grid = []
+    for classificator in classifiers:
+        param_grid.append({'clf__estimator': [classificator]})
+
     cv = StratifiedKFold(n_splits=4, shuffle=True, random_state=42)
     clf = GridSearchCV(estimator=estimators, param_grid=param_grid, cv=cv) # https://stackoverflow.com/questions/52580023/how-to-get-the-best-estimator-parameters-out-from-pipelined-gridsearch-and-cro
     clf.fit(data, labels)
