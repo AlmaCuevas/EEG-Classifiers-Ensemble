@@ -4,6 +4,7 @@ from scipy.io import loadmat
 import os
 
 from data_preprocess import data_normalization
+from data_utils import class_selection
 from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 from Inner_Speech_Dataset.Python_Processing.Data_extractions import Extract_data_from_subject
 from Inner_Speech_Dataset.Python_Processing.Data_processing import Select_time_window, Transform_for_classificator
@@ -296,9 +297,12 @@ if __name__ == '__main__':
 
     epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
 
+    print('Before class selection')
+    print(data.shape) # trials, channels, time
+    print(labels.shape)
+
+    print('After class selection')
+    data, labels = class_selection(data, labels, [1,2])
     print(data.shape) # trials, channels, time
     print(labels.shape)
     print("Congrats! You were able to load data. You can now use this in a processing method.")
-
-
-

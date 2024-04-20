@@ -42,6 +42,15 @@ def data_transform(x, subtract_mean:bool =True, subtract_axis:int =0, transpose:
         x -= mean_image
     return x
 
+def class_selection(dataX, dataY, selected_classes: list[int]):
+    dataX_selected: list = []
+    dataY_selected: list = []
+    for dataX_idx, dataY_idx in zip(dataX, dataY):
+        if dataY_idx in selected_classes:
+            dataX_selected.append(dataX_idx)
+            dataY_selected.append(dataY_idx)
+    return np.asarray(dataX_selected, dtype=np.int32), np.asarray(dataY_selected, dtype=np.int32)
+
 
 def train_test_val_split(dataX, dataY, valid_flag: bool = False):
     train_ratio = 0.75
