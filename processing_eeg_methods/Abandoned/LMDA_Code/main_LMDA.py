@@ -21,7 +21,7 @@ import warnings
 # ========================= LMDA general run =====================================
 
 def data_and_model(dataset_name: str, valid_flag: bool = False):
-    epochs, data, label = load_data_labels_based_on_dataset(dataset_name=dataset_name, subject_id=subject_id, data_path=data_path)
+    epochs, data, label = load_data_labels_based_on_dataset(dataset_info=dataset_name, subject_id=subject_id, data_path=data_path)
     data = preprocess4mi(data) # This was for MI, try it. If it doesn't work, delete it.
     x_train, x_test, x_val, y_train, y_test, y_val = train_test_val_split(dataX = data, dataY= label, valid_flag=valid_flag)
 

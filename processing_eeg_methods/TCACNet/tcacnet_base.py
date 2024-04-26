@@ -150,6 +150,8 @@ def call_tcanet(dataset_name, subject_id, train_loader, valid_loader, test_loade
         kernel_size = 2
     elif dataset_name == 'nieto':
         kernel_size = 4
+    else:
+        kernel_size = 6
 
     model_global = globalnetwork(channels).to(device)
     model_local = localnetwork(channels).to(device)
@@ -222,7 +224,7 @@ if __name__ == '__main__':
     data_path = computer_root_path + dataset_foldername
     dataset_info = datasets_basic_infos[dataset_name]
 
-    data, label = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
+    data, label = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
     data_train, data_test, _, labels_train, labels_test, _ = train_test_val_split(
         dataX=data, dataY=label, valid_flag=False)
     train_loader, valid_loader, test_loader = EEGdata_loader(data_train, labels_train)

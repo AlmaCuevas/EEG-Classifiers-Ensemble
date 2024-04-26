@@ -5,13 +5,11 @@ from keras.utils import to_categorical
 import numpy as np
 
 from data_loaders import load_data_labels_based_on_dataset
-from share import datasets_basic_infos
+from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 from data_utils import train_test_val_split
 import time
 
-def CNN_LSTM_train(data, labels):
-    num_classes = 4
-
+def CNN_LSTM_train(data, labels, num_classes: int):
     # substract data from list
     X_train, X_test, X_val, y_train, y_test, y_val = train_test_val_split(dataX=data, dataY=labels, valid_flag=True)
 
@@ -105,19 +103,18 @@ if __name__ == '__main__':
 
     # Folders and paths
     dataset_foldername = dataset_name + '_dataset'
-    # computer_root_path = "/Users/rosit/Documents/MCC/voting_system_platform/Datasets/"  # OMEN
-    computer_root_path = "/Users/almacuevas/work_projects/voting_system_platform/Datasets/"  # MAC
+    computer_root_path = f"{ROOT_VOTING_SYSTEM_PATH}/Datasets/"
     data_path = computer_root_path + dataset_foldername
     dataset_info = datasets_basic_infos[dataset_name]
 
-    data, label = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
+    data, label = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
     data_train, data_test, _, labels_train, labels_test, _ = train_test_val_split(
         dataX=data, dataY=label, valid_flag=False)
     target_names = dataset_info['target_names']
 
     print("******************************** Training ********************************")
     start = time.time()
-    model, acc = CNN_LSTM_train(data_train, labels_train)
+    model, acc = CNN_LSTM_train(data_train, labels_train, dataset_info['#_class'])
     end = time.time()
     print("Training time: ", end - start)
 

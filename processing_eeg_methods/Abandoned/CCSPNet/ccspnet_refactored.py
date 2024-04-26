@@ -75,7 +75,7 @@ class EEG_MI_dataset(Dataset):
         computer_root_path = "/Users/almacuevas/work_projects/voting_system_platform/Datasets/"  # MAC
         data_path = computer_root_path + dataset_foldername
 
-        data, label = load_data_labels_based_on_dataset(dataset_name, subject, data_path)
+        data, label = load_data_labels_based_on_dataset(dataset_info, subject, data_path)
         data = np.asarray([data])
         data = np.transpose(data, (1, 0, 2, 3))
         label_copy = label.copy()

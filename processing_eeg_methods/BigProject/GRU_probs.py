@@ -9,11 +9,11 @@ from scipy.fftpack import dct, idct
 from scipy import signal
 
 from data_loaders import load_data_labels_based_on_dataset
-from share import datasets_basic_infos
+from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 from data_utils import train_test_val_split
 import time
 
-def GRU_train(dataset_name, data, labels):
+def GRU_train(dataset_name, data, labels, num_classes: int):
     # substract data from list
     X_train, X_test, _, y_train, y_test, _ = train_test_val_split(dataX=data, dataY=labels, valid_flag=False)
 
@@ -23,7 +23,7 @@ def GRU_train(dataset_name, data, labels):
 
     # add dummy zeros for y classification
     lb = preprocessing.LabelBinarizer()
-    lb.fit([0, 1, 2, 3, ])
+    lb.fit(list(range(0,num_classes)))
     y_train = lb.transform(y_train)
     y_test = lb.transform(y_test)
 
@@ -64,7 +64,6 @@ def GRU_train(dataset_name, data, labels):
     seq_split = 1  # Set to one when using FFT to down sample
     seq_len = int(X_train_sub.shape[1] * seq_split)
     timesteps = seq_len
-    num_classes = 4
     batch_size = 200
     num_epoch = 100
 
@@ -99,7 +98,7 @@ def GRU_train(dataset_name, data, labels):
     earlystop = EarlyStopping(monitor='val_loss', min_delta=0.001, patience=30, mode='auto')
 
     # saves the model weights after each epoch if the validation loss decreased
-    checkpointer = ModelCheckpoint(filepath=f'/Users/almacuevas/work_projects/voting_system_platform/Code/BigProject/GRU_model_{dataset_name}.hdf5', monitor='accuracy', verbose=1, save_best_only=True)
+    checkpointer = ModelCheckpoint(filepath=f'{ROOT_VOTING_SYSTEM_PATH}/processing_eeg_methods/BigProject/GRU_model_{dataset_name}.hdf5', monitor='val_accuracy', verbose=1, save_best_only=True)
 
     callbacks_list = [earlystop, checkpointer]
 
@@ -108,7 +107,7 @@ def GRU_train(dataset_name, data, labels):
                         validation_split=0.15, callbacks=callbacks_list)
 
     # evaluate model on entire training set
-    model = load_model(f'/Users/almacuevas/work_projects/voting_system_platform/Code/BigProject/GRU_model_{dataset_name}.hdf5')
+    model = load_model(f'{ROOT_VOTING_SYSTEM_PATH}/processing_eeg_methods/BigProject/GRU_model_{dataset_name}.hdf5')
     results = model.evaluate(X_train_sub, y_train, batch_size=N_train)
     print('GRU training acuracy: ', results[1])
 
@@ -134,19 +133,18 @@ if __name__ == '__main__':
 
     # Folders and paths
     dataset_foldername = dataset_name + '_dataset'
-    # computer_root_path = "/Users/rosit/Documents/MCC/voting_system_platform/Datasets/"  # OMEN
-    computer_root_path = "/Users/almacuevas/work_projects/voting_system_platform/Datasets/"  # MAC
+    computer_root_path = f"{ROOT_VOTING_SYSTEM_PATH}/Datasets/"
     data_path = computer_root_path + dataset_foldername
     dataset_info = datasets_basic_infos[dataset_name]
 
-    data, label = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
+    data, label = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
     data_train, data_test, _, labels_train, labels_test, _ = train_test_val_split(
         dataX=data, dataY=label, valid_flag=False)
     target_names = dataset_info['target_names']
 
     print("******************************** Training ********************************")
     start = time.time()
-    model, acc = GRU_train(dataset_name, data_train, labels_train)
+    model, acc = GRU_train(dataset_name, data_train, labels_train, dataset_info['#_class'])
     end = time.time()
     print("Training time: ", end - start)
 

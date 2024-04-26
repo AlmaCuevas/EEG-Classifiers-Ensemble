@@ -56,11 +56,11 @@ if __name__ == '__main__':
 
     # Folders and paths
     dataset_foldername = dataset_name + '_dataset'
-    computer_root_path = str(ROOT_VOTING_SYSTEM_PATH) + "/Datasets/"
+    computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
     data_path = computer_root_path + dataset_foldername
     dataset_info = datasets_basic_infos[dataset_name]
 
-    epochs, data, label = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
+    epochs, data, label = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
     data_train, data_test, _, labels_train, labels_test, _ = train_test_val_split(
         dataX=data, dataY=label, valid_flag=False)
     target_names = dataset_info['target_names']

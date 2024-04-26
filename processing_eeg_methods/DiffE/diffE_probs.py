@@ -1,77 +1,70 @@
-from collections import OrderedDict
-
 import numpy as np
 import pandas as pd
 
-from sklearn.model_selection import StratifiedKFold, GridSearchCV, train_test_split
-from sklearn.metrics import classification_report
-
-from data_utils import get_best_classificator_and_test_accuracy, classifiers, ClfSwitcher
-from share import datasets_basic_infos
+from sklearn.model_selection import StratifiedKFold
+from diffE_models import Encoder, Decoder, LinearClassifier, DiffE
+from diffE_utils import get_dataloader
+from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 from data_loaders import load_data_labels_based_on_dataset
 import time
-import pickle
-from sklearn.pipeline import Pipeline
 from pathlib import Path
-from mne.decoding import Vectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
-from pyriemann.estimation import ERPCovariances, XdawnCovariances, Covariances
-from pyriemann.tangentspace import TangentSpace
-from mne.decoding import CSP
-
-ROOT_VOTING_SYSTEM_PATH: Path = Path(__file__).parent.parent.parent.resolve()
+import torch
 
 # todo: add the test template
 # todo: do the deap thing about the FFT: https://github.com/tongdaxu/EEG_Emotion_Classifier_DEAP/blob/master/Preprocess_Deap.ipynb
 
 threshold_for_bug = 0.00000001  # could be any value, ex numpy.min
 
-def customized_train(data, labels): # v1
+def diffE_train(data, labels) -> tuple[str, float]: # v1
 
-    estimators = OrderedDict()
-    estimators['Vect + StandScaler'] = Pipeline([("Vectorizer", Vectorizer()), ("StandScaler", StandardScaler()), ('clf', ClfSwitcher())])
-    estimators['Vect'] = Pipeline([("Vectorizer", Vectorizer()), ('clf', ClfSwitcher())])
-    estimators['ERPCov + TS'] = Pipeline([("ERPcova", ERPCovariances(estimator='oas')), ("ts", TangentSpace()), ('clf', ClfSwitcher())])
-    estimators['ERPCov'] = Pipeline([("ERPcova", ERPCovariances(estimator='oas')), ('clf', ClfSwitcher())])
-    estimators['XdawnCov + TS'] = Pipeline([("XdawnCova", XdawnCovariances(estimator='oas')), ("ts", TangentSpace()), ('clf', ClfSwitcher())])
-    estimators['CSP'] = Pipeline([("CSP", CSP(n_components=4, reg=None, log=True, norm_trace=False)), ('clf', ClfSwitcher())])
-    estimators['Cova + TS'] = Pipeline([("Cova", Covariances()), ("ts", TangentSpace()), ('clf', ClfSwitcher())]) # This is probably the best one, at least for Torres
 
-    parameters = []
-    for classificator in classifiers:
-        parameters.append({'clf__estimator': [classificator]})
 
-    accuracy_list = []
-    classifiers_list=[]
-    for name, clf  in estimators.items():
-        print(name)
-        classifier, acc = get_best_classificator_and_test_accuracy(data, labels, clf, param_grid=parameters)
-        accuracy_list.append(acc)
-        classifiers_list.append(classifier)
-    print(estimators.keys())
-    print(accuracy_list)
-    return classifiers_list[np.argmax(accuracy_list)], accuracy_list[np.argmax(accuracy_list)], list(estimators.keys())[np.argmax(accuracy_list)]
+    return model_path, accuracy
 
-def customized_test(clf, trial):
-    """
-    This is what the real-time BCI will call.
-    Parameters
-    ----------
-    clf : classifier trained for the specific subject
-    trial: one epoch, the current one that represents the intention of movement of the user.
+def diffE_test(subject_id: int, X, dataset_info: dict, device: str =  "cuda:0"):
+    # From diffe_evaluation
+    model_path: str = f'{ROOT_VOTING_SYSTEM_PATH}/Results/Diffe/diffe_{dataset_info["dataset_name"]}_{subject_id}.pt'  # diffE_{subject_ID}.pt
 
-    Returns Array of classification with 4 floats representing the target classification
-    -------
+    X = X[:, :, : -1 * (X.shape[2] % 8)]  # 2^3=8 because there are 3 downs and ups halves.
+    # Dataloader
+    batch_size = 32
+    batch_size2 = 260
+    seed = 42
+    train_loader, _ = get_dataloader(
+        X, 0, batch_size, batch_size2, seed, shuffle=True # Y=0 JUST TO NOT LEAVE IT EMPTY, HERE IT ISN'T USED
+    )
 
-    """
-    # To load the model, just in case
-    # loaded_model = pickle.load(open(filename, 'rb'))
+    n_T = 1000
+    ddpm_dim = 128
+    encoder_dim = 256
+    fc_dim = 512
+    # Define model
+    num_classes = dataset_info['#_class']
+    channels = dataset_info['#_channels']
 
-    # To see the array of predictions
-    array = clf.predict_proba(trial)
-    return array
+    encoder = Encoder(in_channels=channels, dim=encoder_dim).to(device)
+    decoder = Decoder(
+        in_channels=channels, n_feat=ddpm_dim, encoder_dim=encoder_dim
+    ).to(device)
+    fc = LinearClassifier(encoder_dim, fc_dim, emb_dim=num_classes).to(device)
+    diffe = DiffE(encoder, decoder, fc).to(device)
+
+    # load the pre-trained model from the file
+    diffe.load_state_dict(torch.load(model_path))
+
+    diffe.eval()
+
+    with torch.no_grad():
+        Y_hat = []
+        for x, _ in train_loader:
+            x = x.to(device).float()
+            encoder_out = diffe.encoder(x)
+            y_hat = diffe.fc(encoder_out[1])
+            y_hat = F.softmax(y_hat, dim=1)
+
+            Y_hat.append(y_hat.detach().cpu())
+        Y_hat = torch.cat(Y_hat, dim=0).numpy()  # (N, 13): has to sum to 1 for each row
+    return Y_hat
 
 
 if __name__ == "__main__":
@@ -83,18 +76,12 @@ if __name__ == "__main__":
 
         # Folders and paths
         dataset_foldername = dataset_name + "_dataset"
-        computer_root_path = str(ROOT_VOTING_SYSTEM_PATH) + "/Datasets/"
+        computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
         data_path = computer_root_path + dataset_foldername
         print(data_path)
         # Initialize
         processing_name: str = ''
-        if dataset_name not in [
-            "aguilera_traditional",
-            "aguilera_gamified",
-            "nieto",
-            "coretto",
-            "torres",
-        ]:
+        if dataset_name not in datasets_basic_infos:
             raise Exception(
                 f"Not supported dataset named '{dataset_name}', choose from the following: aguilera_traditional, aguilera_gamified, nieto, coretto or torres."
             )
@@ -108,24 +95,27 @@ if __name__ == "__main__":
         ):  # Only two things I should be able to change
             print(subject_id)
             with open(
-                f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{dataset_name}.txt",
+                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
                 "a",
             ) as f:
                 f.write(f"Subject: {subject_id}\n\n")
-            epochs, data, labels = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
+            epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
             data[data < threshold_for_bug] = threshold_for_bug # To avoid the error "SVD did not convergence"
             # Do cross-validation
             cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
             acc_over_cv = []
             testing_time_over_cv = []
+            training_time = []
             accuracy = 0
             for train, test in cv.split(epochs, labels):
                 print(
                     "******************************** Training ********************************"
                 )
-                clf, accuracy, processing_name = customized_train(data[train], labels[train])
+                start = time.time()
+                clf, accuracy, processing_name = diffE_train(data[train], labels[train])
+                training_time.append(time.time() - start)
                 with open(
-                    f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{dataset_name}.txt",
+                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
                     "a",
                 ) as f:
                     f.write(f"{processing_name}\n")
@@ -137,7 +127,7 @@ if __name__ == "__main__":
                 testing_time = []
                 for epoch_number in test:
                     start = time.time()
-                    array = customized_test(clf, np.asarray([data[epoch_number]]))
+                    array = diffE_test(clf, np.asarray([data[epoch_number]]))
                     end = time.time()
                     testing_time.append(end - start)
                     print(dataset_info["target_names"])
@@ -152,7 +142,7 @@ if __name__ == "__main__":
                 testing_time_over_cv.append(np.mean(testing_time))
                 acc_over_cv.append(acc)
                 with open(
-                    f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{dataset_name}.txt",
+                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
                     "a",
                 ) as f:
                     f.write(f"Prediction: {pred_list}\n")
@@ -162,14 +152,14 @@ if __name__ == "__main__":
             mean_acc_over_cv = np.mean(acc_over_cv)
 
             with open(
-                f"{str(ROOT_VOTING_SYSTEM_PATH)}/Results/{version_name}_{dataset_name}.txt",
+                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
                 "a",
             ) as f:
                 f.write(f"Final acc: {mean_acc_over_cv}\n\n\n\n")
             print(f"Final acc: {mean_acc_over_cv}")
 
             temp = pd.DataFrame({'Methods': [processing_name] * len(acc_over_cv), 'Subject ID': [subject_id] * len(acc_over_cv),
-                                 'Version': [version_name] * len(acc_over_cv), 'Training Accuracy': [accuracy] * len(acc_over_cv),
+                                 'Version': [version_name] * len(acc_over_cv), 'Training Accuracy': [accuracy] * len(acc_over_cv), 'Training Time': training_time,
                                  'Testing Accuracy': acc_over_cv, 'Testing Time': testing_time_over_cv}) # The idea is that the most famous one is the one I use for this dataset
             results_df = pd.concat([results_df, temp])
 

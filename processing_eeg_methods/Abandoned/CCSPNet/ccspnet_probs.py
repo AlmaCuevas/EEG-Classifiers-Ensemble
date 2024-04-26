@@ -114,7 +114,7 @@ if __name__ == '__main__':
     data_path = computer_root_path + dataset_foldername
     dataset_info = datasets_basic_infos[dataset_name]
 
-    data, labels = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
+    data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
     target_names = dataset_info['target_names']
 
     print("******************************** Training ********************************")
