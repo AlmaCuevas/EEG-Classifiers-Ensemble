@@ -25,9 +25,9 @@ from sklearn.tree import DecisionTreeClassifier
 from mne.decoding import CSP
 from data_loaders import load_data_labels_based_on_dataset
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from pyriemann.classification import MDM
+from sklearn.linear_model import RidgeClassifier
 
-ROOT_VOTING_SYSTEM_PATH: Path = Path(__file__).parent.parent.parent.resolve()
+from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 
 names = [
     "Nearest Neighbors",
@@ -58,10 +58,10 @@ classifiers = [
     GaussianNB(),
     QuadraticDiscriminantAnalysis(),
     LinearDiscriminantAnalysis(),
-    MDM()
+    RidgeClassifier()
 ]
 
-datasets = ['aguilera_gamified', 'aguilera_traditional', 'torres']
+datasets = ['torres']
 
 for ds_cnt, ds in enumerate(datasets):
     # Manual Inputs
@@ -72,15 +72,12 @@ for ds_cnt, ds in enumerate(datasets):
     dataset_foldername = ds + '_dataset'
     computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
     data_path = computer_root_path + dataset_foldername
+    dataset_info: dict = datasets_basic_infos[ds]
 
-    epochs, data, y  = load_data_labels_based_on_dataset(ds, subject_id, data_path)
-
-
-    threshold_for_bug = 0.00000001  # could be any value, ex numpy.min
-    data[data < threshold_for_bug] = threshold_for_bug
-
+    epochs, data, y  = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path, selected_classes=[0, 1])
+    print(y)
     figure = plt.figure(figsize=(27, 9))
-    i = 1
+    i = 1 # for the subplot index
     # iterate over datasets
 
     # preprocess dataset, split into training and test part
@@ -156,17 +153,3 @@ for ds_cnt, ds in enumerate(datasets):
 
 plt.tight_layout()
 plt.show()
-
-
-# To figure it out later (maybe its not worth it, but its a nice way to make a graph)
-
-# Compute w_times using the adjusted w_start array
-# plt.figure()
-# plt.plot(time, accuracy, label="Mean Performance")
-# plt.axvline(0, linestyle="--", color="k", label="Onset")
-# plt.axhline(0.5, linestyle="-", color="k", label="Chance")
-# plt.xlabel("Time (s)")
-# plt.ylabel("Classification Accuracy")
-# plt.title("Mean Classification Performance over Time for Selected Subjects")
-# plt.legend(loc="lower right")
-# plt.show()

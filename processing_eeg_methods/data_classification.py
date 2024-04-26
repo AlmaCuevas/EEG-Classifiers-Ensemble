@@ -24,8 +24,6 @@ from Extraction.get_features_probs import get_extractions, extractions_train, ex
 
 import pandas as pd
 
-threshold_for_bug = 0.00000001  # could be any value, ex numpy.min
-
 def group_methods_train(
     dataset_name: str,
     subject_id: int,
@@ -262,7 +260,7 @@ if __name__ == "__main__":
     # Manual Inputs
     #dataset_name = "torres"  # Only two things I should be able to change
    # datasets = ['aguilera_gamified', 'aguilera_traditional', 'torres']
-    datasets = ['ic_bci_2020']
+    datasets = ['torres']
     voting_by_mode = False
     for dataset_name in datasets:
         version_name = "multiple_classifier" # To keep track what the output processing alteration went through
@@ -315,8 +313,7 @@ if __name__ == "__main__":
                 "a",
             ) as f:
                 f.write(f"Subject: {subject_id}\n\n")
-            epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
-            data[data < threshold_for_bug] = threshold_for_bug # To avoid the error "SVD did not convergence"
+            epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path, selected_classes=[0, 1], threshold_for_bug = 0.00000001)  # could be any value, ex numpy.min
 
             cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42) # Do cross-validation
             acc_over_cv = []

@@ -131,8 +131,10 @@ if __name__ == "__main__":
                 "a",
             ) as f:
                 f.write(f"Subject: {subject_id}\n\n")
-            epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path, normalize=False) # If I normalize it doesn't run
-
+            epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path,
+                                                                     normalize=False, # If I normalize it doesn't run
+                                                                     selected_classes=[0, 2],
+                                                                     threshold_for_bug=0.00000001)  # could be any value, ex numpy.min
             # Do cross-validation
             cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
             acc_over_cv = []

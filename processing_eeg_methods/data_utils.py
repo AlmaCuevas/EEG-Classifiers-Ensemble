@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model import SGDClassifier, RidgeClassifier
 from sklearn.model_selection import train_test_split, StratifiedKFold, GridSearchCV
 from sklearn.base import BaseEstimator
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
@@ -14,10 +14,14 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
+import pandas as pd
+
+
 # MDM() Always nan at the end
 classifiers = [ # The Good, Medium and Bad is decided on Torres dataset. This to avoid most of the processings.
     # KNeighborsClassifier(3), # Good
-    SVC(kernel='linear', probability=True), # Good
+    # SVC(kernel='linear', probability=True), # Good
+    RidgeClassifier()
     # GaussianProcessClassifier(1.0 * RBF(1.0), random_state=42), # Good # It doesn't have .coef
     # DecisionTreeClassifier(max_depth=5, random_state=42), # Good # It doesn't have .coef
     # RandomForestClassifier(max_depth=5, n_estimators=100, max_features=1, random_state=42), # Good It doesn't have .coef
@@ -42,14 +46,22 @@ def data_transform(x, subtract_mean:bool =True, subtract_axis:int =0, transpose:
         x -= mean_image
     return x
 
-def class_selection(dataX, dataY, selected_classes: list[int]):
+def class_selection(dataX, dataY, event_dict: dict, selected_classes: list[int]):
     dataX_selected: list = []
     dataY_selected: list = []
     for dataX_idx, dataY_idx in zip(dataX, dataY):
         if dataY_idx in selected_classes:
             dataX_selected.append(dataX_idx)
             dataY_selected.append(dataY_idx)
-    return np.asarray(dataX_selected, dtype=np.int32), np.asarray(dataY_selected, dtype=np.int32)
+    dataX_selected_np = np.asarray(dataX_selected)
+    dataY_selected_df = pd.Series(dataY_selected)
+
+    label_remap = {dataY_original: dataY_remap_idx for dataY_remap_idx, dataY_original in enumerate(selected_classes)}
+
+    event_dict = {key: label_remap[value] for key, value in event_dict.items()
+                  if value in selected_classes}
+
+    return dataX_selected_np, np.asarray(dataY_selected_df.replace(label_remap)), event_dict
 
 
 def train_test_val_split(dataX, dataY, valid_flag: bool = False):
@@ -111,7 +123,7 @@ class ClfSwitcher(BaseEstimator):
 
 
     def predict_proba(self, X):
-        return self.estimator.predict_proba(X)
+        return self.estimator._predict_proba_lr(X)
 
 
     def score(self, X, y):

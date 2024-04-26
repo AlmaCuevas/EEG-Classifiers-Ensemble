@@ -29,7 +29,6 @@ import mne
 # todo: add the test template
 # todo: do the deap thing about the FFT: https://github.com/tongdaxu/EEG_Emotion_Classifier_DEAP/blob/master/Preprocess_Deap.ipynb
 
-threshold_for_bug = 0.00000001  # could be any value, ex numpy.min
 frequency_ranges: dict = {
     "complete": [0, 140],
     "delta": [0, 3],
@@ -94,9 +93,9 @@ def customized_test(clf, trial):
 
 if __name__ == "__main__":
     # Manual Inputs
-    datasets = ['ic_bci_2020']
+    datasets = ['aguilera_traditional']
     for dataset_name in datasets:
-        version_name = "only_customized" # To keep track what the output processing alteration went through
+        version_name = "only_customized_two_classes_03_no_preprocess" # To keep track what the output processing alteration went through
 
         # Folders and paths
         dataset_foldername = dataset_name + "_dataset"
@@ -115,7 +114,7 @@ if __name__ == "__main__":
         results_df = pd.DataFrame()
 
         for subject_id in range(
-            1, dataset_info["subjects"] + 1 #todo: run not normalized again. I think normalized is better though
+            1, dataset_info["subjects"] + 1
         ):  # Only two things I should be able to change
             print(subject_id)
             with open(
@@ -123,8 +122,7 @@ if __name__ == "__main__":
                 "a",
             ) as f:
                 f.write(f"Subject: {subject_id}\n\n")
-            epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
-            data[data < threshold_for_bug] = threshold_for_bug # To avoid the error "SVD did not convergence"
+            epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path, selected_classes=[0, 3], threshold_for_bug = 0.00000001)  # could be any value, ex numpy.min
             # Do cross-validation
             cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
             acc_over_cv = []
