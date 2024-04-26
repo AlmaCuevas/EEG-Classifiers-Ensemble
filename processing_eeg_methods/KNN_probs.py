@@ -8,8 +8,10 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
 from sklearn.model_selection import StratifiedKFold
-from share import datasets_basic_infos
-from data_loaders import load_data_labels_based_on_dataset
+from sklearn.datasets import load_digits
+from sklearn.feature_selection import SelectKBest, chi2
+from processing_eeg_methods.share import datasets_basic_infos
+from processing_eeg_methods.data_loaders import load_data_labels_based_on_dataset
 from Code.Extraction.Entropy import extractions_train
 from sklearn.preprocessing import normalize
 import time
@@ -77,7 +79,7 @@ def KNN_test(knn_model,epoch):
 
 if __name__ == '__main__':
     # Manual Inputs
-    subject_id = 13  # Only two things I should be able to change
+    subject_id = 7 # Only two things I should be able to change
     dataset_name = 'aguilera_traditional'  # Only two things I should be able to change
     array_format = True
 
@@ -98,16 +100,20 @@ if __name__ == '__main__':
     target_names = dataset_info['target_names']
     df,lv= extractions_train(data, y, target_names)
     df= df.to_numpy()
-    labels=df[:,5]
+    labels=df[:,4]
     # df=normalize(df[:,[0,1,2,3]], axis=0)
     lv=np.array(lv)
+    lv=normalize(lv, axis=0)+1
+    c=np.concatenate((df, lv), axis=1)
+    print(c)
     # mrmr = variable_selection.MinimumRedundancyMaximumRelevance(n_features_to_select=6, method="MID",)
     # mrmr.fit(lv, labels)
     # X = mrmr.transform(lv)
     
     print("******************************** Training ********************************")
     start = time.time()
-    best_k, best_weights=KNN_optimize(lv,labels,target_names)
+    lv_new = SelectKBest(chi2, k=10).fit_transform(c, labels)
+    best_k, best_weights=KNN_optimize(lv_new,labels,target_names)
     clf, acc = KNN_train(lv,labels,target_names,best_k,best_weights)
     end = time.time()
     print("Training time: ", end - start)

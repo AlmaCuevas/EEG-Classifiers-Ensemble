@@ -2,9 +2,9 @@ import numpy as np
 import mne
 from scipy.io import loadmat
 import os
-from share import datasets_basic_infos
-from Inner_Speech_Dataset.Python_Processing.Data_extractions import Extract_data_from_subject
-from Inner_Speech_Dataset.Python_Processing.Data_processing import Select_time_window, Transform_for_classificator
+from processing_eeg_methods.share import datasets_basic_infos
+from processing_eeg_methods.Inner_Speech_Dataset.Python_Processing.Data_extractions import Extract_data_from_subject
+from processing_eeg_methods.Inner_Speech_Dataset.Python_Processing.Data_processing import Select_time_window, Transform_for_classificator
 from mne import io, Epochs, events_from_annotations, EpochsArray
 from mne.preprocessing import ICA, create_eog_epochs
 from autoreject import AutoReject
