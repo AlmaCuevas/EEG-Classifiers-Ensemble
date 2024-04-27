@@ -4,14 +4,12 @@ from scipy.io import loadmat
 import os
 from data_preprocess import data_normalization
 from data_utils import class_selection
-from share import datasets_basic_infos
+from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 from Inner_Speech_Dataset.Python_Processing.Data_extractions import Extract_data_from_subject
 from Inner_Speech_Dataset.Python_Processing.Data_processing import Select_time_window, Transform_for_classificator
 from mne import io, Epochs, events_from_annotations, EpochsArray
 from mne.preprocessing import ICA, create_eog_epochs
 from autoreject import AutoReject
-
-ROOT_VOTING_SYSTEM_PATH: Path = Path(__file__).parent.parent.resolve()
 
 
 def aguilera_dataset_loader(data_path: str, gamified: bool): #typed

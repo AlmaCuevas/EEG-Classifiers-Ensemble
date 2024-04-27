@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 import sys
+
+from Extraction.Entropy_Eduardo import extractions_train
+
 sys.path.append("D:\\Users\\NewUser\\Documents\\GitHub\\voting_system_platform\\")
 
 from sklearn.neighbors import KNeighborsClassifier
@@ -12,7 +15,6 @@ from sklearn.datasets import load_digits
 from sklearn.feature_selection import SelectKBest, chi2
 from processing_eeg_methods.share import datasets_basic_infos
 from processing_eeg_methods.data_loaders import load_data_labels_based_on_dataset
-from Code.Extraction.Entropy import extractions_train
 from sklearn.preprocessing import normalize
 import time
 # from skfda.preprocessing.dim_reduction import variable_selection

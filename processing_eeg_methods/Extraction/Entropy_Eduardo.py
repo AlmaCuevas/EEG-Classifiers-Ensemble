@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import classification_report
-from processing_eeg_methods.share import datasets_basic_infos
+from processing_eeg_methods.share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 from processing_eeg_methods.data_loaders import load_data_labels_based_on_dataset
 from sklearn.pipeline import Pipeline
 import processing_eeg_methods.EEGExtract.EEGExtract as eeg
@@ -13,8 +13,6 @@ import time
 import antropy as ant
 from pathlib import Path
 import numpy
-
-ROOT_VOTING_SYSTEM_PATH: Path = Path(__file__).parent.parent.parent.resolve()
 
 def get_entropy(data):
     entropy_values = []
@@ -100,19 +98,19 @@ def get_ratio(data):
         ratio_trial = []
         for data_channel in data_trial:
             ratio_trial.append(eeg.eegRatio(data_channel,fs=500))
-        ratio_values.append(np.mean(ratio_trial)) # The fastest one
+        ratio_values.append(np.mean(ratio_trial))
     return ratio_values
 
 def get_lyapunov(data):
     lyapunov_values = []
     for data_trial in data:
-        lyapunov_values.append(eeg.lyapunov(data_trial)) # The fastest one
+        lyapunov_values.append(eeg.lyapunov(data_trial))
     return lyapunov_values
 
 def get_coherence(data):
     coherence_values = eeg.coherence(data_trial,fs=500)
     for data_trial in data:
-        coherence_values.append(eeg.coherence(data_trial,fs=500)) # The fastest one
+        coherence_values.append(eeg.coherence(data_trial,fs=500))
     return coherence_values
 
 
@@ -132,10 +130,10 @@ def extractions_train(data, labels, target_names):
     # coherence_values=get_coherence(data)
     # coherence_values=np.array(coherence_values)
     # regularity_values=get_regularity(data)
-    #XXXX_values = get_XXXX(data)
+
     df = pd.DataFrame({"entropy": entropy, "Complexity":Complexity_values, "Mobility":Mobility_values,
                        "α/δ Ratio":ratio_values, "labels": labels})
-    # df.to_csv("/Users/almacuevas/work_projects/voting_system_platform/Code/df_extractions.csv")
+
     # df= df.to_numpy()
     print("Characteristics extraction done")
     # print(coherence_values)
