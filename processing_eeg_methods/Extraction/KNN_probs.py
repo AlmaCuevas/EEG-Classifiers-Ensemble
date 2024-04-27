@@ -1,27 +1,19 @@
 import numpy as np
 import pandas as pd
-from pathlib import Path
-import sys
-
 from Extraction.Entropy_Eduardo import extractions_train
-
-sys.path.append("D:\\Users\\NewUser\\Documents\\GitHub\\voting_system_platform\\")
-
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
 from sklearn.model_selection import StratifiedKFold
 from sklearn.datasets import load_digits
 from sklearn.feature_selection import SelectKBest, chi2
-from processing_eeg_methods.share import datasets_basic_infos
+from processing_eeg_methods.share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 from processing_eeg_methods.data_loaders import load_data_labels_based_on_dataset
 from sklearn.preprocessing import normalize
 import time
-# from skfda.preprocessing.dim_reduction import variable_selection
-
 from sklearn.pipeline import make_pipeline
 
-
+# todo: this needs updating to new format for processing.
 
 def KNN_optimize(data,labels,target_names):
     parameters = { "n_neighbors": range(1, 12), "weights": ["uniform", "distance"],}
@@ -87,8 +79,7 @@ if __name__ == '__main__':
 
     # Folders and paths
     dataset_foldername = dataset_name + '_dataset'
-    # computer_root_path = "/Users/rosit/Documents/MCC/voting_system_platform/Datasets/"  # OMEN
-    computer_root_path = "D:\\Users\\NewUser\\Documents\\GitHub\\voting_system_platform\\Datasets\\"  # MAC
+    computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
     data_path = computer_root_path + dataset_foldername
     dataset_info = datasets_basic_infos[dataset_name]
 

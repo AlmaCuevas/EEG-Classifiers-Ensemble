@@ -1,6 +1,3 @@
-import sys
-sys.path.append("D:\\Users\\NewUser\\Documents\\GitHub\\voting_system_platform\\")
-
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
@@ -11,7 +8,6 @@ from sklearn.pipeline import Pipeline
 import processing_eeg_methods.EEGExtract.EEGExtract as eeg
 import time
 import antropy as ant
-from pathlib import Path
 import numpy
 
 def get_entropy(data):
@@ -107,8 +103,8 @@ def get_lyapunov(data):
         lyapunov_values.append(eeg.lyapunov(data_trial))
     return lyapunov_values
 
-def get_coherence(data):
-    coherence_values = eeg.coherence(data_trial,fs=500)
+def get_coherence(data): # todo: check, does it need the loop?
+    coherence_values = []
     for data_trial in data:
         coherence_values.append(eeg.coherence(data_trial,fs=500))
     return coherence_values
@@ -117,7 +113,7 @@ def get_coherence(data):
 def get_regularity(data):
     regularity_values = []
     for data_trial in data:
-        regularity_values.append(eeg.eegRegularity(data_trial, Fs=500)) # The fastest one
+        regularity_values.append(eeg.eegRegularity(data_trial, Fs=500))
     return regularity_values
 
 def extractions_train(data, labels, target_names):
