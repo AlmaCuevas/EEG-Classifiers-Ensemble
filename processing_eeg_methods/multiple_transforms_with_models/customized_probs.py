@@ -83,19 +83,15 @@ def customized_test(clf, trial):
     -------
 
     """
-    # To load the model, just in case
-    # loaded_model = pickle.load(open(filename, 'rb'))
-
-    # To see the array of predictions
     array = clf.predict_proba(trial)
     return array
 
 
 if __name__ == "__main__":
     # Manual Inputs
-    datasets = ['aguilera_traditional']
+    datasets = ['ic_bci_2020']
     for dataset_name in datasets:
-        version_name = "only_customized_two_classes_03_no_preprocess" # To keep track what the output processing alteration went through
+        version_name = "only_customized_two_classes_12_no_preprocess" # To keep track what the output processing alteration went through
 
         # Folders and paths
         dataset_foldername = dataset_name + "_dataset"
@@ -122,7 +118,7 @@ if __name__ == "__main__":
                 "a",
             ) as f:
                 f.write(f"Subject: {subject_id}\n\n")
-            epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path, selected_classes=[0, 3], threshold_for_bug = 0.00000001)  # could be any value, ex numpy.min
+            epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path, selected_classes=[1, 2], threshold_for_bug = 0.00000001)  # could be any value, ex numpy.min
             # Do cross-validation
             cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
             acc_over_cv = []

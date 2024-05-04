@@ -223,7 +223,8 @@ def nguyen_2019_dataset_loader(folderpath: str):
     event_dict = {'left hand':0, 'concentrate':1, 'right hand':2, 'split':3}
     return x, y, event_dict
 
-def load_data_labels_based_on_dataset(dataset_info: dict, subject_id: int, data_path: str, selected_classes: list[int] = [], transpose: bool = False, normalize: bool = True, threshold_for_bug: float = 0):
+
+def load_data_labels_based_on_dataset(dataset_info: dict, subject_id: int, data_path: str, selected_classes: list[int] = [], transpose: bool = False, normalize: bool = True, threshold_for_bug: float = 0, astype_value: str = ''):
     dataset_name = dataset_info['dataset_name']
 
     event_dict: dict = {}
@@ -258,11 +259,6 @@ def load_data_labels_based_on_dataset(dataset_info: dict, subject_id: int, data_
     elif dataset_name == 'nguyen_2019':
         data, label, event_dict = nguyen_2019_dataset_loader(data_path, subject_id)
 
-    #def optimize_float(series):
-    #    low_consumption = series.astype('float16')
-    #    return low_consumption
-
-    #data = optimize_float(data)
 
     if transpose:
         data = np.transpose(data, (0, 2, 1))
@@ -270,6 +266,8 @@ def load_data_labels_based_on_dataset(dataset_info: dict, subject_id: int, data_
         data = data_normalization(data)
     if selected_classes:
         data, label, event_dict = class_selection(data, label, event_dict, selected_classes=selected_classes)
+    if astype_value:
+        data = data.astype(astype_value)
 
     if threshold_for_bug:
         data[data < threshold_for_bug] = threshold_for_bug  # To avoid the error "SVD did not convergence"

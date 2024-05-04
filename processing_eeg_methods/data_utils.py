@@ -34,18 +34,6 @@ classifiers = [ # The Good, Medium and Bad is decided on Torres dataset. This to
 ]
 
 
-def data_transform(x, subtract_mean:bool =True, subtract_axis:int =0, transpose: bool =False):
-    # Transpose the second and third dimension
-    if transpose:
-        x = np.transpose(x, (0, 2, 1))
-
-    # Normalize the data: subtract the mean image
-    if subtract_mean:
-        mean_image = np.mean(x, axis=subtract_axis)
-        mean_image = np.expand_dims(mean_image, axis=subtract_axis)
-        x -= mean_image
-    return x
-
 def class_selection(dataX, dataY, event_dict: dict, selected_classes: list[int]):
     dataX_selected: list = []
     dataY_selected: list = []

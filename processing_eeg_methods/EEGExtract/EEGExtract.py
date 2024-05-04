@@ -212,7 +212,7 @@ def mfcc(eegData,fs,order=2):
     H = np.zeros((eegData.shape[0], eegData.shape[2],order))
     for chan in range(H.shape[0]):
         for epoch in range(H.shape[1]):
-            H[chan, epoch, : ] = librosa.feature.mfcc(np.asfortranarray(eegData[chan,:,epoch]), sr=fs)[0:order].T
+            H[chan, epoch, : ] = librosa.feature.mfcc(y=np.asfortranarray(eegData[chan,:,epoch]), sr=fs)[0:order].T
     return H
 
 ##########

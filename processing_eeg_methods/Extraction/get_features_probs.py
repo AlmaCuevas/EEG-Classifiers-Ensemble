@@ -1,3 +1,6 @@
+from scipy import signal
+
+import mne
 import numpy as np
 import pandas as pd
 from sklearn.feature_selection import SelectKBest
@@ -12,7 +15,8 @@ import time
 import antropy as ant
 import numpy
 from sklearn.feature_selection import f_classif
-import EEGExtract
+import EEGExtract.EEGExtract as eeg
+from scipy.stats import kurtosis, skew
 
 def get_entropy(data):
     entropy_values = []
@@ -92,15 +96,89 @@ def get_hjorth(data):
         Complexity_values.append(np.mean(Complexity_trial))
     return values, Complexity_values
 
+def get_ratio(data):
+    ratio_values = []
+    for data_trial in data:
+        ratio_trial = []
+        for data_channel in data_trial:
+            ratio_trial.append(eeg.eegRatio(data_channel,fs=500))
+        ratio_values.append(np.mean(ratio_trial))
+    return ratio_values
 
-def get_extractions(data, dataset_info: dict):
+def get_lyapunov(data):
+    lyapunov_values = []
+    for data_trial in data:
+        lyapunov_values.append(eeg.lyapunov(data_trial))
+    return lyapunov_values
+
+def by_frequency_band(data, dataset_info: dict):
+    frequency_ranges: dict = {
+        "delta": [0, 3],
+        "theta": [3, 7],
+        "alpha": [7, 13],
+        "beta 1": [13, 16],
+        "beta 2": [16, 20],
+        "beta 3": [20, 35],
+        "gamma": [35, np.floor(dataset_info['sample_rate']/2)-1],
+    }#todo: fix the transposed, the idea is use the channels instead of time in the features
+    features_df = get_extractions(np.transpose(data, (0, 2, 1)), dataset_info, 'completo')
+    for frequency_bandwidth_name, frequency_bandwidth in frequency_ranges.items():
+        print(frequency_bandwidth)
+        iir_params = dict(order=8, ftype="butter")
+        filt = mne.filter.create_filter(
+            data, dataset_info['sample_rate'], l_freq=frequency_bandwidth[0], h_freq=frequency_bandwidth[1],
+            method="iir", iir_params=iir_params, verbose=True
+        )
+        filtered = signal.sosfiltfilt(filt["sos"], data)
+        filtered = filtered.astype('float64')
+        features_array_ind = get_extractions(np.transpose(filtered, (0, 2, 1)), dataset_info, frequency_bandwidth_name)
+        features_df = pd.concat([features_df, features_array_ind], axis=1)
+    return features_df
+
+
+def get_extractions(data, dataset_info: dict, frequency_bandwidth_name):
     entropy = get_entropy(data)
     Mobility_values, Complexity_values = get_hjorth(data)
-    #falseNN = EEGExtract.falseNearestNeighbor(data)
-    #coherence_res = EEGExtract.coherence(data, dataset_info["sample_rate"])
+    ratio_values = get_ratio(data) # α/δ Ratio
+    lyapunov_values = np.array(get_lyapunov(data),dtype="float64")
+    regularity_values=eeg.eegRegularity(data, Fs=dataset_info['sample_rate'])
+    std_values=eeg.eegStd(data)
+    mean_values = np.mean(data, axis=1)
+    kurtosis_values = kurtosis(data, axis=1, bias=True)
+    skew_values = skew(data, axis=1, bias=True)
+    variance_values = np.var(data, axis=1)
+    medianFreq_values=eeg.medianFreq(data, fs=dataset_info['sample_rate'])
+    mfcc_values_with_kernel=eeg.mfcc(data, fs=dataset_info['sample_rate'],order=1) # Takes a long time and it doesn't reward much
+    mfcc_values = np.squeeze(mfcc_values_with_kernel, axis=2)
 
-    feature_array = np.array([entropy, Complexity_values, Mobility_values]).transpose()
-    return feature_array
+    # diffuseSlowing_values=eeg.diffuseSlowing(data, Fs=dataset_info['sample_rate']) # all zeros
+    # numBursts_values=eeg.numBursts(data, fs=dataset_info['sample_rate']) # all zeros
+    # burstLengthStats_values=eeg.burstLengthStats(data, fs=dataset_info['sample_rate']) # all zeros
+    # falseNN = eeg.falseNearestNeighbor(data) # all zeros
+    # coherence_res = eeg.coherence(data, dataset_info["sample_rate"]) # all ones
+
+    feature_array = np.array([entropy, Complexity_values, Mobility_values, ratio_values],dtype="float64").transpose()
+    feature_array = np.concatenate((feature_array, lyapunov_values, regularity_values, std_values, medianFreq_values, kurtosis_values, mean_values, skew_values, variance_values, mfcc_values), axis=1)
+
+    feature_array[np.isfinite(feature_array) == False] = 0
+
+    column_name = (
+            [f'{frequency_bandwidth_name}_entropy', f'{frequency_bandwidth_name}_Complexity_values',
+                    f'{frequency_bandwidth_name}_Mobility_values', f'{frequency_bandwidth_name}_ratio_values'] +
+                   [f'{frequency_bandwidth_name}_lyapunov_{num}' for num in range(0, lyapunov_values.shape[1])] +
+                   [f'{frequency_bandwidth_name}_regularity_values_{num}' for num in range(0, regularity_values.shape[1])] +
+                   [f'{frequency_bandwidth_name}_std_values_{num}' for num in range(0, std_values.shape[1])]+
+                   [f'{frequency_bandwidth_name}_medianFreq_values_{num}' for num in range(0, medianFreq_values.shape[1])] +
+                   [f'{frequency_bandwidth_name}_kurtosis_values_{num}' for num in range(0, kurtosis_values.shape[1])] +
+                   [f'{frequency_bandwidth_name}_mean_values_{num}' for num in range(0, mean_values.shape[1])] +
+                    [f'{frequency_bandwidth_name}_skew_values_{num}' for num in range(0, skew_values.shape[1])] +
+                   [f'{frequency_bandwidth_name}_variance_values_{num}' for num in range(0, variance_values.shape[1])] +
+                   [f'{frequency_bandwidth_name}_mfcc_values_{num}' for num in range(0, mfcc_values.shape[1])]
+                   )
+
+    feature_df = pd.DataFrame(feature_array, columns=column_name)
+
+    return feature_df
 
 def extractions_train(features, labels):
     print('training...')
@@ -128,9 +206,9 @@ def extractions_test(clf, features_df):
 
 if __name__ == "__main__":
     # Manual Inputs
-    datasets = ['ic_bci_2020']#, 'aguilera_traditional', 'torres', 'aguilera_gamified'
+    datasets = ['aguilera_gamified']#, 'aguilera_traditional', 'torres', 'aguilera_gamified'
     for dataset_name in datasets:
-        version_name = "features" # To keep track what the output processing alteration went through
+        version_name = "features_datatransposed_by_frequency_band" # To keep track what the output processing alteration went through
 
         # Folders and paths
         dataset_foldername = dataset_name + "_dataset"
@@ -169,7 +247,7 @@ if __name__ == "__main__":
                     "******************************** Training ********************************"
                 )
                 start = time.time()
-                features_train = get_extractions(data[train], dataset_info)
+                features_train = by_frequency_band(data[train], dataset_info)
                 clf, accuracy = extractions_train(features_train, labels[train])
                 training_time.append(time.time() - start)
                 with open(
@@ -184,7 +262,7 @@ if __name__ == "__main__":
                 testing_time = []
                 for epoch_number in test:
                     start = time.time()
-                    features_test = get_extractions(np.asarray([data[epoch_number]]), dataset_info)
+                    features_test = by_frequency_band(np.asarray([data[epoch_number]]), dataset_info)
                     array = extractions_test(clf, features_test)
                     end = time.time()
                     testing_time.append(end - start)

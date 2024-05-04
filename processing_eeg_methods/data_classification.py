@@ -20,7 +20,7 @@ from XDAWN.xdawn_probs import xdawn_train, xdawn_test
 from sklearn.preprocessing import normalize
 from diffE_training import diffE_train
 from diffE_evaluation import diffE_evaluation
-from Extraction.get_features_probs import get_extractions, extractions_train, extractions_test
+from Extraction.get_features_probs import extractions_train, extractions_test, by_frequency_band
 
 import pandas as pd
 
@@ -131,7 +131,7 @@ def group_methods_train(
     if methods["feature_extraction"]:
         print("feature_extraction")
         start_time = time.time()
-        features_df = get_extractions(data, dataset_info)
+        features_df = by_frequency_band(data, dataset_info)
         models_outputs["feature_extraction_clf"], models_outputs["feature_extraction_accuracy"] =extractions_train(features_df, labels)
         models_outputs["feature_extraction_train_timer"] = time.time() - start_time
 
@@ -223,7 +223,8 @@ def group_methods_test(methods: dict, columns_list: list, transform_methods: dic
     if methods["feature_extraction"]:
         print("feature_extraction")
         start_time = time.time()
-        models_outputs["feature_extraction_probabilities"] = normalize(extractions_test(models_outputs["feature_extraction_clf"], data_array))
+        features_df = by_frequency_band(data_array, dataset_info)
+        models_outputs["feature_extraction_probabilities"] = normalize(extractions_test(models_outputs["feature_extraction_clf"], features_df))
         models_outputs["feature_extraction_test_timer"] = time.time() - start_time
 
     return methods, models_outputs

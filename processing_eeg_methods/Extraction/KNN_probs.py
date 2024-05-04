@@ -7,6 +7,8 @@ from sklearn.metrics import classification_report
 from sklearn.model_selection import StratifiedKFold
 from sklearn.datasets import load_digits
 from sklearn.feature_selection import SelectKBest, chi2
+
+from Extraction.get_features_probs import get_extractions
 from processing_eeg_methods.share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 from processing_eeg_methods.data_loaders import load_data_labels_based_on_dataset
 from sklearn.preprocessing import normalize
@@ -31,7 +33,7 @@ def KNN_optimize(data,labels,target_names):
 def KNN_train(data,labels,target_names,best_k,best_weights):
     clf = KNeighborsClassifier(n_neighbors=best_k, weights=best_weights)
 
-# Cross validator
+    # Cross validator
     cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
 
     # Do cross-validation
@@ -50,32 +52,10 @@ def KNN_train(data,labels,target_names,best_k,best_weights):
 
 
 
-def KNN_test(knn_model,epoch):
-    """
-    This is what the real-time BCI will call.
-    Parameters
-    ----------
-    clf : classifier trained for the specific subject
-    epoch: one epoch, the current one that represents the intention of movement of the user.
-
-    Returns Array of classification with 4 floats representing the target classification
-    -------
-
-    """
-    # To load the model, just in case
-    #loaded_model = pickle.load(open(filename, 'rb'))
-
-    # To see the array of predictions
-    array = clf.predict_proba(epoch)
-    return array
-    
-
-
 if __name__ == '__main__':
     # Manual Inputs
     subject_id = 7 # Only two things I should be able to change
     dataset_name = 'aguilera_traditional'  # Only two things I should be able to change
-    array_format = True
 
     # Folders and paths
     dataset_foldername = dataset_name + '_dataset'
@@ -83,40 +63,12 @@ if __name__ == '__main__':
     data_path = computer_root_path + dataset_foldername
     dataset_info = datasets_basic_infos[dataset_name]
 
-    epochs,data, y = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
-    # print("epochs")
-    # print (epochs)
-    # print("data")
-    # print(data)
-    # print("y")
-    # print(y)
-    target_names = dataset_info['target_names']
-    df,lv= extractions_train(data, y, target_names)
-    df= df.to_numpy()
-    labels=df[:,4]
-    # df=normalize(df[:,[0,1,2,3]], axis=0)
-    lv=np.array(lv)
-    lv=normalize(lv, axis=0)+1
-    c=np.concatenate((df, lv), axis=1)
-    print(c)
-    # mrmr = variable_selection.MinimumRedundancyMaximumRelevance(n_features_to_select=6, method="MID",)
-    # mrmr.fit(lv, labels)
-    # X = mrmr.transform(lv)
-    
-    print("******************************** Training ********************************")
-    start = time.time()
-    lv_new = SelectKBest(chi2, k=10).fit_transform(c, labels)
-    best_k, best_weights=KNN_optimize(lv_new,labels,target_names)
-    clf, acc = KNN_train(lv,labels,target_names,best_k,best_weights)
-    end = time.time()
-    print("Training time: ", end - start)
+    _, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path, threshold_for_bug = 0.00000001)
 
-    print("******************************** Test ********************************")
-    epoch_number = 4
-    start = time.time()
-    array = KNN_test(clf, lv)
-    end = time.time()
-    print("One epoch, testing time: ", end - start)
-    print(target_names)
-    print("Probability: " , array[epoch_number]) # We select the last one, the last epoch which is the current one.
-    print("Real: ", y[epoch_number])
+    features_array = get_extractions(data, dataset_info)
+
+    features_array=normalize(features_array, axis=0)+1
+    target_names = dataset_info['target_names']
+    features_array_new = SelectKBest(chi2, k=10).fit_transform(features_array, labels)
+    best_k, best_weights=KNN_optimize(features_array_new,labels,target_names)
+    KNN_train(data, labels, target_names, best_k, best_weights)

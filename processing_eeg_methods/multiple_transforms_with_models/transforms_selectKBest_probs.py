@@ -39,14 +39,14 @@ def transform_data(data, dataset_info: dict, labels=None, transform_methods: dic
     "Cova": Pipeline([("Cova", Covariances()), ("ts", TangentSpace())]), # Add TangentSpace, otherwise the dimensions are not 2D.
             }
     frequency_ranges: dict = {
-        "complete": [0, 50],
+        "complete": [0, int(dataset_info['sample_rate']/2)],
         "delta": [0, 3],
         "theta": [3, 7],
         "alpha": [7, 13],
         "beta 1": [13, 16],
         "beta 2": [16, 20],
         "beta 3": [20, 35],
-        "gamma": [35, 50], # todo the 50 should be a value to change depending on the max freq, find later a variable that automatically changes it
+        "gamma": [35, int(dataset_info['sample_rate']/2)],
     }
 
     features_df = pd.DataFrame()
@@ -74,7 +74,7 @@ def transform_data(data, dataset_info: dict, labels=None, transform_methods: dic
     return features_df, transform_methods
 
 
-def selected_transformers_train(features_df, labels): # v1
+def selected_transformers_train(features_df, labels):
     X_SelectKBest = SelectKBest(f_classif, k=100)
     X_new = X_SelectKBest.fit_transform(features_df, labels)
     columns_list = X_SelectKBest.get_feature_names_out()
