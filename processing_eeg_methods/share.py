@@ -52,18 +52,18 @@ coretto_info = {
 'sample_rate': 256, # Originally it was 1024 with 1365 samples = 1.3 seconds. But I downsampled to 256.
 'channels_names': ['F3', 'F4', 'C3', 'C4', 'P3', 'P4'],
 'subjects':15,
-'total_trials':606,} # TODO: Read the paper and find if this is right
+'total_trials':606,}
 
 # Torres
 torres_info = {
 'dataset_name': 'torres',
-'#_class': 4, # 'arriba', 'abajo', 'izquierda', 'derecha'. They also did 'seleccionar', but we are not going to use that one.
-"target_names": ["Arriba", "Abajo", "Izquierda", "Derecha"],
+'#_class': 5, # 'arriba', 'abajo', 'izquierda', 'derecha'. They also did 'seleccionar', but we are not going to use that one.
+"target_names": ["Arriba", "Abajo", "Izquierda", "Derecha", "Seleccionar"],
 '#_channels': 14, # CHECK
 'samples': 421, # PENDING
 'sample_rate': 128,
 'channels_names': ['AF3', 'F7', 'F3', 'FC5', 'T7', 'P7', 'O1', 'O2', 'P8', 'T8', 'FC6', 'F4', 'F8', 'AF4'],
-'subjects':7, # Total of 27, but 7 because they haven't give me the full array.
+'subjects':27,
 'total_trials':132,
 }
 
@@ -92,4 +92,16 @@ nguyen_2019 = {
     'total_trials':0, # PENDING
 }
 
-datasets_basic_infos = {'aguilera_traditional': aguilera_traditional_info, 'aguilera_gamified': aguilera_gamified_info, 'nieto':nieto_info, 'coretto':coretto_info, 'torres':torres_info, 'ic_bci_2020': ic_bci_2020, 'nguyen_2019': nguyen_2019}
+braincommand = {  # BrainCommand
+                    'dataset_name': 'braincommand',
+                    '#_class': 4,
+                    "target_names": ['Derecha', 'Izquierda', 'Arriba', 'Abajo'],
+                    '#_channels': 8,
+                    'samples': 350,  # 250*1.4
+                    'sample_rate': 250,
+                    'channels_names': ['C4', 'FC3', 'F5', 'C3', 'F7', 'Cz', 'P3', 'C5'],
+                    'subjects': 23,  # PENDING
+                    'total_trials': 200,  # VARIABLE SINCE THE SUBJECT HAS TOTAL CONTROL OF HOW MANY MOVEMENTS THEY WANT TO DO
+                    }
+
+datasets_basic_infos = {'aguilera_traditional': aguilera_traditional_info, 'aguilera_gamified': aguilera_gamified_info, 'nieto':nieto_info, 'coretto':coretto_info, 'torres':torres_info, 'ic_bci_2020': ic_bci_2020, 'nguyen_2019': nguyen_2019, 'braincommand': braincommand}

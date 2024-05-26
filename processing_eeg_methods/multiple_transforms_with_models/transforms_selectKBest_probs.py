@@ -39,14 +39,14 @@ def transform_data(data, dataset_info: dict, labels=None, transform_methods: dic
     "Cova": Pipeline([("Cova", Covariances()), ("ts", TangentSpace())]), # Add TangentSpace, otherwise the dimensions are not 2D.
             }
     frequency_ranges: dict = {
-        "complete": [0, int(dataset_info['sample_rate']/2)],
+        "complete": [0, int(dataset_info['sample_rate']/2) - 1],
         "delta": [0, 3],
         "theta": [3, 7],
         "alpha": [7, 13],
         "beta 1": [13, 16],
         "beta 2": [16, 20],
         "beta 3": [20, 35],
-        "gamma": [35, int(dataset_info['sample_rate']/2)],
+        "gamma": [35, int(dataset_info['sample_rate']/2) - 1],
     }
 
     features_df = pd.DataFrame()
@@ -123,7 +123,7 @@ if __name__ == "__main__":
         results_df = pd.DataFrame()
 
         for subject_id in range(
-            1, dataset_info["subjects"] + 1 #todo: run not normalized again. I think normalized is better though
+            1, dataset_info["subjects"] + 1
         ):  # Only two things I should be able to change
             print(subject_id)
             with open(

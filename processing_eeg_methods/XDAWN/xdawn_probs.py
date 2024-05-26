@@ -1,6 +1,9 @@
 import numpy as np
 from pathlib import Path
 import sys
+
+from data_loaders import load_data_labels_based_on_dataset
+
 sys.path.append("D:\\Users\\NewUser\\Documents\\GitHub\\voting_system_platform\\")
 
 from sklearn.model_selection import StratifiedKFold
@@ -12,7 +15,6 @@ from mne.preprocessing import Xdawn
 from mne.decoding import Vectorizer
 
 from share import datasets_basic_infos
-from Code.data_loaders import load_data_labels_based_on_dataset
 import time
 import pickle
 

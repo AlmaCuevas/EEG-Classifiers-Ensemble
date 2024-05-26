@@ -245,6 +245,7 @@ def voting_decision(methods: dict, models_outputs: dict, voting_by_mode: bool = 
         ]
 
         # You need to select at least two for this to work
+        print(probs_list)
         probs = np.nanmean(probs_list, axis=0)  # Mean over columns
 
         return probs
@@ -261,9 +262,10 @@ if __name__ == "__main__":
     # Manual Inputs
     #dataset_name = "torres"  # Only two things I should be able to change
    # datasets = ['aguilera_gamified', 'aguilera_traditional', 'torres']
-    datasets = ['torres']
+    datasets = ['braincommand']
     voting_by_mode = False
     for dataset_name in datasets:
+        selected_classes = [0, 1, 2, 3]
         version_name = "multiple_classifier" # To keep track what the output processing alteration went through
 
         # Folders and paths
@@ -278,7 +280,7 @@ if __name__ == "__main__":
             "XDAWN_LogReg": False, # Todo: ValueError: Cannot apply correct_overlap if epochs were baselined.
             "TCANET_Global_Model": False, # BAD
             "TCANET": False, # BAD #todo It always gives answer 0. Even when the training is high. why?
-            "diffE": True, #todo: for ic_bci_2020 diffE evaluation doesnt run because the array shape is weird? check!
+            "diffE": False, #todo: for ic_bci_2020 diffE evaluation doesnt run because the array shape is weird? check! # ERROR IN EVALUATION OF TEST, BRAINCOMMAND: setting an array element with a sequence. The requested array has an inhomogeneous shape after 2 dimensions. The detected shape was (2, 1) + inhomogeneous part.
             "DeepConvNet": False, # BAD #todo: ValueError: Shapes (None, 5) and (None, 4) are incompatible
             "LSTM": False, # BAD
             "GRU": False, # BAD
@@ -293,6 +295,8 @@ if __name__ == "__main__":
                 f"Not supported dataset named '{dataset_name}', choose from the following: aguilera_traditional, aguilera_gamified, nieto, coretto or torres."
             )
         dataset_info: dict = datasets_basic_infos[dataset_name]
+
+        dataset_info['#_class'] = len(selected_classes)
 
         models_outputs = dict.fromkeys([key + "_accuracy" for key in keys], np.nan)
         models_outputs.update(
@@ -314,7 +318,7 @@ if __name__ == "__main__":
                 "a",
             ) as f:
                 f.write(f"Subject: {subject_id}\n\n")
-            epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path, selected_classes=[0, 1], threshold_for_bug = 0.00000001)  # could be any value, ex numpy.min
+            epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path, selected_classes=selected_classes, threshold_for_bug = 0.00000001)  # could be any value, ex numpy.min
 
             cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42) # Do cross-validation
             acc_over_cv = []

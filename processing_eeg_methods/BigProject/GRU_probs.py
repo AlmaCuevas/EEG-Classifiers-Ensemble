@@ -98,7 +98,7 @@ def GRU_train(dataset_name, data, labels, num_classes: int):
     earlystop = EarlyStopping(monitor='val_loss', min_delta=0.001, patience=30, mode='auto')
 
     # saves the model weights after each epoch if the validation loss decreased
-    checkpointer = ModelCheckpoint(filepath=f'{ROOT_VOTING_SYSTEM_PATH}/processing_eeg_methods/BigProject/GRU_model_{dataset_name}.hdf5', monitor='val_accuracy', verbose=1, save_best_only=True)
+    checkpointer = ModelCheckpoint(filepath=f'{ROOT_VOTING_SYSTEM_PATH}/Results/BigProject/GRU_model_{dataset_name}.hdf5', monitor='val_accuracy', verbose=1, save_best_only=True)
 
     callbacks_list = [earlystop, checkpointer]
 
@@ -107,7 +107,7 @@ def GRU_train(dataset_name, data, labels, num_classes: int):
                         validation_split=0.15, callbacks=callbacks_list)
 
     # evaluate model on entire training set
-    model = load_model(f'{ROOT_VOTING_SYSTEM_PATH}/processing_eeg_methods/BigProject/GRU_model_{dataset_name}.hdf5')
+    model = load_model(f'{ROOT_VOTING_SYSTEM_PATH}/Results/BigProject/GRU_model_{dataset_name}.hdf5')
     results = model.evaluate(X_train_sub, y_train, batch_size=N_train)
     print('GRU training acuracy: ', results[1])
 

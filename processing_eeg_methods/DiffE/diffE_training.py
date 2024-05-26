@@ -201,6 +201,7 @@ def diffE_train(subject_id: int, X, Y, dataset_info, device: str =  "cuda:0"):
                     best_auc_bool = auc > best_auc
 
                     if best_acc_bool:
+                        print("Saving model...")
                         best_acc = acc
                         torch.save(diffe.state_dict(), f'{ROOT_VOTING_SYSTEM_PATH}/Results/Diffe/diffe_{dataset_info["dataset_name"]}_{subject_id}.pt')
                     if best_f1_bool:
@@ -248,7 +249,7 @@ def diffE_train(subject_id: int, X, Y, dataset_info, device: str =  "cuda:0"):
 if __name__ == "__main__":
     print(f'CUDA is available? {torch.cuda.is_available()}')
 
-    dataset_name = "aguilera_traditional"  # Only two things I should be able to change
+    dataset_name = "braincommand"  # Only two things I should be able to change
 
     # Folders and paths
     dataset_foldername = dataset_name + "_dataset"

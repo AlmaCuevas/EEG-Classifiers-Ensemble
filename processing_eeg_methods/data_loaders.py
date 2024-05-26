@@ -10,7 +10,8 @@ from Inner_Speech_Dataset.Python_Processing.Data_processing import Select_time_w
 from mne import io, Epochs, events_from_annotations, EpochsArray
 from mne.preprocessing import ICA, create_eog_epochs
 from autoreject import AutoReject
-
+import pandas as pd
+from scipy import signal
 
 def aguilera_dataset_loader(data_path: str, gamified: bool): #typed
     # '1':'FP1', '2':'FP2', '3':'F3', '4':'F4', '5':'C3', '6':'C4', '7':'P3', '8':'P4', '9':'O1', '10':'O2', '11':'F7', '12':'F8', '13':'T7', '14':'T8', '15':'P7', '16':'P8', '17':'Fz', '18':'Cz', '19':'Pz', '20':'M1', '21':'M2', '22':'AFz', '23':'CPz', '24':'POz'
@@ -124,19 +125,19 @@ def torres_dataset_loader(filepath: str, subject_id: int): # TODO: Flag or somet
                     EEG_array[i_subject, i_word, i_epoch, :epoch['SenalesEEG'].shape[0], :] = epoch['SenalesEEG']
 
     # SELECT DATA
-    # word: 0 to 4, because the 5 is "Seleccionar" (Select), and we are not going to use it.
+    # word: 0 to 5. We extract all words, if you want to use less you can add that option as a list in "selected_classes"
     # channel 0:13 because 14, 15, 16 are gyros and marker of start and end.
     # EEG_array_selected_values is (word, trials, samples, channels)
-    EEG_array_selected_values = np.squeeze(EEG_array[subject_id-1, 0:4, :, :, 0:14])
+    EEG_array_selected_values = np.squeeze(EEG_array[subject_id-1, 0:5, :, :, 0:14])
 
 
     # reshape x in 3d data(Trials, Channels, Samples) and y in 1d data(Trials)
     x = np.transpose(EEG_array_selected_values, (0, 1, 3, 2))
-    x = x.reshape(4*33, 14, 421)
-    y = [0, 1, 2, 3]
+    x = x.reshape(5*33, 14, 421)
+    y = [0, 1, 2, 3, 4]
     y = np.repeat(y, 33, axis=0)
 
-    event_dict = {"Arriba": 0, "Abajo": 1, "Izquierda": 2, "Derecha": 3}
+    event_dict = {"Arriba": 0, "Abajo": 1, "Izquierda": 2, "Derecha": 3, "Seleccionar": 3}
     return x, y, event_dict
 
 def coretto_dataset_loader(filepath: str):
@@ -223,6 +224,32 @@ def nguyen_2019_dataset_loader(folderpath: str):
     event_dict = {'left hand':0, 'concentrate':1, 'right hand':2, 'split':3}
     return x, y, event_dict
 
+def braincommand_dataset_loader(filepath: str, subject_id: int, game_mode: str = 'calibration2'):
+    complete_information = pd.read_csv(f'{filepath}/eeg_data_{game_mode}_sub{subject_id:02d}.csv')
+    x_list = list(complete_information['time'].apply(eval))
+    label = list(complete_information['class'][1:])# TODO: I'm removing the first one because the EEG data is incomplete. Real time seems to have this problem too. So the first one will always be lost
+
+    label_0 = label.count(0)
+    print(f"label 0 is {label_0}")
+
+    label_1 = label.count(1)
+    print(f"label 1 is {label_1}")
+
+    label_2 = label.count(2)
+    print(f"label 2 is {label_2}")
+
+    label_3 = label.count(3)
+    print(f"label 3 is {label_3}")
+
+    x_array = np.array(x_list[1:]) # trials, time, channels
+    x_array = x_array[:, :, :-9] # The last channels are accelerometer (x3), gyroscope (x3), validity, battery and counter
+    x_array = np.transpose(x_array, (0, 2, 1))
+    x_array = signal.detrend(x_array)
+    #x_array, label = convert_to_epochs(x_array, label)
+    x_array = data_normalization(x_array)
+
+    event_dict = {'Derecha': 0, 'Izquierda': 1, 'Arriba': 2, 'Abajo': 3}
+    return x_array, label, event_dict
 
 def load_data_labels_based_on_dataset(dataset_info: dict, subject_id: int, data_path: str, selected_classes: list[int] = [], transpose: bool = False, normalize: bool = True, threshold_for_bug: float = 0, astype_value: str = ''):
     dataset_name = dataset_info['dataset_name']
@@ -247,7 +274,7 @@ def load_data_labels_based_on_dataset(dataset_info: dict, subject_id: int, data_
         filepath = os.path.join(*path)
         data, label, event_dict = coretto_dataset_loader(filepath)
     elif dataset_name == 'torres':
-        filename = "IndividuosS1-S7(17columnas)-Epocas.mat"
+        filename = "IndividuosS1-S27(17columnas)-Epocas.mat"
         filepath = os.path.join(data_path, filename)
         data, label, event_dict = torres_dataset_loader(filepath, subject_id)
     elif dataset_name == 'ic_bci_2020':
@@ -258,6 +285,8 @@ def load_data_labels_based_on_dataset(dataset_info: dict, subject_id: int, data_
         data, label, event_dict = ic_bci_2020_dataset_loader(filepath)
     elif dataset_name == 'nguyen_2019':
         data, label, event_dict = nguyen_2019_dataset_loader(data_path, subject_id)
+    elif dataset_name == 'braincommand':
+        data, label, event_dict = braincommand_dataset_loader(data_path, subject_id)
 
 
     if transpose:
@@ -286,8 +315,8 @@ def load_data_labels_based_on_dataset(dataset_info: dict, subject_id: int, data_
 
 if __name__ == '__main__':
     # Manual Inputs
-    subject_id = 2  # Only two things I should be able to change
-    dataset_name = 'ic_bci_2020'  # Only two things I should be able to change
+    subject_id = 22  # Only two things I should be able to change
+    dataset_name = 'torres'  # Only two things I should be able to change
 
     if dataset_name not in datasets_basic_infos:
         raise Exception(
