@@ -3,9 +3,8 @@
 ## Table of Contents
 
 1. [share.py](https://github.com/AlmaCuevas/voting_system_platform/tree/main/processing_eeg_methods#sharepy)<br />
-    1.2. [Dataset Information Definition](https://github.com/AlmaCuevas/voting_system_platform/tree/main/processing_eeg_methods#dataset-information-definition)<br />
-    1.3. [Dataset Basic Infos](https://github.com/AlmaCuevas/voting_system_platform/tree/main/processing_eeg_methods#dataset-basic-infos)<br />
-    1.4. [Content of Datasets](https://github.com/AlmaCuevas/voting_system_platform/tree/main/processing_eeg_methods#description-of-datasets)<br />
+    1.2. [Datasets](https://github.com/AlmaCuevas/voting_system_platform/tree/main/processing_eeg_methods#datasets)<br />
+    1.3. [Content of Datasets](https://github.com/AlmaCuevas/voting_system_platform/tree/main/processing_eeg_methods#description-of-datasets)<br />
 2. [data_loaders.py](https://github.com/AlmaCuevas/voting_system_platform/tree/main/processing_eeg_methods#data_loaderspy)<br />
     2.1. [Functions](https://github.com/AlmaCuevas/voting_system_platform/tree/main/processing_eeg_methods#functions)<br />
     2.2. [Main Function](https://github.com/AlmaCuevas/voting_system_platform/tree/main/processing_eeg_methods#main-function)<br />
@@ -13,11 +12,11 @@
    
 ## share.py
 
-The code implies the possibility of running experiments with all datasets simultaneously. It offers a well-organized framework for managing multiple datasets in a cohesive manner, simplifying data analysis and experimentation.
+The code implies the possibility of running experiments with all datasets simultaneously. It offers a well-organized framework for managing multiple datasets cohesively, simplifying data analysis and experimentation.
 
-The code provide detailed information about different EEG datasets, including metadata such as class names, number of channels, sampling rate, and more. It organizes this information into dictionaries for easy access and reference during data analysis or processing tasks.
+The code provides detailed information about different EEG datasets, including metadata such as class names, number of channels, sampling rate, and more. It organizes this information into dictionaries for easy access and reference during data analysis or processing tasks.
 
-### Dataset Information Definition:
+### Datasets:
 
 The code begins by defining dictionaries for each dataset:
 * aguilera_traditional_info
@@ -26,12 +25,9 @@ The code begins by defining dictionaries for each dataset:
 * torres_info
 * ic_bci_2020
 
-Each dictionary contains specific information about a particular EEG dataset, such as the number of classes, class names, number of EEG channels, sampling rate, channel names, number of subjects, and total number of trials.
-
-### Dataset Basic Infos:
-
 After defining individual dataset information dictionaries, the code creates a master dictionary named `datasets_basic_infos`.
-This master dictionary contains all the dataset information dictionaries, indexed by their names (aguilera_traditional, aguilera_gamified, nieto, coretto, torres).
+This master dictionary contains all the dataset information dictionaries, indexed by their names.
+
 This organization allows easy access to dataset information using the dataset names as keys.
 
 ### Content of Datasets:
@@ -43,12 +39,12 @@ Each dataset is described with specific details:
 
 ## data_loaders.py
 
-This Python script is designed to load and preprocess EEG (electroencephalography) data from multiple datasets. It includes functions for loading data from different EEG datasets, each with its own preprocessing steps. The main purpose of the script is to facilitate the loading and preprocessing of EEG data for further analysis or machine learning tasks.
+This Python script is designed to load and preprocess EEG (electroencephalography) data from multiple datasets. It includes functions for loading data from different EEG datasets, each with its preprocessing steps. The script's main purpose is to facilitate the loading and preprocessing of EEG data for further analysis or machine learning tasks.
 
 ### Functions:
 
-* **aguilera_dataset_loader**: Loads data from the Aguilera dataset, performs preprocessing steps such as renaming channels, filtering, and artifact removal using ICA.
-* **nieto_dataset_loader**: Loads data from the Nieto dataset, performs preprocessing steps such as selecting a time window, transforming data for classification, etc.
+* **aguilera_dataset_loader**: This function loads data from the Aguilera dataset and performs preprocessing steps such as renaming channels, filtering, and artifact removal using ICA.
+* **nieto_dataset_loader**: Loads data from the Nieto dataset and performs preprocessing steps such as selecting a time window, transforming data for classification, etc.
 * **torres_dataset_loader**: Loads data from the Torres dataset and preprocesses it.
 * **coretto_dataset_loader**: Loads data from the Coretto dataset and preprocesses it.
 
@@ -73,7 +69,7 @@ Execute the script to load and preprocess the EEG data.
 The loaded data and labels will be printed to verify successful loading.
 
 #### Inputs:
-subject_id: Integer representing the ID of the subject from whom EEG data will be loaded.
+subject_id: Integer representing the subject's ID from which EEG data will be loaded.
 dataset_name: String representing the name of the dataset from which EEG data will be loaded.
 
 #### Outputs:
@@ -97,7 +93,7 @@ The `load_data_labels_based_on_dataset` function is the main function that loads
 
 
 #### Main Block
-In the `__main__` block, the script sets manual inputs for the subject ID and dataset name. Then it constructs the data path based on the dataset name and loads the data using the `load_data_labels_based_on_dataset` function.
+In the `__main__` block, the script sets manual inputs for the subject ID and dataset name. Then, it constructs the data path based on the dataset name and loads the data using the `load_data_labels_based_on_dataset` function.
     if __name__ == '__main__':
     # Manual Inputs
     subject_id = 2  # Only two things I should be able to change
