@@ -1,23 +1,30 @@
 # Voting system EEG Data Classification
 
-## LMDA-net
+## Table of Contents
+1. [Processing Methods](https://github.com/AlmaCuevas/voting_system_platform/tree/main#processing-methods)
+2. [Datasets used](https://github.com/AlmaCuevas/voting_system_platform/tree/main#datasets-used)
+3. [References](https://github.com/AlmaCuevas/voting_system_platform/tree/main#references)
+
+## Processing Methods
+
+### LMDA-net
 LMDA-net is a lightweight neural network model integrated with multi-dimensional attention modules. This network was
 evaluated on four high-impact public datasets, including motor imagery and P300-speller tasks. Notably, the LMDA-net
 reduced the convolution kernels in the special convolutional layer, which has advantages in preventing overfitting and preserving
 information from different domains of EEG signals. The LMDA-net demonstrates its advantages in online testing scenarios,
 offering better accuracy than other BCI scenarios [1].
 
-## LSTM
+### LSTM
 Abdulghani, Walters, and Abed [2], Agarwal and Kumar [3], and Kumar and Scheme [4] use Long-Short Term Memory (LSTM) to
 classify speech imagery. An LSTM, a recurrent neural network, can learn long-term dependencies between the discrete
 steps in a time series data. The code used was obtained from GitHub by [5].
 
-## CCSPNET
+### CCSPNET
 CCSPNet (Convolutional Common Spatial Pattern Network), applied in MI, is a subject-independent BCI framework that
 utilizes a wavelet kernel convolutional neural network and a temporal convolutional neural network to represent and extract
 spectral features of EEG signals to classify them with linear discriminant analysis [6].
 
-## XDAWN+RG
+### XDAWN+RG
 The XDAWN spatial filter and Riemannian Geometry classifier (RG) algorithm [7] achieved an accuracy of 0.836. Riemannian
 Geometry represents data as symmetric positive definite covariance matrices and maps them onto a specific geometric space.
 It can be computationally intensive when dealing with high-dimensional data, so dimensionality reduction techniques like
@@ -26,12 +33,23 @@ and mental states have a degree of invariance that covariance matrices can captu
 distance is robust to noise. This method can potentially reduce or eliminate the calibration phase, especially when limited
 training data is available.
 
-#  The Datasets are provided by:
-* (Aguilera)[https://data.mendeley.com/datasets/57g8z63tmy/1] [15]
-* (Nieto)[https://openneuro.org/datasets/ds003626/versions/2.1.2] [16]
-  * Their code is embedded in this repository to load their dataset. The original is (Inner_Speech_Dataset)[https://github.com/N-Nieto/Inner_Speech_Dataset]
-* (Coretto)[https://drive.google.com/file/d/0By7apHbIp8ENZVBLRFVlSFhzbHc/view?resourcekey=0-JVHv2UiRsxim41Wioro0EA] [17]
-* Torres (Data available on request from the original authors) [18]
+##  Datasets used:
+### [Aguilera](https://data.mendeley.com/datasets/57g8z63tmy/1) [15]
+### [Nieto](https://openneuro.org/datasets/ds003626/versions/2.1.2) [16]
+
+Their code is embedded in this repository to load their dataset. The original is [Inner_Speech_Dataset](https://github.com/N-Nieto/Inner_Speech_Dataset)
+
+Ten Argentinian participants were involved in this experimental setup, and data from 136 channels were recorded, with 128 dedicated to EEG readings and 8 to muscle activity. The experiment focused on eliciting four specific commands from the subjects, namely ”arriba,” ”abajo,” ”derecha,” and ”izquierda,” corresponding to ”up,” ”down,” ”right,” and ”left.” To explore inner speech processes, each participant was instructed to engage in a mental exercise involving repeatedly imagining their voice and uttering the respective word.
+
+### [Coretto](https://drive.google.com/file/d/0By7apHbIp8ENZVBLRFVlSFhzbHc/view?resourcekey=0-JVHv2UiRsxim41Wioro0EA) [17]
+The Coretto dataset consists of 15 Argentinian subjects who are native Spanish speakers, with an average age of 25 years old. These subjects repeated words, including vowels and directional words, 50 times each at a sample frequency of 1024Hz. The words were visually presented, and the recordings were single takes. The dataset used the Geschwind-Wernicke model, focusing on specific electrode locations to minimize myoelectric noise interference during speech.
+
+### Torres (Data available on request from the original authors) [18]
+This dataset comprises the EEG signals of 27 right-handed subjects performing internal pronunciation of words without emitting sounds or doing facial movements. It is focused on
+the recognition of five Spanish words corresponding to the English words “up,” “down,” “left,” “right,” and “select,” with which a computer cursor could be controlled. Unlike the other datasets, this one is not open-access and was kindly made available by interinstitutional agreement.
+
+### [2020 International BCI Competition](https://osf.io/pq7vb/) [19]
+
 
 # References
 
@@ -55,3 +73,4 @@ bci. Inf. Process. amp; Manag. 59, 103001, 10.1016/j.ipm.2022.103001 (2022).
 16. Nieto, N., Peterson, V., Rufiner, H., Kamienkowski, J. & Spies, R. "inner speech", doi:10.18112/openneuro.ds003626.v2.1.2 (2022)
 17. Coretto, G. A. P., Gareis, I. E. & Rufiner, H. L. Open access database of eeg signals recorded during imagined speech. In Symposium on Medical Information Processing and Analysis (2017)
 18. A. A. Torres-García, C. A. Reyes-García, L. Villaseñor-Pineda, and J. M. Ramírez-Cortes, “Análisis de Señales Electroencefalográficas para la Clasificación de Habla Imaginada,” Revista Mexicana de Ingeniería Biomédica, vol. 34, no. 1, pp. 23–39, 2013. ISSN: 0188-9532.
+19. Committee, B. 2020 international bci competition. Open Sci. Framew. 10.17605/OSF.IO/PQ7VB (2022)
