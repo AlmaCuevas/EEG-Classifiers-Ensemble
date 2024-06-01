@@ -1,5 +1,5 @@
 # EEG Processing Methods
-https://github.com/AlmaCuevas/voting_system_platform/tree/main/processing_eeg_methods#
+
 ## Table of Contents
 
 1. [share.py](https://github.com/AlmaCuevas/voting_system_platform/tree/main/processing_eeg_methods#sharepy)<br />
