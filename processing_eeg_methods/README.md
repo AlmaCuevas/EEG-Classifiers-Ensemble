@@ -1,30 +1,21 @@
 # EEG Processing Methods
-
+https://github.com/AlmaCuevas/voting_system_platform/tree/main/processing_eeg_methods#
 ## Table of Contents
 
-1. [share.py](https://github.com/AlmaCuevas/voting_system_platform/edit/main/processing_eeg_methods/README.md#sharepy)<br />
-    1.1. [Purpose](https://github.com/AlmaCuevas/voting_system_platform/edit/main/processing_eeg_methods/README.md#purpose)<br />
-    1.2. [Use](https://github.com/AlmaCuevas/voting_system_platform/edit/main/processing_eeg_methods/README.md#use)<br />
-    1.3. [Dataset Information Definition](https://github.com/AlmaCuevas/voting_system_platform/edit/main/processing_eeg_methods/README.md#dataset-information-definition)<br />
-    1.4. [Dataset Basic Infos](https://github.com/AlmaCuevas/voting_system_platform/edit/main/processing_eeg_methods/README.md#dataset-basic-infos)<br />
-    1.5. [Description of Datasets](https://github.com/AlmaCuevas/voting_system_platform/edit/main/processing_eeg_methods/README.md#description-of-datasets)<br />
-    1.6. [Documentation and Organization](https://github.com/AlmaCuevas/voting_system_platform/edit/main/processing_eeg_methods/README.md#documentation-and-organization)<br />
-2. [data_loaders.py](https://github.com/AlmaCuevas/voting_system_platform/edit/main/processing_eeg_methods/README.md#data_loaderspy)<br />
-    2.1. [Description](https://github.com/AlmaCuevas/voting_system_platform/edit/main/processing_eeg_methods/README.md#description)<br />
-    2.2. [Functions](https://github.com/AlmaCuevas/voting_system_platform/edit/main/processing_eeg_methods/README.md#functions)<br />
-    2.3. [Main Function](https://github.com/AlmaCuevas/voting_system_platform/edit/main/processing_eeg_methods/README.md#main-function)<br />
-    2.4. [How to Use](https://github.com/AlmaCuevas/voting_system_platform/edit/main/processing_eeg_methods/README.md#how-to-use)<br />
+1. [share.py](https://github.com/AlmaCuevas/voting_system_platform/tree/main/processing_eeg_methods#sharepy)<br />
+    1.2. [Dataset Information Definition](https://github.com/AlmaCuevas/voting_system_platform/tree/main/processing_eeg_methods#dataset-information-definition)<br />
+    1.3. [Dataset Basic Infos](https://github.com/AlmaCuevas/voting_system_platform/tree/main/processing_eeg_methods#dataset-basic-infos)<br />
+    1.4. [Content of Datasets](https://github.com/AlmaCuevas/voting_system_platform/tree/main/processing_eeg_methods#description-of-datasets)<br />
+2. [data_loaders.py](https://github.com/AlmaCuevas/voting_system_platform/tree/main/processing_eeg_methods#data_loaderspy)<br />
+    2.1. [Functions](https://github.com/AlmaCuevas/voting_system_platform/tree/main/processing_eeg_methods#functions)<br />
+    2.2. [Main Function](https://github.com/AlmaCuevas/voting_system_platform/tree/main/processing_eeg_methods#main-function)<br />
+    2.3. [How to Use](https://github.com/AlmaCuevas/voting_system_platform/tree/main/processing_eeg_methods#how-to-use)<br />
    
 ## share.py
 
-### Purpose:
+The code implies the possibility of running experiments with all datasets simultaneously. It offers a well-organized framework for managing multiple datasets in a cohesive manner, simplifying data analysis and experimentation.
 
 The code provide detailed information about different EEG datasets, including metadata such as class names, number of channels, sampling rate, and more. It organizes this information into dictionaries for easy access and reference during data analysis or processing tasks.
-
-### Use:
-The code hints at potential future use cases, such as running experiments with all datasets at once.
-It provides a structured framework for handling multiple datasets in a unified manner, facilitating data analysis and experimentation.
-
 
 ### Dataset Information Definition:
 
@@ -37,31 +28,24 @@ The code begins by defining dictionaries for each dataset:
 
 Each dictionary contains specific information about a particular EEG dataset, such as the number of classes, class names, number of EEG channels, sampling rate, channel names, number of subjects, and total number of trials.
 
-#### Dataset Basic Infos:
+### Dataset Basic Infos:
 
-After defining individual dataset information dictionaries, the code creates a master dictionary named datasets_basic_infos.
+After defining individual dataset information dictionaries, the code creates a master dictionary named `datasets_basic_infos`.
 This master dictionary contains all the dataset information dictionaries, indexed by their names (aguilera_traditional, aguilera_gamified, nieto, coretto, torres).
 This organization allows easy access to dataset information using the dataset names as keys.
 
-#### Description of Datasets:
+### Content of Datasets:
 Each dataset is described with specific details:
 * **Class information**: Number of classes and their respective names.
 * **Channel information**: Number of EEG channels and their names.
 * **Sampling information**: Number of samples, sample rate, and duration.
 * **Subject and trial information**: Number of subjects and total number of trials.
 
-#### Documentation and Organization:
-Comments are provided throughout the code to document and explain the purpose of each variable and dictionary key.
-The code is organized into sections, with each dataset's information clearly defined and separated.
-
 ## data_loaders.py
-
-### Description:
 
 This Python script is designed to load and preprocess EEG (electroencephalography) data from multiple datasets. It includes functions for loading data from different EEG datasets, each with its own preprocessing steps. The main purpose of the script is to facilitate the loading and preprocessing of EEG data for further analysis or machine learning tasks.
 
 ### Functions:
-Dataset Loader Functions:
 
 * **aguilera_dataset_loader**: Loads data from the Aguilera dataset, performs preprocessing steps such as renaming channels, filtering, and artifact removal using ICA.
 * **nieto_dataset_loader**: Loads data from the Nieto dataset, performs preprocessing steps such as selecting a time window, transforming data for classification, etc.
@@ -73,10 +57,15 @@ Dataset Loader Functions:
 `load_data_labels_based_on_dataset`: The main function responsible for loading data based on the specified dataset name, subject ID, and data path. It calls the appropriate dataset loader function based on the dataset name provided.
 
 ### How to Use:
-#### Set Parameters:
 
-Specify the subject ID and dataset name in the __main__ block.
-Define the dataset path based on the computer's root path and the dataset name.
+`epochs, data, labels = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)`
+
+* Specify the dataset name and subject ID.
+* Define the dataset path based on the computer's root path and the dataset name.
+
+The datasets should be loaded in a folder. It should look like this:<br />
+<img width="267" alt="image" src="https://github.com/AlmaCuevas/voting_system_platform/assets/46833474/86715cdd-ee61-4137-96d2-348519b46c0d">
+
 
 #### Run the Script:
 
@@ -91,25 +80,6 @@ dataset_name: String representing the name of the dataset from which EEG data wi
 epochs: EEG data loaded as MNE Epochs objects.
 data: Processed EEG data in numpy array format.
 labels: Labels associated with the loaded EEG data.
-
-#### Purpose:
-The purpose of this script is to automate the process of loading and preprocessing EEG data from multiple datasets. By providing functions tailored to each dataset, it allows researchers and practitioners to easily access and prepare EEG data for analysis, modeling, or other applications in neuroscience research or clinical settings.
-
-#### Importing Libraries
-
-    import numpy as np
-    import mne 
-    from scipy.io import loadmat
-    import os
-    from share import datasets_basic_infos
-    from Inner_Speech_Dataset.Python_Processing.Data_extractions import Extract_data_from_subject
-    from Inner_Speech_Dataset.Python_Processing.Data_processing import Select_time_window, Transform_for_classificator
-    from mne import io, Epochs, events_from_annotations, EpochsArray
-    from mne.preprocessing import ICA, create_eog_epochs
-    from autoreject import AutoReject
-    from pathlib import Path
-
-This block imports necessary libraries and modules required for the code.
 
 #### Main Function: 
 The `load_data_labels_based_on_dataset` function is the main function that loads data based on the specified dataset name, subject ID, and data path. It calls the appropriate dataset loader function based on the dataset name provided.
@@ -127,6 +97,7 @@ The `load_data_labels_based_on_dataset` function is the main function that loads
 
 
 #### Main Block
+In the `__main__` block, the script sets manual inputs for the subject ID and dataset name. Then it constructs the data path based on the dataset name and loads the data using the `load_data_labels_based_on_dataset` function.
     if __name__ == '__main__':
     # Manual Inputs
     subject_id = 2  # Only two things I should be able to change
@@ -143,14 +114,4 @@ The `load_data_labels_based_on_dataset` function is the main function that loads
     print(labels.shape)
     print("Congrats! You were able to load data. You can now use this in a processing method.")
 
-This block is the main part of the script. It sets manual inputs for `subject_id` and dataset_name, then constructs the data path based on these inputs. Finally, it calls `load_data_labels_based_on_dataset()` function to load data and labels based on the provided dataset and subject ID, prints out the shapes of data and labels, and provides a congratulatory message.
-
-#### Load Data: 
-
-In the `__main__` block, the script sets manual inputs for the subject ID and dataset name. Then it constructs the data path based on the dataset name and loads the data using the `load_data_labels_based_on_dataset` function.
-
-#### Print Data Shape:
-Finally, the script prints the shape of the loaded data and labels to verify that the data loading was successful.
-
-
-
+This block is the main part of the script. It sets manual inputs for `subject_id` and `dataset_name`, then constructs the data path based on these inputs. Finally, it calls `load_data_labels_based_on_dataset()` function to load data and labels based on the provided dataset and subject ID, prints out the shapes of data and labels, and provides a congratulatory message.
