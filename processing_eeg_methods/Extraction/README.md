@@ -1,6 +1,6 @@
 # EEG Feature Extraction and Classification
 
-This code contains code for feature extraction from EEG data and classification of brain activity using machine learning. The project involves reading EEG data, extracting relevant features, and using these features to train a classifier to predict specific brain activity patterns.
+This code contains functions for feature extraction from EEG data and classification of brain activity. 
 
 ## Features
 
