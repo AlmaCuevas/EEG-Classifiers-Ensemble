@@ -2,16 +2,6 @@
 
 This code provides a pipeline for extracting features from EEG data and using K-Nearest Neighbors (KNN) to classify brain activity. The process includes  feature selection, and model optimization and training.
 
-## Dependencies
-
-Ensure you have the following Python packages installed:
-- `numpy`
-- `pandas`
-- `scikit-learn`
-- `scipy`
-- `processing_eeg_methods` (custom module)
-- `Extraction` (custom module)
-
 ## Feature Extraction and KNN Classification Pipeline
 
 ### Main Functions
@@ -22,6 +12,15 @@ Ensure you have the following Python packages installed:
 2. **KNN_train(data, labels, target_names, best_k, best_weights)**:
     - Trains a KNN classifier using the best hyperparameters found in the optimization step.
     - Performs cross-validation and prints a classification report and accuracy.
+## Dependencies
+
+Ensure you have the following Python packages installed:
+- `numpy`
+- `pandas`
+- `scikit-learn`
+- `scipy`
+- `processing_eeg_methods` (custom module)
+- `Extraction` (custom module)
 
 ### Usage
 
@@ -40,43 +39,6 @@ Ensure you have the following Python packages installed:
 ### Example:
 
 ```python
-import numpy as np
-import pandas as pd
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.model_selection import GridSearchCV, StratifiedKFold
-from sklearn.metrics import classification_report
-from sklearn.feature_selection import SelectKBest, chi2
-from sklearn.preprocessing import normalize
-
-from Extraction.get_features_probs import get_extractions
-from processing_eeg_methods.share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
-from processing_eeg_methods.data_loaders import load_data_labels_based_on_dataset
-
-def KNN_optimize(data, labels, target_names):
-    parameters = { "n_neighbors": range(1, 12), "weights": ["uniform", "distance"] }
-    gridsearch = GridSearchCV(KNeighborsClassifier(), parameters)
-    gridsearch.fit(data, labels)
-    best_k = gridsearch.best_params_["n_neighbors"]
-    best_weights = gridsearch.best_params_["weights"]
-    print("Best N-Neighbor:", best_k)
-    print("Best Weight:", best_weights)
-    return best_k, best_weights
-
-def KNN_train(data, labels, target_names, best_k, best_weights):
-    clf = KNeighborsClassifier(n_neighbors=best_k, weights=best_weights)
-    cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
-    preds = np.empty(len(labels))
-    for train, test in cv.split(data, labels):
-        clf.fit(data[train], labels[train])
-        preds[test] = clf.predict(data[test])
-    report = classification_report(labels, preds, target_names=target_names)
-    print(report)
-    acc = np.mean(preds == labels)
-    print("Accuracy:", acc)
-    if acc <= 0.25:
-        acc = np.nan
-    return clf, acc
-
 if __name__ == '__main__':
     subject_id = 7
     dataset_name = 'aguilera_traditional'
