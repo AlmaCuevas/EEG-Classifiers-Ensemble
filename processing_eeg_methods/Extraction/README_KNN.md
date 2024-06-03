@@ -22,7 +22,7 @@ Ensure you have the following Python packages installed:
 - `processing_eeg_methods` (custom module)
 - `Extraction` (custom module)
 
-### Usage
+## Usage
 
 1. **Feature Extraction**:
     - Loads EEG data and labels for a given dataset and subject.
