@@ -1,48 +1,53 @@
-EEG Signal Classification with Xdawn and Logistic Regression
+# EEG Signal Classification with Xdawn and Logistic Regression
+
 This repository contains code for training and testing a machine learning model to classify EEG signals using the Xdawn algorithm and Logistic Regression. The goal is to provide a robust model for identifying user intentions from EEG data, which can be used in various biomedical applications, including brain-computer interfaces (BCIs).
 
-Overview
+## Overview
+
 The provided code performs the following tasks:
+1. **Data Loading:** Loads EEG data and labels based on a specified dataset and subject ID.
+2. **Model Training:** Utilizes Xdawn for signal enhancement and Logistic Regression for classification.
+3. **Cross-Validation:** Implements Stratified K-Fold cross-validation to evaluate model performance.
+4. **Model Testing:** Tests the trained classifier on a given epoch and provides classification probabilities.
 
-Data Loading: Loads EEG data and labels based on a specified dataset and subject ID.
-Model Training: Utilizes Xdawn for signal enhancement and Logistic Regression for classification.
-Cross-Validation: Implements Stratified K-Fold cross-validation to evaluate model performance.
-Model Testing: Tests the trained classifier on a given epoch and provides classification probabilities.
-Getting Started
-Prerequisites
+## Getting Started
+
+### Prerequisites
+
 Ensure you have the following Python packages installed:
+- NumPy
+- scikit-learn
+- mne
+- pathlib
 
-NumPy
-scikit-learn
-mne
-pathlib
-You will also need to have access to the EEG datasets and the data_loaders module, as well as the datasets_basic_infos configuration.
+You will also need to have access to the EEG datasets and the `data_loaders` module, as well as the `datasets_basic_infos` configuration.
 
-Code Structure
-Imports and Configuration:
-The code begins by importing necessary libraries and appending the system path to include the voting system platform directory.
+### Code Structure
 
-Training Function:
-xdawn_train function performs cross-validation using Xdawn and Logistic Regression, and outputs a classification report along with the accuracy.
+1. **Imports and Configuration:**
+   The code begins by importing necessary libraries and appending the system path to include the voting system platform directory.
 
-Testing Function:
-xdawn_test function takes a trained classifier and an epoch, and returns the classification probabilities for that epoch.
+2. **Training Function:**
+   `xdawn_train` function performs cross-validation using Xdawn and Logistic Regression, and outputs a classification report along with the accuracy.
 
-Main Execution:
-The main block of the code sets manual inputs for the subject ID and dataset name, loads the data, trains the model, and tests it on a sample epoch.
+3. **Testing Function:**
+   `xdawn_test` function takes a trained classifier and an epoch, and returns the classification probabilities for that epoch.
 
-Usage
-Manual Inputs:
-Modify the subject_id and dataset_name variables to specify which subject and dataset to use.
+4. **Main Execution:**
+   The main block of the code sets manual inputs for the subject ID and dataset name, loads the data, trains the model, and tests it on a sample epoch.
 
-Folders and Paths:
-Update the computer_root_path to the location of your datasets.
+### Usage
 
-Run the Code:
-Execute the script to train the model and test its performance. The script will output the training accuracy, classification report, and test probabilities.
+1. **Manual Inputs:**
+   Modify the `subject_id` and `dataset_name` variables to specify which subject and dataset to use.
 
-python
-Copiar código
+2. **Folders and Paths:**
+   Update the `computer_root_path` to the location of your datasets.
+
+3. **Run the Code:**
+   Execute the script to train the model and test its performance. The script will output the training accuracy, classification report, and test probabilities.
+
+```python
 if __name__ == '__main__':
     # Manual Inputs
     subject_id = 1  # Only two things I should be able to change
@@ -73,7 +78,11 @@ if __name__ == '__main__':
     print(target_names)
     print("Probability: ", array)
     print("Real: ", labels[epoch_number])
-Notes
-Ensure the data paths and module imports are correctly set up according to your project structure.
-The code uses hardcoded paths; update them as necessary to fit your environment.
-The model is saved using pickle (commented out in the provided script); uncomment and update the path to save the trained model.
+```
+
+### Notes
+
+- Ensure the data paths and module imports are correctly set up according to your project structure.
+- The code uses hardcoded paths; update them as necessary to fit your environment.
+- The model is saved using `pickle` (commented out in the provided script); uncomment and update the path to save the trained model.
+
