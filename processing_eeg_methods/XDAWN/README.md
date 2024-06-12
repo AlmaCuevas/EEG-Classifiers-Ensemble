@@ -1,6 +1,6 @@
 # EEG Signal Classification with Xdawn and Logistic Regression
 
-This repository contains code for training and testing a machine learning model to classify EEG signals using the Xdawn algorithm and Logistic Regression. The goal is to provide a robust model for identifying user intentions from EEG data, which can be used in various biomedical applications, including brain-computer interfaces (BCIs).
+This code contains functions for training and testing a machine learning model to classify EEG signals using the Xdawn algorithm and Logistic Regression. The goal is to provide a robust model for identifying user intentions from EEG data.
 
 ## Overview
 
