@@ -23,3 +23,9 @@ emd==0.4.0
 brainflow==2.4.0
 keras-preprocessing==1.1.2
 autoreject==0.4.3
+PyWavelets==1.6.0 # From EEGExtract Original: 1.0.3
+dit==1.5 # From EEGExtract Original: 1.2.3
+statsmodels==0.14.2 # From EEGExtract Original: 0.10.1
+librosa==0.10.2.post1
+pyinform==0.2.0
+antropy==0.1.6

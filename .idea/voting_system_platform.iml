@@ -31,10 +31,13 @@
       <sourceFolder url="file://$MODULE_DIR$/Code/Abandoned/TCACNet/tcacnet_utils" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Code/eeglib" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Code/eeglib/eeglib" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/processing_eeg_methods" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/env_voting_system_platform" />
       <excludeFolder url="file://$MODULE_DIR$/Results" />
+      <excludeFolder url="file://$MODULE_DIR$/processing310_env" />
+      <excludeFolder url="file://$MODULE_DIR$/processing_env" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.10 (voting_system_platform)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.10" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PyDocumentationSettings">

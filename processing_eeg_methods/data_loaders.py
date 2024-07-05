@@ -114,7 +114,7 @@ def nieto_dataset_loader(root_dir: str, N_S: int):
 
 def torres_dataset_loader(filepath: str, subject_id: int): # TODO: Flag or something to return all subjects
     EEG_nested_dict = loadmat(filepath, simplify_cells=True)
-    EEG_array = np.zeros((7, 5, 33, 421, 17)) # Subject, Word, Trial, Samples, Channels
+    EEG_array = np.zeros((27, 5, 33, 463, 17)) # Subject, Word, Trial, Samples, Channels
 
     for i_subject, subject in enumerate(EEG_nested_dict['S']):
         for i_word, word in enumerate(subject['Palabra']):
@@ -133,11 +133,11 @@ def torres_dataset_loader(filepath: str, subject_id: int): # TODO: Flag or somet
 
     # reshape x in 3d data(Trials, Channels, Samples) and y in 1d data(Trials)
     x = np.transpose(EEG_array_selected_values, (0, 1, 3, 2))
-    x = x.reshape(5*33, 14, 421)
+    x = x.reshape(5*33, 14, 463)
     y = [0, 1, 2, 3, 4]
     y = np.repeat(y, 33, axis=0)
 
-    event_dict = {"Arriba": 0, "Abajo": 1, "Izquierda": 2, "Derecha": 3, "Seleccionar": 3}
+    event_dict = {"Arriba": 0, "Abajo": 1, "Izquierda": 2, "Derecha": 3, "Seleccionar": 4}
     return x, y, event_dict
 
 def coretto_dataset_loader(filepath: str):
@@ -227,7 +227,7 @@ def nguyen_2019_dataset_loader(folderpath: str):
 def braincommand_dataset_loader(filepath: str, subject_id: int, game_mode: str = 'calibration2'):
     complete_information = pd.read_csv(f'{filepath}/eeg_data_{game_mode}_sub{subject_id:02d}.csv')
     x_list = list(complete_information['time'].apply(eval))
-    label = list(complete_information['class'][1:])# TODO: I'm removing the first one because the EEG data is incomplete. Real time seems to have this problem too. So the first one will always be lost
+    label = list(complete_information['class'][1:]) # I'm removing the first one because is not a real trial.
 
     label_0 = label.count(0)
     print(f"label 0 is {label_0}")
@@ -242,6 +242,7 @@ def braincommand_dataset_loader(filepath: str, subject_id: int, game_mode: str =
     print(f"label 3 is {label_3}")
 
     x_array = np.array(x_list[1:]) # trials, time, channels
+    print(x_array.shape)
     x_array = x_array[:, :, :-9] # The last channels are accelerometer (x3), gyroscope (x3), validity, battery and counter
     x_array = np.transpose(x_array, (0, 2, 1))
     x_array = signal.detrend(x_array)
@@ -249,6 +250,8 @@ def braincommand_dataset_loader(filepath: str, subject_id: int, game_mode: str =
     x_array = data_normalization(x_array)
 
     event_dict = {'Derecha': 0, 'Izquierda': 1, 'Arriba': 2, 'Abajo': 3}
+    print(len(label))
+    print(x_array.shape)
     return x_array, label, event_dict
 
 def load_data_labels_based_on_dataset(dataset_info: dict, subject_id: int, data_path: str, selected_classes: list[int] = [], transpose: bool = False, normalize: bool = True, threshold_for_bug: float = 0, astype_value: str = ''):
@@ -288,7 +291,6 @@ def load_data_labels_based_on_dataset(dataset_info: dict, subject_id: int, data_
     elif dataset_name == 'braincommand':
         data, label, event_dict = braincommand_dataset_loader(data_path, subject_id)
 
-
     if transpose:
         data = np.transpose(data, (0, 2, 1))
     if normalize:
@@ -315,8 +317,8 @@ def load_data_labels_based_on_dataset(dataset_info: dict, subject_id: int, data_
 
 if __name__ == '__main__':
     # Manual Inputs
-    subject_id = 22  # Only two things I should be able to change
-    dataset_name = 'torres'  # Only two things I should be able to change
+    subject_id = 29  # Only two things I should be able to change
+    dataset_name = 'braincommand'  # Only two things I should be able to change
 
     if dataset_name not in datasets_basic_infos:
         raise Exception(

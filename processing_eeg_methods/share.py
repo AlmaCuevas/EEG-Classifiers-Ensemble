@@ -57,10 +57,10 @@ coretto_info = {
 # Torres
 torres_info = {
 'dataset_name': 'torres',
-'#_class': 5, # 'arriba', 'abajo', 'izquierda', 'derecha'. They also did 'seleccionar', but we are not going to use that one.
+'#_class': 5, # 'arriba', 'abajo', 'izquierda', 'derecha', 'seleccionar'
 "target_names": ["Arriba", "Abajo", "Izquierda", "Derecha", "Seleccionar"],
-'#_channels': 14, # CHECK
-'samples': 421, # PENDING
+'#_channels': 14,
+'samples': 463, # The maximum, epochs are irregular.
 'sample_rate': 128,
 'channels_names': ['AF3', 'F7', 'F3', 'FC5', 'T7', 'P7', 'O1', 'O2', 'P8', 'T8', 'FC6', 'F4', 'F8', 'AF4'],
 'subjects':27,
@@ -100,7 +100,7 @@ braincommand = {  # BrainCommand
                     'samples': 350,  # 250*1.4
                     'sample_rate': 250,
                     'channels_names': ['C4', 'FC3', 'F5', 'C3', 'F7', 'Cz', 'P3', 'C5'],
-                    'subjects': 23,  # PENDING
+                    'subjects': 1,  # PENDING
                     'total_trials': 200,  # VARIABLE SINCE THE SUBJECT HAS TOTAL CONTROL OF HOW MANY MOVEMENTS THEY WANT TO DO
                     }
 
