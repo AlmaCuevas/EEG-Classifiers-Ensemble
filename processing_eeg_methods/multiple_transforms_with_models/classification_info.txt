@@ -1,3 +1,5 @@
+IDK where I got this. I dont think is real, otherwise I would remember. I think in reality the chance level is 0.5 and I forgot to update the value.
+
 Classification accuracy for Subject 1: 0.5041666666666667 / Chance level: 0.25
 Classification accuracy for Subject 2: 0.5416666666666667 / Chance level: 0.25
 Classification accuracy for Subject 3: 0.4333333333333333 / Chance level: 0.25

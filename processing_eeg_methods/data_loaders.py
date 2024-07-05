@@ -242,7 +242,6 @@ def braincommand_dataset_loader(filepath: str, subject_id: int, game_mode: str =
     print(f"label 3 is {label_3}")
 
     x_array = np.array(x_list[1:]) # trials, time, channels
-    print(x_array.shape)
     x_array = x_array[:, :, :-9] # The last channels are accelerometer (x3), gyroscope (x3), validity, battery and counter
     x_array = np.transpose(x_array, (0, 2, 1))
     x_array = signal.detrend(x_array)
@@ -250,8 +249,6 @@ def braincommand_dataset_loader(filepath: str, subject_id: int, game_mode: str =
     x_array = data_normalization(x_array)
 
     event_dict = {'Derecha': 0, 'Izquierda': 1, 'Arriba': 2, 'Abajo': 3}
-    print(len(label))
-    print(x_array.shape)
     return x_array, label, event_dict
 
 def load_data_labels_based_on_dataset(dataset_info: dict, subject_id: int, data_path: str, selected_classes: list[int] = [], transpose: bool = False, normalize: bool = True, threshold_for_bug: float = 0, astype_value: str = ''):
