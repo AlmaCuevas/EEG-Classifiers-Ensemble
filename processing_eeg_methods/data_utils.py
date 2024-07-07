@@ -13,9 +13,9 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
-
+import os
 import pandas as pd
-
+from share import ROOT_VOTING_SYSTEM_PATH
 
 # MDM() Always nan at the end
 classifiers = [ # The Good, Medium and Bad is decided on Torres dataset. This to avoid most of the processings.
@@ -51,6 +51,20 @@ def class_selection(dataX, dataY, event_dict: dict, selected_classes: list[int])
 
     return dataX_selected_np, np.asarray(dataY_selected_df.replace(label_remap)), event_dict
 
+def create_folder(dataset_name: str, subfolder_name: str):
+    # Create the folder if it doesn't exist already
+    saving_folder = f'{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{subfolder_name}/'
+    if not os.path.exists(saving_folder):
+        os.makedirs(saving_folder)
+
+def convert_into_binary(label, chosen_numbered_label):
+    label_copy = label.copy()
+    for i, label_i in enumerate(label_copy):
+        if label_i == chosen_numbered_label:
+            label[i] = 1
+        else:
+            label[i] = 0
+    return label
 
 def train_test_val_split(dataX, dataY, valid_flag: bool = False):
     train_ratio = 0.75

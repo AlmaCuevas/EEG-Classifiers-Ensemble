@@ -42,7 +42,7 @@ def diffE_evaluation(subject_id: int, X, Y, dataset_info, device: str =  "cuda:0
         encoder_dim = 256
         fc_dim = 512
         # Define model
-        model_path: str = f'{ROOT_VOTING_SYSTEM_PATH}/Results/Diffe/diffe_{dataset_info["dataset_name"]}_{subject_id}.pt'  # diffE_{subject_ID}.pt
+        model_path: str = f'{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_info["dataset_name"]}/Diffe/diffe_{dataset_info["dataset_name"]}_{subject_id}.pth'
         num_classes = dataset_info['#_class']
         channels = dataset_info['#_channels']
 

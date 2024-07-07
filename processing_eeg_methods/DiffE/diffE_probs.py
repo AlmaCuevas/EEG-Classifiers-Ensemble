@@ -7,7 +7,7 @@ from diffE_utils import get_dataloader
 from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 from data_loaders import load_data_labels_based_on_dataset
 import time
-from pathlib import Path
+import torch.nn.functional as F
 import torch
 
 # todo: add the test template
@@ -15,15 +15,12 @@ import torch
 
 threshold_for_bug = 0.00000001  # could be any value, ex numpy.min
 
-def diffE_train(data, labels) -> tuple[str, float]: # v1
-
-
-
-    return model_path, accuracy
+def diffE_train(data, labels) -> tuple[str, float]:
+    pass
 
 def diffE_test(subject_id: int, X, dataset_info: dict, device: str =  "cuda:0"):
     # From diffe_evaluation
-    model_path: str = f'{ROOT_VOTING_SYSTEM_PATH}/Results/Diffe/diffe_{dataset_info["dataset_name"]}_{subject_id}.pt'  # diffE_{subject_ID}.pt
+    model_path: str = f'{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_info["dataset_name"]}/Diffe/diffe_{dataset_info["dataset_name"]}_{subject_id}.pth'
 
     X = X[:, :, : -1 * (X.shape[2] % 8)]  # 2^3=8 because there are 3 downs and ups halves.
     # Dataloader
@@ -91,7 +88,7 @@ if __name__ == "__main__":
         results_df = pd.DataFrame()
 
         for subject_id in range(
-            1, dataset_info["subjects"] + 1 #todo: run not normalized again. I think normalized is better though
+            1, dataset_info["subjects"] + 1
         ):  # Only two things I should be able to change
             print(subject_id)
             with open(
