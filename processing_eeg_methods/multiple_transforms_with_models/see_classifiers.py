@@ -61,11 +61,11 @@ classifiers = [
     RidgeClassifier()
 ]
 
-datasets = ['torres']
+datasets = ['braincommand']
 
 for ds_cnt, ds in enumerate(datasets):
     # Manual Inputs
-    subject_id = 1  # Only two things I should be able to change
+    subject_id = 29  # Only two things I should be able to change
 
     print(ROOT_VOTING_SYSTEM_PATH)
     # Folders and paths

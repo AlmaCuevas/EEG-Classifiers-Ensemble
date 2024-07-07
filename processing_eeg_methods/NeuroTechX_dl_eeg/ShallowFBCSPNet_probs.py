@@ -219,7 +219,7 @@ if __name__ == "__main__":
             create_folder(dataset_name, processing_name)
             print(subject_id)
             with open(
-                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{processing_name}_{dataset_name}.txt",
+                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{processing_name}_{dataset_name}.txt",
                 "a",
             ) as f:
                 f.write(f"Subject: {subject_id}\n\n")
@@ -244,7 +244,7 @@ if __name__ == "__main__":
                 accuracy = ShallowFBCSPNet_train(data[train], labels[train])
                 training_time.append(time.time() - start)
                 with open(
-                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{processing_name}_{dataset_name}.txt",
+                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{processing_name}_{dataset_name}.txt",
                     "a",
                 ) as f:
                     f.write(f"{processing_name}\n")
@@ -271,7 +271,7 @@ if __name__ == "__main__":
                 testing_time_over_cv.append(np.mean(testing_time))
                 acc_over_cv.append(acc)
                 with open(
-                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{processing_name}_{dataset_name}.txt",
+                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{processing_name}_{dataset_name}.txt",
                     "a",
                 ) as f:
                     f.write(f"Prediction: {pred_list}\n")
@@ -281,7 +281,7 @@ if __name__ == "__main__":
             mean_acc_over_cv = np.mean(acc_over_cv)
 
             with open(
-                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{processing_name}_{dataset_name}.txt",
+                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{processing_name}_{dataset_name}.txt",
                 "a",
             ) as f:
                 f.write(f"Final acc: {mean_acc_over_cv}\n\n\n\n")
@@ -293,6 +293,6 @@ if __name__ == "__main__":
             results_df = pd.concat([results_df, temp])
 
         results_df.to_csv(
-            f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{processing_name}_{dataset_name}.csv")
+            f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{processing_name}_{dataset_name}.csv")
 
     print("Congrats! The processing methods are done processing.")
