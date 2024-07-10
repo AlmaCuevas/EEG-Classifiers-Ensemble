@@ -103,9 +103,9 @@ def selected_transformers_test(clf, features_df):
 
 if __name__ == "__main__":
     # Manual Inputs
-    datasets = ['aguilera_gamified']
+    datasets = ['braincommand']
     for dataset_name in datasets:
-        version_name = "one_transforms_table_of_selectKbest" # To keep track what the output processing alteration went through
+        version_name = "22_23_independent_channels_one_transforms_table_of_selectKbest" # To keep track what the output processing alteration went through
 
         # Folders and paths
         dataset_foldername = dataset_name + "_dataset"
@@ -123,7 +123,7 @@ if __name__ == "__main__":
         results_df = pd.DataFrame()
 
         for subject_id in range(
-            1, dataset_info["subjects"] + 1
+            22, 24
         ):  # Only two things I should be able to change
             print(subject_id)
             with open(
@@ -133,8 +133,8 @@ if __name__ == "__main__":
                 f.write(f"Subject: {subject_id}\n\n")
             epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path,
                                                                      normalize=False, # If I normalize it doesn't run
-                                                                     selected_classes=[0, 2],
-                                                                     threshold_for_bug=0.00000001)  # could be any value, ex numpy.min
+                                                                     threshold_for_bug=0.00000001, # could be any value, ex numpy.min
+                                                                     channels_independent=True)
             # Do cross-validation
             cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
             acc_over_cv = []

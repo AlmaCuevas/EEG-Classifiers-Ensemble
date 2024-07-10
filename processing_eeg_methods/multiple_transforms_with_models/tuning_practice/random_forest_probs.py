@@ -1,20 +1,19 @@
+# Exercise, the models can be done iteratively with ClfSwitcher.
+
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
 from sklearn.model_selection import StratifiedKFold
+
+from Extraction.get_features_probs import get_extractions
 from processing_eeg_methods.share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 from processing_eeg_methods.data_loaders import load_data_labels_based_on_dataset
-from Extraction.Entropy_Eduardo import extractions_train
 from sklearn.preprocessing import normalize
 import time
 
-from sklearn.pipeline import make_pipeline
-
-# todo: this needs updating to new format for processing.
-
-def ranf_optimize(data,labels,target_names):
+def ranf_optimize(data,labels):
     parameters = {
     'n_estimators': [50, 100, 200],
     'max_depth': [None, 5, 10, 20],
@@ -25,7 +24,7 @@ def ranf_optimize(data,labels,target_names):
     gridsearch.fit(data, labels)
     best_parameters = gridsearch.best_params_
     print(best_parameters)
-    return     best_parameters
+    return best_parameters
 
 
 def ranf_train(data, labels, target_names,best_parameters):
@@ -78,28 +77,27 @@ if __name__ == '__main__':
     data_path = computer_root_path + dataset_foldername
     dataset_info = datasets_basic_infos[dataset_name]
 
-    epochs,data, y = load_data_labels_based_on_dataset(dataset_name, subject_id, data_path)
+    epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
     target_names = dataset_info['target_names']
-    df= extractions_train(data, y, target_names)
+    df= get_extractions(data, dataset_info, "complete")
     df= df.to_numpy()
-    labels=df[:,3]
-    df=normalize(df[:,[0,1,2]], axis=0)
+    df=normalize(df, axis=0)
     print(df)
 
     print("******************************** Training ********************************")
 
     start = time.time()
-    best_parameters=ranf_optimize(df[:,[0,1,2]],labels,target_names)
-    clf, acc = ranf_train(df[:,[0,1,2]],labels,target_names,best_parameters)
+    best_parameters=ranf_optimize(df,labels,target_names)
+    clf, acc = ranf_train(df,labels,target_names,best_parameters)
     end = time.time()
     print("Training time: ", end - start)
 
     print("******************************** Test ********************************")
     epoch_number = 0
     start = time.time()
-    array = ranf_test(clf, df[:,[0,1,2]])
+    array = ranf_test(clf, df)
     end = time.time()
     print("One epoch, testing time: ", end - start)
     print(target_names)
     print("Probability: " , array[epoch_number]) # We select the last one, the last epoch which is the current one.
-    print("Real: ", y[epoch_number])
+    print("Real: ", labels[epoch_number])

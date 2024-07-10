@@ -9,7 +9,12 @@
     2.1. [Functions](https://github.com/AlmaCuevas/voting_system_platform/tree/main/processing_eeg_methods#functions)<br />
     2.2. [Main Function](https://github.com/AlmaCuevas/voting_system_platform/tree/main/processing_eeg_methods#main-function)<br />
     2.3. [How to Use](https://github.com/AlmaCuevas/voting_system_platform/tree/main/processing_eeg_methods#how-to-use)<br />
-   
+
+## Prerequisites
+
+* Ensure you have installed the Python packages from requirements.txt .
+* You will also need to have access to the EEG datasets.
+
 ## share.py
 
 The code implies the possibility of running experiments with all datasets simultaneously. It offers a well-organized framework for managing multiple datasets cohesively, simplifying data analysis and experimentation.

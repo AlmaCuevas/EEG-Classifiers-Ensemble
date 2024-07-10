@@ -222,7 +222,7 @@ def lyapunov(eegData):
     
 ##########
 # Fractal Embedding Dimension
-# From pyrem: packadge for sleep scoring from EEG data
+# From pyrem: package for sleep scoring from EEG data
 # https://github.com/gilestrolab/pyrem/blob/master/src/pyrem/univariate.py
 def hFD(a, k_max): #Higuchi FD
     L = []

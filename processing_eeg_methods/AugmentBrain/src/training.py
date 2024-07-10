@@ -471,11 +471,13 @@ def main():
 
     raw_data_X, data_y, label_mapping = load_all_raw_data(starting_dir=STARTING_DIR)
 
+    # todo: import my data
+
     hyperparameters = Hyperparameters(RANDOM_STATE, label_mapping)
 
     network_hyperparameters_dict, aug_hyperparameters_dict = hyperparameters.set_default_hyperparameters()
 
-    data_X, fft_data_X = preprocess_raw_eeg(raw_data_X, lowcut=8, highcut=45, coi3order=0)
+    data_X, fft_data_X = preprocess_raw_eeg(raw_data_X, lowcut=8, highcut=45, coi3order=0) # (samples, channels, values)
 
     tmp_train_X, test_X, tmp_train_y, test_y = train_test_split(data_X, data_y,
                                                                 test_size=SPLITTING_PERCENTAGE.test / 100,

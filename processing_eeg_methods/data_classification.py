@@ -15,7 +15,7 @@ from BigProject.LSTM_probs import LSTM_train, LSTM_test
 from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 import numpy as np
 import time
-from TCACNet.tcanet_probs import tcanet_train, tcanet_test
+from NeuroTechX_dl_eeg.ShallowFBCSPNet_probs import ShallowFBCSPNet_train, ShallowFBCSPNet_test
 from XDAWN.xdawn_probs import xdawn_train, xdawn_test
 from sklearn.preprocessing import normalize
 from diffE_training import diffE_train
@@ -59,41 +59,16 @@ def group_methods_train(
         ) = xdawn_train(epochs, labels, target_names)
         models_outputs["XDAWN_LogReg_train_timer"] = time.time() - start_time
 
-    # No standard methods:
-    if methods["TCANET_Global_Model"]:
-        print("TCANET_Global_Model")
+    if methods["ShallowFBCSPNet"]:
+        print("ShallowFBCSPNet")
         start_time = time.time()
         (
-            models_outputs["model_only_global"],
-            models_outputs["model_only_local"],
-            models_outputs["model_only_top"],
-            models_outputs["TCANET_Global_Model_accuracy"],
-        ) = tcanet_train(
-            dataset_name,
-            subject_id,
+            models_outputs["model_accuracy"]
+        ) = ShallowFBCSPNet_train(
             data,
-            labels,
-            channels=dataset_info["#_channels"],
-            ONLY_GLOBAL_MODEL=True,
+            labels
         )
-        models_outputs["TCANET_Global_Model_train_timer"] = time.time() - start_time
-    if methods["TCANET"]:
-        print("TCANET")
-        start_time = time.time()
-        (
-            models_outputs["model_tcanet_global"],
-            models_outputs["model_tcanet_local"],
-            models_outputs["model_tcanet_top"],
-            models_outputs["TCANET_accuracy"],
-        ) = tcanet_train(
-            dataset_name,
-            subject_id,
-            data,
-            labels,
-            channels=dataset_info["#_channels"],
-            ONLY_GLOBAL_MODEL=False,
-        )
-        models_outputs["TCANET_train_timer"] = time.time() - start_time
+        models_outputs["ShallowFBCSPNet_train_timer"] = time.time() - start_time
     if methods["DeepConvNet"]: #todo: UserWarning: You are saving your model as an HDF5 file via `model.save()`. This file format is considered legacy
         print("DeepConvNet")
         start_time = time.time()
@@ -162,34 +137,16 @@ def group_methods_test(methods: dict, columns_list: list, transform_methods: dic
             xdawn_test(models_outputs["XDAWN_LogReg_clf"], data_epoch)
         )
         models_outputs["XDAWN_LogReg_test_timer"] = time.time() - start_time
-    if methods["TCANET_Global_Model"] and models_outputs["model_only_global"]:
-        print("TCANET_Global_Model")
+
+    if methods["ShallowFBCSPNet"]:
+        print("ShallowFBCSPNet")
         start_time = time.time()
-        models_outputs["TCANET_Global_Model_probabilities"] = normalize(tcanet_test(
-            dataset_name,
+        models_outputs["ShallowFBCSPNet_array"] = normalize(ShallowFBCSPNet_test( # TODO: This array is binary, you could call it as many classes there are.
             subject_id,
-            models_outputs["model_only_global"],
-            models_outputs["model_only_local"],
-            models_outputs["model_only_top"],
             data_array,
-            dataset_info["#_channels"],
-            True,
+            dataset_info,
         ))
-        models_outputs["TCANET_Global_Model_test_timer"] = time.time() - start_time
-    if methods["TCANET"] and models_outputs["model_tcanet_global"]:
-        print("TCANET")
-        start_time = time.time()
-        models_outputs["TCANET_array"] = normalize(tcanet_test(
-            dataset_name,
-            subject_id,
-            models_outputs["model_tcanet_global"],
-            models_outputs["model_tcanet_local"],
-            models_outputs["model_tcanet_top"],
-            data_array,
-            dataset_info["#_channels"],
-            False,
-        ))
-        models_outputs["TCANET_test_timer"] = time.time() - start_time
+        models_outputs["ShallowFBCSPNet_test_timer"] = time.time() - start_time
     if methods["DeepConvNet"]:
         print("DeepConvNet")
         start_time = time.time()
@@ -278,8 +235,7 @@ if __name__ == "__main__":
             "selected_transformers": False, # Like customized but with frequency bands and selected columns
             "customized": True,
             "XDAWN_LogReg": False, # Todo: ValueError: Cannot apply correct_overlap if epochs were baselined.
-            "TCANET_Global_Model": False, # BAD
-            "TCANET": False, # BAD #todo It always gives answer 0. Even when the training is high. why?
+            "ShallowFBCSPNet": False,
             "diffE": False, #todo: for ic_bci_2020 diffE evaluation doesnt run because the array shape is weird? check! # ERROR IN EVALUATION OF TEST, BRAINCOMMAND: setting an array element with a sequence. The requested array has an inhomogeneous shape after 2 dimensions. The detected shape was (2, 1) + inhomogeneous part.
             "DeepConvNet": False, # BAD #todo: ValueError: Shapes (None, 5) and (None, 4) are incompatible
             "LSTM": False, # BAD

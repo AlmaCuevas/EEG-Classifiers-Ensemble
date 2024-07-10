@@ -195,7 +195,7 @@ if __name__ == "__main__":
     datasets = ['braincommand']#, 'aguilera_traditional', 'aguilera_gamified', 'torres']
     for dataset_name in datasets:
         chosen_numbered_label = 3
-        version_name = str(chosen_numbered_label) # To keep track what the output processing alteration went through
+        version_name = f"independent_channels_{chosen_numbered_label}" # To keep track what the output processing alteration went through
 
         # Folders and paths
         dataset_foldername = dataset_name + "_dataset"
@@ -223,7 +223,7 @@ if __name__ == "__main__":
                 "a",
             ) as f:
                 f.write(f"Subject: {subject_id}\n\n")
-            epochs, _, _ = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
+            epochs, _, _ = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path, channels_independent=True)
 
             data = (epochs.get_data() * 1e6).astype(np.float32)
             labels = epochs.events[:, 2].astype(np.int64)

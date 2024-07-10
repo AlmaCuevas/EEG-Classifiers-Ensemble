@@ -1,5 +1,5 @@
 from data_utils import train_test_val_split
-from share import datasets_basic_infos
+from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 from data_loaders import load_data_labels_based_on_dataset
 import time
 
@@ -9,7 +9,6 @@ from torch.utils.data import DataLoader
 import numpy as np
 from pathlib import Path
 
-ROOT_VOTING_SYSTEM_PATH: Path = Path(__file__).parent.parent.resolve()
 
 def tcanet_train(dataset_name, subject_id, data, labels, channels, ONLY_GLOBAL_MODEL):
     train_loader, valid_loader, test_loader = EEGdata_loader(data, labels)
@@ -39,9 +38,9 @@ def tcanet_test(dataset_name, subject_id, model_global, model_local, model_top, 
     use_cuda = False
     loader = DataLoader(trial_data, pin_memory=use_cuda)
 
-    model_global.load_state_dict(torch.load(f'model_global_cross_entropy_{dataset_name}_{subject_id}.pth'))
-    model_local.load_state_dict(torch.load(f'model_local_cross_entropy_{dataset_name}_{subject_id}.pth'))
-    model_top.load_state_dict(torch.load(f'model_top_cross_entropy_{dataset_name}_{subject_id}.pth'))
+    model_global.load_state_dict(torch.load(f'{ROOT_VOTING_SYSTEM_PATH}/Results/model_global_cross_entropy_{dataset_name}_{subject_id}.pth'))
+    model_local.load_state_dict(torch.load(f'{ROOT_VOTING_SYSTEM_PATH}/Results/model_local_cross_entropy_{dataset_name}_{subject_id}.pth'))
+    model_top.load_state_dict(torch.load(f'{ROOT_VOTING_SYSTEM_PATH}/Results/model_top_cross_entropy_{dataset_name}_{subject_id}.pth'))
 
     output_array = tcanet_online_pred(model_global, model_local, model_top, loader, channels, only_global_model=ONLY_GLOBAL_MODEL)
     return output_array

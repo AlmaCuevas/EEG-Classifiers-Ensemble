@@ -5,7 +5,7 @@ from data_utils import train_test_val_split
 import torch.nn as nn
 import torch.optim as optim
 from TCACNet.tcacnet_utils.network import globalnetwork, localnetwork, topnetwork
-from share import datasets_basic_infos
+from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 from data_loaders import load_data_labels_based_on_dataset
 import numpy as np
 
@@ -156,42 +156,40 @@ def call_tcanet(dataset_name, subject_id, train_loader, valid_loader, test_loade
     model_global = globalnetwork(channels).to(device)
     model_local = localnetwork(channels).to(device)
     model_top = topnetwork(kernel_size).to(device)
-    try:
-        if only_global_model:
-            optimizer = optim.Adam(list(model_global.parameters())
-                                   + list(model_top.parameters()), lr=learning_rate)
-        else:
-            optimizer = optim.Adam(list(model_global.parameters())
-                                   + list(model_local.parameters())
-                                   + list(model_top.parameters()), lr=learning_rate)
 
-        min_cross_entropy = 100000
+    if only_global_model:
+        optimizer = optim.Adam(list(model_global.parameters())
+                               + list(model_top.parameters()), lr=learning_rate)
+    else:
+        optimizer = optim.Adam(list(model_global.parameters())
+                               + list(model_local.parameters())
+                               + list(model_top.parameters()), lr=learning_rate)
 
-        for ep in range(n_epochs):
-            train_total_loss, train_cross_entropy = train(model_global, model_local, model_top, optimizer,
-                                                          loss_fn_local_top, ep, only_global_model, train_loader, channels)
-            valid_total_loss, valid_cross_entropy, valid_acc, preds_tcanet = tcanet_test(model_global, model_local, model_top,
-                                                                          test_loss_fn_local_top, ep, valid_loader, only_global_model, channels, verbose=False)
-            if valid_cross_entropy < min_cross_entropy:
-                min_cross_entropy = valid_cross_entropy
-                torch.save(model_global.state_dict(), f'model_global_cross_entropy_{dataset_name}_{subject_id}.pth')
-                torch.save(model_local.state_dict(), f'model_local_cross_entropy_{dataset_name}_{subject_id}.pth')
-                torch.save(model_top.state_dict(), f'model_top_cross_entropy_{dataset_name}_{subject_id}.pth')
+    min_cross_entropy = 100000
 
-        if only_global_model:
-            print('\nUse global model:')
-        else:
-            print('\nUse TCACNet:')
-
-        model_global.load_state_dict(torch.load(f'model_global_cross_entropy_{dataset_name}_{subject_id}.pth'))
-        model_local.load_state_dict(torch.load(f'model_local_cross_entropy_{dataset_name}_{subject_id}.pth'))
-        model_top.load_state_dict(torch.load(f'model_top_cross_entropy_{dataset_name}_{subject_id}.pth'))
+    for ep in range(n_epochs):
+        train_total_loss, train_cross_entropy = train(model_global, model_local, model_top, optimizer,
+                                                      loss_fn_local_top, ep, only_global_model, train_loader, channels)
         valid_total_loss, valid_cross_entropy, valid_acc, preds_tcanet = tcanet_test(model_global, model_local, model_top,
-                                                                                    test_loss_fn_local_top, 0, test_loader, only_global_model, channels,
-                                                                                    verbose=True)
-        return model_global, model_local, model_top, valid_acc
-    except:
-        return False, False, False, np.nan
+                                                                      test_loss_fn_local_top, ep, valid_loader, only_global_model, channels, verbose=False)
+        if valid_cross_entropy < min_cross_entropy:
+            min_cross_entropy = valid_cross_entropy
+            torch.save(model_global.state_dict(), f'{ROOT_VOTING_SYSTEM_PATH}/Results/model_global_cross_entropy_{dataset_name}_{subject_id}.pth')
+            torch.save(model_local.state_dict(), f'{ROOT_VOTING_SYSTEM_PATH}/Results/model_local_cross_entropy_{dataset_name}_{subject_id}.pth')
+            torch.save(model_top.state_dict(), f'{ROOT_VOTING_SYSTEM_PATH}/Results/model_top_cross_entropy_{dataset_name}_{subject_id}.pth')
+
+    if only_global_model:
+        print('\nUse global model:')
+    else:
+        print('\nUse TCACNet:')
+
+    model_global.load_state_dict(torch.load(f'{ROOT_VOTING_SYSTEM_PATH}/Results/model_global_cross_entropy_{dataset_name}_{subject_id}.pth'))
+    model_local.load_state_dict(torch.load(f'{ROOT_VOTING_SYSTEM_PATH}/Results/model_local_cross_entropy_{dataset_name}_{subject_id}.pth'))
+    model_top.load_state_dict(torch.load(f'{ROOT_VOTING_SYSTEM_PATH}/Results/model_top_cross_entropy_{dataset_name}_{subject_id}.pth'))
+    valid_total_loss, valid_cross_entropy, valid_acc, preds_tcanet = tcanet_test(model_global, model_local, model_top,
+                                                                                test_loss_fn_local_top, 0, test_loader, only_global_model, channels,
+                                                                                verbose=True)
+    return model_global, model_local, model_top, valid_acc
 
 def tcanet_online_pred(model_global, model_local, model_top, loader, channels, only_global_model, n_slices = 1):
     model_global.eval()

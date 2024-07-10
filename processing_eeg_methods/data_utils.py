@@ -100,6 +100,12 @@ def get_best_classificator_and_test_accuracy(data, labels, estimators):
         acc = np.nan
     return clf.best_estimator_, acc
 
+def convert_into_independent_channels(data, labels):
+    data_independent_channels = data.reshape([data.shape[0] * data.shape[1], data.shape[2]],
+                                             order='C')  # [trials, channels, time] to [trials*channels, time]
+    labels_independent_channels = np.repeat(labels, data.shape[1], axis=0)
+    return data_independent_channels, labels_independent_channels
+
 class ClfSwitcher(BaseEstimator):
     # https://stackoverflow.com/questions/48507651/multiple-classification-models-in-a-scikit-pipeline-python
 

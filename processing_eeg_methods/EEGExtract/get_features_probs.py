@@ -15,7 +15,7 @@ import time
 import antropy as ant
 import numpy
 from sklearn.feature_selection import f_classif
-import EEGExtract.EEGExtract as eeg
+import EEGExtract as eeg
 from scipy.stats import kurtosis, skew
 
 def get_entropy(data):
@@ -24,7 +24,7 @@ def get_entropy(data):
         entropy_trial = []
         for data_channel in data_trial:
             entropy_trial.append(ant.higuchi_fd(data_channel))
-        entropy_values.append(np.mean(entropy_trial)) # The fastest one
+        entropy_values.append(np.mean(entropy_trial))
     return entropy_values
 
 def hjorth(X, D=None):
@@ -112,6 +112,19 @@ def get_lyapunov(data):
     return lyapunov_values
 
 def by_frequency_band(data, dataset_info: dict):
+    """
+    This code contains functions for feature extraction from EEG data and classification of brain activity.
+
+    Parameters
+    ----------
+    data
+    Gets converted from [epochs, chans, ms] to [chans x ms x epochs] # Todo: it got like 1, 2, 0: but I think it should be 0, 2, 1
+    dataset_info
+
+    Returns
+    -------
+
+    """
     frequency_ranges: dict = {
         "delta": [0, 3],
         "theta": [3, 7],
@@ -120,8 +133,8 @@ def by_frequency_band(data, dataset_info: dict):
         "beta 2": [16, 20],
         "beta 3": [20, 35],
         "gamma": [35, np.floor(dataset_info['sample_rate']/2)-1],
-    }#todo: fix the transposed, the idea is use the channels instead of time in the features
-    features_df = get_extractions(np.transpose(data, (0, 2, 1)), dataset_info, 'completo')
+    }
+    features_df = get_extractions(np.transpose(data, (0, 2, 1)), dataset_info, 'complete')
     for frequency_bandwidth_name, frequency_bandwidth in frequency_ranges.items():
         print(frequency_bandwidth)
         iir_params = dict(order=8, ftype="butter")
@@ -137,7 +150,7 @@ def by_frequency_band(data, dataset_info: dict):
 
 
 def get_extractions(data, dataset_info: dict, frequency_bandwidth_name):
-    entropy = get_entropy(data)
+    # To use EEGExtract, the data must be [chans x ms x epochs]
     Mobility_values, Complexity_values = get_hjorth(data)
     ratio_values = get_ratio(data) # α/δ Ratio
     lyapunov_values = np.array(get_lyapunov(data),dtype="float64")
@@ -156,14 +169,16 @@ def get_extractions(data, dataset_info: dict, frequency_bandwidth_name):
     # burstLengthStats_values=eeg.burstLengthStats(data, fs=dataset_info['sample_rate']) # all zeros
     # falseNN = eeg.falseNearestNeighbor(data) # all zeros
     # coherence_res = eeg.coherence(data, dataset_info["sample_rate"]) # all ones
+    # entropy = eeg.shannonEntropy(data, bin_min=-200, bin_max=200, binWidth=2) # todo: why entropy is not working?
+    # tsalisRes = eeg.tsalisEntropy(data, bin_min=-200, bin_max=200, binWidth=2)
 
-    feature_array = np.array([entropy, Complexity_values, Mobility_values, ratio_values],dtype="float64").transpose()
+    feature_array = np.array([Complexity_values, Mobility_values, ratio_values],dtype="float64").transpose()
     feature_array = np.concatenate((feature_array, lyapunov_values, regularity_values, std_values, medianFreq_values, kurtosis_values, mean_values, skew_values, variance_values, mfcc_values), axis=1)
 
     feature_array[np.isfinite(feature_array) == False] = 0
 
     column_name = (
-            [f'{frequency_bandwidth_name}_entropy', f'{frequency_bandwidth_name}_Complexity_values',
+            [f'{frequency_bandwidth_name}_Complexity_values',
                     f'{frequency_bandwidth_name}_Mobility_values', f'{frequency_bandwidth_name}_ratio_values'] +
                    [f'{frequency_bandwidth_name}_lyapunov_{num}' for num in range(0, lyapunov_values.shape[1])] +
                    [f'{frequency_bandwidth_name}_regularity_values_{num}' for num in range(0, regularity_values.shape[1])] +
@@ -180,10 +195,15 @@ def get_extractions(data, dataset_info: dict, frequency_bandwidth_name):
 
     return feature_df
 
-def extractions_train(features, labels):
+def extractions_train(features_df, labels):
     print('training...')
-    classifier, acc = get_best_classificator_and_test_accuracy(features, labels, Pipeline([('clf', ClfSwitcher())]))
-    return classifier, acc
+    X_SelectKBest = SelectKBest(f_classif, k=100)
+    X_new = X_SelectKBest.fit_transform(features_df, labels)
+    columns_list = X_SelectKBest.get_feature_names_out()
+    features_df = pd.DataFrame(X_new, columns=columns_list)
+
+    classifier, acc = get_best_classificator_and_test_accuracy(features_df, labels, Pipeline([('clf', ClfSwitcher())]))
+    return classifier, acc, columns_list
 
 
 def extractions_test(clf, features_df):
@@ -206,7 +226,7 @@ def extractions_test(clf, features_df):
 
 if __name__ == "__main__":
     # Manual Inputs
-    datasets = ['aguilera_gamified']#, 'aguilera_traditional', 'torres', 'aguilera_gamified'
+    datasets = ['braincommand']#, 'aguilera_traditional', 'torres', 'aguilera_gamified'
     for dataset_name in datasets:
         version_name = "features_datatransposed_by_frequency_band" # To keep track what the output processing alteration went through
 
@@ -226,16 +246,16 @@ if __name__ == "__main__":
         results_df = pd.DataFrame()
 
         for subject_id in range(
-            1, dataset_info["subjects"] + 1 #todo: run not normalized again. I think normalized is better though
-        ):  # Only two things I should be able to change
+            29, 30
+        ):
             print(subject_id)
             with open(
-                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
+                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{dataset_name}.txt",
                 "a",
             ) as f:
                 f.write(f"Subject: {subject_id}\n\n")
-            epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
-
+            epochs, data, _ = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
+            labels = epochs.events[:, 2].astype(np.int64)
             # Do cross-validation
             cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
             acc_over_cv = []
@@ -248,10 +268,10 @@ if __name__ == "__main__":
                 )
                 start = time.time()
                 features_train = by_frequency_band(data[train], dataset_info)
-                clf, accuracy = extractions_train(features_train, labels[train])
+                clf, accuracy, columns_list = extractions_train(features_train, labels[train])
                 training_time.append(time.time() - start)
                 with open(
-                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
+                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{dataset_name}.txt",
                     "a",
                 ) as f:
                     f.write(f"Accuracy of training: {accuracy}\n")
@@ -263,7 +283,7 @@ if __name__ == "__main__":
                 for epoch_number in test:
                     start = time.time()
                     features_test = by_frequency_band(np.asarray([data[epoch_number]]), dataset_info)
-                    array = extractions_test(clf, features_test)
+                    array = extractions_test(clf, features_test[columns_list])
                     end = time.time()
                     testing_time.append(end - start)
                     print(dataset_info["target_names"])
@@ -278,7 +298,7 @@ if __name__ == "__main__":
                 testing_time_over_cv.append(np.mean(testing_time))
                 acc_over_cv.append(acc)
                 with open(
-                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
+                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{dataset_name}.txt",
                     "a",
                 ) as f:
                     f.write(f"Prediction: {pred_list}\n")
@@ -288,7 +308,7 @@ if __name__ == "__main__":
             mean_acc_over_cv = np.mean(acc_over_cv)
 
             with open(
-                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
+                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{dataset_name}.txt",
                 "a",
             ) as f:
                 f.write(f"Final acc: {mean_acc_over_cv}\n\n\n\n")
@@ -300,6 +320,6 @@ if __name__ == "__main__":
             results_df = pd.concat([results_df, temp])
 
         results_df.to_csv(
-            f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.csv")
+            f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{dataset_name}.csv")
 
     print("Congrats! The processing methods are done processing.")

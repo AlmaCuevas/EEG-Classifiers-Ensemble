@@ -3,7 +3,7 @@ import mne
 from scipy.io import loadmat
 import os
 from data_preprocess import data_normalization
-from data_utils import class_selection
+from data_utils import class_selection, convert_into_independent_channels
 from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 from Inner_Speech_Dataset.Python_Processing.Data_extractions import Extract_data_from_subject
 from Inner_Speech_Dataset.Python_Processing.Data_processing import Select_time_window, Transform_for_classificator
@@ -251,7 +251,7 @@ def braincommand_dataset_loader(filepath: str, subject_id: int, game_mode: str =
     event_dict = {'Derecha': 0, 'Izquierda': 1, 'Arriba': 2, 'Abajo': 3}
     return x_array, label, event_dict
 
-def load_data_labels_based_on_dataset(dataset_info: dict, subject_id: int, data_path: str, selected_classes: list[int] = [], transpose: bool = False, normalize: bool = True, threshold_for_bug: float = 0, astype_value: str = ''):
+def load_data_labels_based_on_dataset(dataset_info: dict, subject_id: int, data_path: str, selected_classes: list[int] = [], transpose: bool = False, normalize: bool = True, threshold_for_bug: float = 0, astype_value: str = '', channels_independent: bool = False):
     dataset_name = dataset_info['dataset_name']
 
     event_dict: dict = {}
@@ -296,9 +296,12 @@ def load_data_labels_based_on_dataset(dataset_info: dict, subject_id: int, data_
         data, label, event_dict = class_selection(data, label, event_dict, selected_classes=selected_classes)
     if astype_value:
         data = data.astype(astype_value)
-
     if threshold_for_bug:
         data[data < threshold_for_bug] = threshold_for_bug  # To avoid the error "SVD did not convergence"
+    if channels_independent:
+        data, label = convert_into_independent_channels(data, label)
+        data = np.transpose(np.array([data]), (1, 0, 2))
+        dataset_info['#_channels'] = 1
 
     # Convert to epochs
     events = np.column_stack((
@@ -329,7 +332,7 @@ if __name__ == '__main__':
     computer_root_path = ROOT_VOTING_SYSTEM_PATH + '/Datasets/'
     data_path = computer_root_path + dataset_foldername
 
-    epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path, selected_classes=[2, 3])
+    epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path, selected_classes=[2, 3], channels_independent=True)
 
     print('Before class selection')
     print(data.shape) # trials, channels, time

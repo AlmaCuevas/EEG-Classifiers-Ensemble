@@ -1,1 +1,1 @@
-I also tried eeglib foe features extraction, but it was nonsense.
+I also tried eeglib for features extraction, but it was nonsense.
