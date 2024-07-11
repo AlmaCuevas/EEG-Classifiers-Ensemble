@@ -7,22 +7,10 @@
 
 ## Processing Methods
 
-### LMDA-net
-LMDA-net is a lightweight neural network model integrated with multi-dimensional attention modules. This network was
-evaluated on four high-impact public datasets, including motor imagery and P300-speller tasks. Notably, the LMDA-net
-reduced the convolution kernels in the special convolutional layer, which has advantages in preventing overfitting and preserving
-information from different domains of EEG signals. The LMDA-net demonstrates its advantages in online testing scenarios,
-offering better accuracy than other BCI scenarios [1].
-
 ### LSTM
 Abdulghani, Walters, and Abed [2], Agarwal and Kumar [3], and Kumar and Scheme [4] use Long-Short Term Memory (LSTM) to
 classify speech imagery. An LSTM, a recurrent neural network, can learn long-term dependencies between the discrete
 steps in a time series data. The code used was obtained from GitHub by [5].
-
-### CCSPNET
-CCSPNet (Convolutional Common Spatial Pattern Network), applied in MI, is a subject-independent BCI framework that
-utilizes a wavelet kernel convolutional neural network and a temporal convolutional neural network to represent and extract
-spectral features of EEG signals to classify them with linear discriminant analysis [6].
 
 ### XDAWN+RG
 The XDAWN spatial filter and Riemannian Geometry classifier (RG) algorithm [7] achieved an accuracy of 0.836. Riemannian
