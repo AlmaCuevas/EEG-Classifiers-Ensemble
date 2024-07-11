@@ -1,31 +1,66 @@
-import numpy as np
-import mne 
-from scipy.io import loadmat
 import os
+
+import mne
+import numpy as np
+import pandas as pd
+from autoreject import AutoReject
 from data_preprocess import data_normalization
 from data_utils import class_selection, convert_into_independent_channels
-from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
-from Inner_Speech_Dataset.Python_Processing.Data_extractions import Extract_data_from_subject
-from Inner_Speech_Dataset.Python_Processing.Data_processing import Select_time_window, Transform_for_classificator
-from mne import io, Epochs, events_from_annotations, EpochsArray
+from Inner_Speech_Dataset.Python_Processing.Data_extractions import \
+    Extract_data_from_subject
+from Inner_Speech_Dataset.Python_Processing.Data_processing import (
+    Select_time_window, Transform_for_classificator)
+from mne import Epochs, EpochsArray, events_from_annotations, io
 from mne.preprocessing import ICA, create_eog_epochs
-from autoreject import AutoReject
-import pandas as pd
 from scipy import signal
+from scipy.io import loadmat
+from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
 
-def aguilera_dataset_loader(data_path: str, gamified: bool): #typed
+
+def aguilera_dataset_loader(data_path: str, gamified: bool):  # typed
     # '1':'FP1', '2':'FP2', '3':'F3', '4':'F4', '5':'C3', '6':'C4', '7':'P3', '8':'P4', '9':'O1', '10':'O2', '11':'F7', '12':'F8', '13':'T7', '14':'T8', '15':'P7', '16':'P8', '17':'Fz', '18':'Cz', '19':'Pz', '20':'M1', '21':'M2', '22':'AFz', '23':'CPz', '24':'POz'
     # include=['Channel 3', 'Channel 4', 'Channel 5', 'Channel 6', 'Channel 7', 'Channel 8', 'Channel 11', 'Channel 12', 'Channel 13', 'Channel 14', 'Channel 15', 'Channel 16', 'Channel 17', 'Channel 18', 'Channel 19', 'Channel 23'] #this is the left and important middle
-    raw = io.read_raw_edf(data_path, preload=True, verbose=40, exclude=['Gyro 1', 'Gyro 2', 'Gyro 3'])
-    #1, 3, 8, 10, 11, 13, 15, 18, 21, 23
+    raw = io.read_raw_edf(
+        data_path, preload=True, verbose=40, exclude=["Gyro 1", "Gyro 2", "Gyro 3"]
+    )
+    # 1, 3, 8, 10, 11, 13, 15, 18, 21, 23
     # include=['FP1', 'F3', 'P4', 'O2', 'F7', 'T7', 'P7', 'Cz', 'M2', 'CPz'] # electrodes that I think have an ERP
     if gamified:
         try:
-            raw.rename_channels({'Fp1':'FP1', 'Fp2':'FP2'}) # do it for traditional too, that doesn't include the names
+            raw.rename_channels(
+                {"Fp1": "FP1", "Fp2": "FP2"}
+            )  # do it for traditional too, that doesn't include the names
         except:
             pass
     else:
-        raw.rename_channels({'Channel 1':'FP1', 'Channel 2':'FP2', 'Channel 3':'F3', 'Channel 4':'F4', 'Channel 5':'C3', 'Channel 6':'C4', 'Channel 7':'P3', 'Channel 8':'P4', 'Channel 9':'O1', 'Channel 10':'O2', 'Channel 11':'F7', 'Channel 12':'F8', 'Channel 13':'T7', 'Channel 14':'T8', 'Channel 15':'P7', 'Channel 16':'P8', 'Channel 17':'Fz', 'Channel 18':'Cz', 'Channel 19':'Pz', 'Channel 20':'M1', 'Channel 21':'M2', 'Channel 22':'AFz', 'Channel 23':'CPz', 'Channel 24':'POz'})
+        raw.rename_channels(
+            {
+                "Channel 1": "FP1",
+                "Channel 2": "FP2",
+                "Channel 3": "F3",
+                "Channel 4": "F4",
+                "Channel 5": "C3",
+                "Channel 6": "C4",
+                "Channel 7": "P3",
+                "Channel 8": "P4",
+                "Channel 9": "O1",
+                "Channel 10": "O2",
+                "Channel 11": "F7",
+                "Channel 12": "F8",
+                "Channel 13": "T7",
+                "Channel 14": "T8",
+                "Channel 15": "P7",
+                "Channel 16": "P8",
+                "Channel 17": "Fz",
+                "Channel 18": "Cz",
+                "Channel 19": "Pz",
+                "Channel 20": "M1",
+                "Channel 21": "M2",
+                "Channel 22": "AFz",
+                "Channel 23": "CPz",
+                "Channel 24": "POz",
+            }
+        )
     channel_location = ROOT_VOTING_SYSTEM_PATH + "/mBrain_24ch_locations.txt"
     raw.set_montage(mne.channels.read_custom_montage(channel_location))
     # #raw.set_eeg_reference(ref_channels=['M1', 'M2']) # If I do this it, the XDAWN doesn't run.
@@ -57,29 +92,32 @@ def aguilera_dataset_loader(data_path: str, gamified: bool): #typed
     # #raw.plot(show_scrollbars=False, scalings=dict(eeg=20))
     # ar = AutoReject()
     events, event_id = events_from_annotations(raw)
-    extra_label=False
-    if gamified: # We are removing the Speaking events
-        if 'OVTK_StimulationId_EndOfFile' in event_id:
-            event_id.pop('OVTK_StimulationId_EndOfFile')
+    extra_label = False
+    if gamified:  # We are removing the Speaking events
+        if "OVTK_StimulationId_EndOfFile" in event_id:
+            event_id.pop("OVTK_StimulationId_EndOfFile")
             extra_label = True
-        event_id.pop('OVTK_StimulationId_Number_05') # Spoke Avanzar
-        event_id.pop('OVTK_StimulationId_Number_06') # Spoke Derecha
-        event_id.pop('OVTK_StimulationId_Number_07') # Spoke Izquierda
-        event_id.pop('OVTK_StimulationId_Number_08') # Spoke Retroceder
+        event_id.pop("OVTK_StimulationId_Number_05")  # Spoke Avanzar
+        event_id.pop("OVTK_StimulationId_Number_06")  # Spoke Derecha
+        event_id.pop("OVTK_StimulationId_Number_07")  # Spoke Izquierda
+        event_id.pop("OVTK_StimulationId_Number_08")  # Spoke Retroceder
     else:
-        event_id.pop('OVTK_StimulationId_Label_05') # This is not a command
-        events = events[3:] # From the one that is not a command
+        event_id.pop("OVTK_StimulationId_Label_05")  # This is not a command
+        events = events[3:]  # From the one that is not a command
 
     # Read epochs
-    epochs = Epochs(raw, events, event_id, preload=True, tmin=0, tmax=1.4, baseline=(None, None))#, detrend=1)#, decim=2) # Better results when there is no baseline for traditional. Decim is for lowering the sample rate
+    epochs = Epochs(
+        raw, events, event_id, preload=True, tmin=0, tmax=1.4, baseline=(None, None)
+    )  # , detrend=1)#, decim=2) # Better results when there is no baseline for traditional. Decim is for lowering the sample rate
     # epochs = ar.fit_transform(epochs)
-    #epochs.average().plot()
+    # epochs.average().plot()
     label = epochs.events[:, -1]
     if extra_label:
         label = label - 1
-    label = label -1 # So it goes from 0 to 3
-    event_dict = {'Avanzar': 0, 'Retroceder': 1, 'Derecha': 2, 'Izquierda': 3}
+    label = label - 1  # So it goes from 0 to 3
+    event_dict = {"Avanzar": 0, "Retroceder": 1, "Derecha": 2, "Izquierda": 3}
     return epochs, label, event_dict
+
 
 def nieto_dataset_loader(root_dir: str, N_S: int):
     ### Hyperparameters
@@ -96,49 +134,66 @@ def nieto_dataset_loader(root_dir: str, N_S: int):
     t_end = 3.5
 
     # Load all trials for a single subject
-    X, Y = Extract_data_from_subject(root_dir, N_S, datatype) # This uses the derivatives folder
+    X, Y = Extract_data_from_subject(
+        root_dir, N_S, datatype
+    )  # This uses the derivatives folder
 
     # Cut useful time. i.e action interval
     X = Select_time_window(X=X, t_start=t_start, t_end=t_end, fs=fs)
 
     # Conditions to compared
-    Conditions = [["Inner"], ["Inner"],["Inner"], ["Inner"]]
+    Conditions = [["Inner"], ["Inner"], ["Inner"], ["Inner"]]
     # The class for the above condition
     Classes = [["Up"], ["Down"], ["Right"], ["Left"]]
 
     # Transform data and keep only the trials of interest
     X, Y = Transform_for_classificator(X, Y, Classes, Conditions)
     Y = Y.astype(int)
-    event_dict = {'Arriba': 0, 'Abajo': 1, 'Derecha': 2,'Izquierda': 3}
+    event_dict = {"Arriba": 0, "Abajo": 1, "Derecha": 2, "Izquierda": 3}
     return X, Y, event_dict
 
-def torres_dataset_loader(filepath: str, subject_id: int): # TODO: Flag or something to return all subjects
-    EEG_nested_dict = loadmat(filepath, simplify_cells=True)
-    EEG_array = np.zeros((27, 5, 33, 463, 17)) # Subject, Word, Trial, Samples, Channels
 
-    for i_subject, subject in enumerate(EEG_nested_dict['S']):
-        for i_word, word in enumerate(subject['Palabra']):
-            for i_epoch, epoch in enumerate(word['Epoca']):
-                if i_epoch > 32: # One subject has an extra epoch, the option was leaving one empty epoch to everyone or removing it.
-                    pass # I chose removing, that's why we don't capture it.
+def torres_dataset_loader(
+    filepath: str, subject_id: int
+):  # TODO: Flag or something to return all subjects
+    EEG_nested_dict = loadmat(filepath, simplify_cells=True)
+    EEG_array = np.zeros(
+        (27, 5, 33, 463, 17)
+    )  # Subject, Word, Trial, Samples, Channels
+
+    for i_subject, subject in enumerate(EEG_nested_dict["S"]):
+        for i_word, word in enumerate(subject["Palabra"]):
+            for i_epoch, epoch in enumerate(word["Epoca"]):
+                if (
+                    i_epoch > 32
+                ):  # One subject has an extra epoch, the option was leaving one empty epoch to everyone or removing it.
+                    pass  # I chose removing, that's why we don't capture it.
                 else:
-                    EEG_array[i_subject, i_word, i_epoch, :epoch['SenalesEEG'].shape[0], :] = epoch['SenalesEEG']
+                    EEG_array[
+                        i_subject, i_word, i_epoch, : epoch["SenalesEEG"].shape[0], :
+                    ] = epoch["SenalesEEG"]
 
     # SELECT DATA
     # word: 0 to 5. We extract all words, if you want to use less you can add that option as a list in "selected_classes"
     # channel 0:13 because 14, 15, 16 are gyros and marker of start and end.
     # EEG_array_selected_values is (word, trials, samples, channels)
-    EEG_array_selected_values = np.squeeze(EEG_array[subject_id-1, 0:5, :, :, 0:14])
-
+    EEG_array_selected_values = np.squeeze(EEG_array[subject_id - 1, 0:5, :, :, 0:14])
 
     # reshape x in 3d data(Trials, Channels, Samples) and y in 1d data(Trials)
     x = np.transpose(EEG_array_selected_values, (0, 1, 3, 2))
-    x = x.reshape(5*33, 14, 463)
+    x = x.reshape(5 * 33, 14, 463)
     y = [0, 1, 2, 3, 4]
     y = np.repeat(y, 33, axis=0)
 
-    event_dict = {"Arriba": 0, "Abajo": 1, "Izquierda": 2, "Derecha": 3, "Seleccionar": 4}
+    event_dict = {
+        "Arriba": 0,
+        "Abajo": 1,
+        "Izquierda": 2,
+        "Derecha": 3,
+        "Seleccionar": 4,
+    }
     return x, y, event_dict
+
 
 def coretto_dataset_loader(filepath: str):
     """
@@ -152,7 +207,7 @@ def coretto_dataset_loader(filepath: str):
     P3 -- Muestra 16385:20480
     P4 -- Muestra 20481:24576
     Etiquetas :  Modalidad: 1 - Imaginada
-	     		            2 - Pronunciada
+                                    2 - Pronunciada
 
                  Estímulo:  1 - A
                             2 - E
@@ -172,26 +227,30 @@ def coretto_dataset_loader(filepath: str):
     x = []
     y = []
 
-    #for i in np.arange(1, 10): # import all data in 9 .mat files # TODO: We are still not loading everyone. Just one subject at a time.
-    EEG = loadmat(filepath) # Channels and labels are concat
+    # for i in np.arange(1, 10): # import all data in 9 .mat files # TODO: We are still not loading everyone. Just one subject at a time.
+    EEG = loadmat(filepath)  # Channels and labels are concat
 
-    #modality = EEG['EEG'][:,24576]
-    #stimulus = EEG['EEG'][:, 24577]
+    # modality = EEG['EEG'][:,24576]
+    # stimulus = EEG['EEG'][:, 24577]
 
     direction_labels = [6, 7, 10, 11]
-    EEG_filtered_by_labels = EEG['EEG'][(EEG['EEG'][:,24576] == 1) & (np.in1d(EEG['EEG'][:,24577], direction_labels))]
-    x_channels_concat = EEG_filtered_by_labels[:,:-3] # Remove labels
-    x_divided_in_channels = np.asarray(np.split(x_channels_concat,6,axis=1))
+    EEG_filtered_by_labels = EEG["EEG"][
+        (EEG["EEG"][:, 24576] == 1) & (np.in1d(EEG["EEG"][:, 24577], direction_labels))
+    ]
+    x_channels_concat = EEG_filtered_by_labels[:, :-3]  # Remove labels
+    x_divided_in_channels = np.asarray(np.split(x_channels_concat, 6, axis=1))
     # There are 3 words trials, but the samples didn't match so a series of conversions had to be done
-    x_divided_in_channels_and_thirds = np.asarray(np.split(x_divided_in_channels[:,:,1:],3,axis=2))
+    x_divided_in_channels_and_thirds = np.asarray(
+        np.split(x_divided_in_channels[:, :, 1:], 3, axis=2)
+    )
     x_transposed = np.transpose(x_divided_in_channels_and_thirds, (1, 3, 0, 2))
     x_transposed_reshaped = x_transposed.reshape(x_transposed.shape[:-2] + (-1,))
 
-    y = EEG_filtered_by_labels[:,-2] # Direction labels array
+    y = EEG_filtered_by_labels[:, -2]  # Direction labels array
 
     # reshape x in 3d data(Trials, Channels, Samples) and y in 1d data(Trials)
     x = np.transpose(x_transposed_reshaped, (2, 0, 1))
-    x = x[:,:, 0:x.shape[2]:4] # Downsampled to fs = 256Hz
+    x = x[:, :, 0 : x.shape[2] : 4]  # Downsampled to fs = 256Hz
     y = np.asarray(y, dtype=np.int32)
     y = np.repeat(y, 3, axis=0)
 
@@ -203,31 +262,40 @@ def coretto_dataset_loader(filepath: str):
     event_dict = {"Arriba": 0, "Abajo": 1, "Derecha": 2, "Izquierda": 3}
     return x, y, event_dict
 
+
 def ic_bci_2020_dataset_loader(filepath: str):
     EEG_nested_dict = loadmat(filepath, simplify_cells=True)
     # PENDING. You have to open it in Matlab and check structure
-    x=EEG_nested_dict['epo_train']['x'] # Raw data (time × channels × trials)
-    x = np.transpose(x, (2, 1, 0)) # Raw data (trials, channels, time)
-    y=EEG_nested_dict['epo_train']['y']
-    y=np.argmax(y.transpose(), axis=1)
-    event_dict = {'Hello': 0, 'Help me': 1, 'Stop': 2, 'Thank you': 3, 'Yes': 4}
+    x = EEG_nested_dict["epo_train"]["x"]  # Raw data (time × channels × trials)
+    x = np.transpose(x, (2, 1, 0))  # Raw data (trials, channels, time)
+    y = EEG_nested_dict["epo_train"]["y"]
+    y = np.argmax(y.transpose(), axis=1)
+    event_dict = {"Hello": 0, "Help me": 1, "Stop": 2, "Thank you": 3, "Yes": 4}
     return x, y, event_dict
+
 
 def nguyen_2019_dataset_loader(folderpath: str):
     EEG = []
-    for run_index in range(0,8): # There are 7 runs
+    for run_index in range(0, 8):  # There are 7 runs
         filename = f"Run{run_index}.mat"
         filepath = os.path.join(folderpath, filename)
         EEG[run_index] = loadmat(filepath, simplify_cells=True)
-    x=0
-    y=0
-    event_dict = {'left hand':0, 'concentrate':1, 'right hand':2, 'split':3}
+    x = 0
+    y = 0
+    event_dict = {"left hand": 0, "concentrate": 1, "right hand": 2, "split": 3}
     return x, y, event_dict
 
-def braincommand_dataset_loader(filepath: str, subject_id: int, game_mode: str = 'calibration2'):
-    complete_information = pd.read_csv(f'{filepath}/eeg_data_{game_mode}_sub{subject_id:02d}.csv')
-    x_list = list(complete_information['time'].apply(eval))
-    label = list(complete_information['class'][1:]) # I'm removing the first one because is not a real trial.
+
+def braincommand_dataset_loader(
+    filepath: str, subject_id: int, game_mode: str = "calibration2"
+):
+    complete_information = pd.read_csv(
+        f"{filepath}/eeg_data_{game_mode}_sub{subject_id:02d}.csv"
+    )
+    x_list = list(complete_information["time"].apply(eval))
+    label = list(
+        complete_information["class"][1:]
+    )  # I'm removing the first one because is not a real trial.
 
     label_0 = label.count(0)
     print(f"label 0 is {label_0}")
@@ -241,51 +309,64 @@ def braincommand_dataset_loader(filepath: str, subject_id: int, game_mode: str =
     label_3 = label.count(3)
     print(f"label 3 is {label_3}")
 
-    x_array = np.array(x_list[1:]) # trials, time, channels
-    x_array = x_array[:, :, :-9] # The last channels are accelerometer (x3), gyroscope (x3), validity, battery and counter
+    x_array = np.array(x_list[1:])  # trials, time, channels
+    x_array = x_array[
+        :, :, :-9
+    ]  # The last channels are accelerometer (x3), gyroscope (x3), validity, battery and counter
     x_array = np.transpose(x_array, (0, 2, 1))
     x_array = signal.detrend(x_array)
-    #x_array, label = convert_to_epochs(x_array, label)
+    # x_array, label = convert_to_epochs(x_array, label)
     x_array = data_normalization(x_array)
 
-    event_dict = {'Derecha': 0, 'Izquierda': 1, 'Arriba': 2, 'Abajo': 3}
+    event_dict = {"Derecha": 0, "Izquierda": 1, "Arriba": 2, "Abajo": 3}
     return x_array, label, event_dict
 
-def load_data_labels_based_on_dataset(dataset_info: dict, subject_id: int, data_path: str, selected_classes: list[int] = [], transpose: bool = False, normalize: bool = True, threshold_for_bug: float = 0, astype_value: str = '', channels_independent: bool = False):
-    dataset_name = dataset_info['dataset_name']
+
+def load_data_labels_based_on_dataset(
+    dataset_info: dict,
+    subject_id: int,
+    data_path: str,
+    selected_classes: list[int] = [],
+    transpose: bool = False,
+    normalize: bool = True,
+    threshold_for_bug: float = 0,
+    astype_value: str = "",
+    channels_independent: bool = False,
+):
+    dataset_name = dataset_info["dataset_name"]
 
     event_dict: dict = {}
     label: list = []
 
-    if 'aguilera' in dataset_name:
-        filename = F"S{subject_id}.edf"
+    if "aguilera" in dataset_name:
+        filename = f"S{subject_id}.edf"
         filepath = os.path.join(data_path, filename)
-        if 'gamified' in dataset_name:
+        if "gamified" in dataset_name:
             epochs, label, event_dict = aguilera_dataset_loader(filepath, True)
         else:
             epochs, label, event_dict = aguilera_dataset_loader(filepath, False)
         data = epochs.get_data()
-    elif dataset_name == 'nieto':
+    elif dataset_name == "nieto":
         data, label, event_dict = nieto_dataset_loader(data_path, subject_id)
-    elif dataset_name == 'coretto':
+    elif dataset_name == "coretto":
         foldername = "S{:02d}".format(subject_id)
         filename = foldername + "_EEG.mat"
         path = [data_path, foldername, filename]
         filepath = os.path.join(*path)
         data, label, event_dict = coretto_dataset_loader(filepath)
-    elif dataset_name == 'torres':
+    elif dataset_name == "torres":
         filename = "IndividuosS1-S27(17columnas)-Epocas.mat"
         filepath = os.path.join(data_path, filename)
         data, label, event_dict = torres_dataset_loader(filepath, subject_id)
-    elif dataset_name == 'ic_bci_2020':
+    elif dataset_name == "ic_bci_2020":
         foldername = "Training set"
         filename = "Data_Sample{:02d}.mat".format(subject_id)
         path = [data_path, foldername, filename]
         filepath = os.path.join(*path)
         data, label, event_dict = ic_bci_2020_dataset_loader(filepath)
-    elif dataset_name == 'nguyen_2019':
+    elif dataset_name == "nguyen_2019":
         data, label, event_dict = nguyen_2019_dataset_loader(data_path, subject_id)
-    elif dataset_name == 'braincommand':
+    elif dataset_name == "braincommand":
         data, label, event_dict = braincommand_dataset_loader(data_path, subject_id)
 
     if transpose:
@@ -293,32 +374,52 @@ def load_data_labels_based_on_dataset(dataset_info: dict, subject_id: int, data_
     if normalize:
         data = data_normalization(data)
     if selected_classes:
-        data, label, event_dict = class_selection(data, label, event_dict, selected_classes=selected_classes)
+        data, label, event_dict = class_selection(
+            data, label, event_dict, selected_classes=selected_classes
+        )
     if astype_value:
         data = data.astype(astype_value)
     if threshold_for_bug:
-        data[data < threshold_for_bug] = threshold_for_bug  # To avoid the error "SVD did not convergence"
+        data[data < threshold_for_bug] = (
+            threshold_for_bug  # To avoid the error "SVD did not convergence"
+        )
     if channels_independent:
         data, label = convert_into_independent_channels(data, label)
         data = np.transpose(np.array([data]), (1, 0, 2))
-        dataset_info['#_channels'] = 1
+        dataset_info["#_channels"] = 1
 
     # Convert to epochs
-    events = np.column_stack((
-        np.arange(0, dataset_info['sample_rate'] * data.shape[0], dataset_info['sample_rate']),
-        np.zeros(len(label), dtype=int),
-        np.array(label),
-    ))
+    events = np.column_stack(
+        (
+            np.arange(
+                0,
+                dataset_info["sample_rate"] * data.shape[0],
+                dataset_info["sample_rate"],
+            ),
+            np.zeros(len(label), dtype=int),
+            np.array(label),
+        )
+    )
 
-    epochs = EpochsArray(data, info=mne.create_info(dataset_info['#_channels'],
-                                                    sfreq=dataset_info['sample_rate'], ch_types='eeg'), events=events,
-                         event_id=event_dict, baseline=(None, None))
+    epochs = EpochsArray(
+        data,
+        info=mne.create_info(
+            dataset_info["#_channels"],
+            sfreq=dataset_info["sample_rate"],
+            ch_types="eeg",
+        ),
+        events=events,
+        event_id=event_dict,
+        baseline=(None, None),
+    )
+    label = epochs.events[:, 2].astype(np.int64)  # Repetition to keep the right format
     return epochs, data, label
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # Manual Inputs
     subject_id = 29  # Only two things I should be able to change
-    dataset_name = 'braincommand'  # Only two things I should be able to change
+    dataset_name = "braincommand"  # Only two things I should be able to change
 
     if dataset_name not in datasets_basic_infos:
         raise Exception(
@@ -328,13 +429,21 @@ if __name__ == '__main__':
 
     print(ROOT_VOTING_SYSTEM_PATH)
     # Folders and paths
-    dataset_foldername = dataset_name + '_dataset'
-    computer_root_path = ROOT_VOTING_SYSTEM_PATH + '/Datasets/'
+    dataset_foldername = dataset_name + "_dataset"
+    computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
     data_path = computer_root_path + dataset_foldername
 
-    epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path, selected_classes=[2, 3], channels_independent=True)
+    epochs, data, labels = load_data_labels_based_on_dataset(
+        dataset_info,
+        subject_id,
+        data_path,
+        selected_classes=[2, 3],
+        channels_independent=True,
+    )
 
-    print('Before class selection')
-    print(data.shape) # trials, channels, time
+    print("Before class selection")
+    print(data.shape)  # trials, channels, time
     print(labels.shape)
-    print("Congrats! You were able to load data. You can now use this in a processing method.")
+    print(
+        "Congrats! You were able to load data. You can now use this in a processing method."
+    )

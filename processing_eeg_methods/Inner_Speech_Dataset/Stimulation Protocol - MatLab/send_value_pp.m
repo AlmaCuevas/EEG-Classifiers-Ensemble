@@ -10,4 +10,3 @@ N_dato=N_dato+1;
 % lptwrite(lptport, mrk+dir);
 pause(time_pause)
 % lptwrite(lptport, dir)
-

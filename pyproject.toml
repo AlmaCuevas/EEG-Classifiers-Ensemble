@@ -1,0 +1,11 @@
+[project]
+name = "eeg-tasks-classification"
+version = "0.0.1"
+requires-python = "==3.10"
+authors = [
+  {name = "Alma Cuevas", email = "almarosa.arcr@gmail.com"}
+]
+description = "Tools for processing and classifying EEG tasks in real-time."
+readme = "README.md"
+license = {file = "LICENSE"}
+keywords = ["EEG", "classification", "ERP", "feature extraction", "transforms"]

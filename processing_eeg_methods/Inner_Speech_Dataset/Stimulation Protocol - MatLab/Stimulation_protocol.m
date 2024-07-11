@@ -3,7 +3,7 @@
 % Corresponds to the Inner speech dataset
 %% ----------------------------SET UPs-------------------------------------
 %--------------------------------------------------------------------------
-%% General Set Up 
+%% General Set Up
 % Clean
 close all; clear; clc;
 Screen('Preference', 'SkipSyncTests', 1)
@@ -33,7 +33,7 @@ N_classes=size(Classes,2);
 % Amount of trials for each class in every run
 TriasxRuns=10;
 
-% Paradigms Order 
+% Paradigms Order
 % 1 = Pronounced Speech
 % 2 =  Inner speech
 % 3 = Visualized condition
@@ -228,7 +228,7 @@ for bloque=1:N_bloques
     % MARCADOR modalidad Pronunciada
     mrk = mrks_modalidad(Mod_n);
     [N_dato,Datos_Enviados,Tiempo_parcial,Tiempos_parciales]= send_value_pp (mrk,lptport,dir,time_pause,N_dato,Datos_Enviados,Tiempo_parcial,Tiempos_parciales);
-    
+
     DrawFormattedText(window, strcat('Modalidad: ',Mod_str), 'center', 'center', color_letra);
     Screen('Flip', window);
     WaitSecs(3);
@@ -238,7 +238,7 @@ for bloque=1:N_bloques
         %% Comienzo de trial
         mrk = mrks_xTrial(1);
         [N_dato,Datos_Enviados,Tiempo_parcial,Tiempos_parciales]= send_value_pp (mrk,lptport,dir,time_pause,N_dato,Datos_Enviados,Tiempo_parcial,Tiempos_parciales);
-        
+
         %% Periodo de concentracion
         % MOSTRAR Punto
         Screen('DrawDots', window, [xCenter yCenter], Tamano_punto,color_punto , [], 2);
@@ -248,7 +248,7 @@ for bloque=1:N_bloques
         [N_dato,Datos_Enviados,Tiempo_parcial,Tiempos_parciales]= send_value_pp (mrk,lptport,dir,time_pause,N_dato,Datos_Enviados,Tiempo_parcial,Tiempos_parciales);
         % Tiempo de concentracion
         WaitSecs(T_Concentracion1);
-        
+
         %% Periodo de Estimulacion
         % MOSTRAR Punto
         Screen('DrawDots', window, [xCenter yCenter], Tamano_punto, color_punto, [], 2);
@@ -260,10 +260,10 @@ for bloque=1:N_bloques
         % MARCADOR Estimulo
         mrk_c = mrks_clase(n_sel);
         [N_dato,Datos_Enviados,Tiempo_parcial,Tiempos_parciales]= send_value_pp (mrk_c,lptport,dir,time_pause,N_dato,Datos_Enviados,Tiempo_parcial,Tiempos_parciales);
-        
+
         % Tiempo para eliminar el P300
         WaitSecs(T_Estimulo);
-        
+
         %% Periodo útil de adquisicion
         % MOSTRAR Punto
         Screen('DrawDots', window, [xCenter yCenter], Tamano_punto, color_punto, [], 2);
@@ -273,7 +273,7 @@ for bloque=1:N_bloques
         [N_dato,Datos_Enviados,Tiempo_parcial,Tiempos_parciales]= send_value_pp(mrk,lptport,dir,time_pause,N_dato,Datos_Enviados,Tiempo_parcial,Tiempos_parciales);
         % Tiempo útil de adquisicion
         WaitSecs(T_Imaginacion);
-        
+
         %% Periodo de adquisición sin estímulo (para eliminar blinks )
         % MOSTRAR Punto
         Screen('DrawDots', window, [xCenter yCenter], Tamano_punto, color_punto_2, [], 2);
@@ -283,7 +283,7 @@ for bloque=1:N_bloques
         [N_dato,Datos_Enviados,Tiempo_parcial,Tiempos_parciales]= send_value_pp (mrk,lptport,dir,time_pause,N_dato,Datos_Enviados,Tiempo_parcial,Tiempos_parciales);
         % Tiempo para eliminar blinks
         WaitSecs(T_Concentracion2);
-        
+
         %% Periodo de descanso
         % Pantalla en negro
         Screen('Flip', window);
@@ -296,17 +296,17 @@ for bloque=1:N_bloques
         if n_trial<N_trials_bloque
             WaitSecs(T_Descanso_min+delta_des);
         end
-        
+
         %% Fin del trial
         mrk = mrks_xTrial(7);
         [N_dato,Datos_Enviados,Tiempo_parcial,Tiempos_parciales]= send_value_pp (mrk,lptport,dir,time_pause,N_dato,Datos_Enviados,Tiempo_parcial,Tiempos_parciales);
-        
+
         %% Pregunta de concentracion
         if (count_preg>=N_q && ((strcmp(Mod_str,'Imaginada') || (strcmp(Mod_str,'Visualizado')))))
             % Comienzo Pregunta
             mrk = mrks_general(7);
             [N_dato,Datos_Enviados,Tiempo_parcial,Tiempos_parciales]= send_value_pp (mrk,lptport,dir,time_pause,N_dato,Datos_Enviados,Tiempo_parcial,Tiempos_parciales);
-            
+
             % MARCADOR Fin Bloque
             DrawFormattedText(window, 'Cual fue la última instrucción? \n\n Presione la flecha de la misma', 'center', 'center', color_letra);
             Screen('Flip', window);
@@ -315,7 +315,7 @@ for bloque=1:N_bloques
             count_preg=0;
             [mrk_q]= Realizar_Pregunta(mrks_clase_q);
             [N_dato,Datos_Enviados,Tiempo_parcial,Tiempos_parciales]= send_value_pp (mrk_q,lptport,dir,time_pause,N_dato,Datos_Enviados,Tiempo_parcial,Tiempos_parciales);
-            
+
             if mrk_c==mrk_q-30
                 DrawFormattedText(window, 'Muy bien!', 'center', 'center', color_letra);
                 Screen('Flip', window);
@@ -332,10 +332,10 @@ for bloque=1:N_bloques
             Screen('Flip', window);
             WaitSecs(T_Descanso_min);
         end
-        
-        
+
+
     end
-    
+
     % MARCADOR Fin Bloque
     mrk = mrks_general(6);
     [N_dato,Datos_Enviados,Tiempo_parcial,Tiempos_parciales]= send_value_pp (mrk,lptport,dir,time_pause,N_dato,Datos_Enviados,Tiempo_parcial,Tiempos_parciales);
@@ -357,7 +357,7 @@ for bloque=1:N_bloques
             WaitSecs(1);
         end
     end
-    
+
 end
 WaitSecs(1);
 % MARCADOR Finaliza el experimento

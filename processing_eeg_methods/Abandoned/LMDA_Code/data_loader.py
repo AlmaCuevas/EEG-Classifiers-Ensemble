@@ -1,7 +1,8 @@
-import numpy as np
-import mne
-from scipy.io import loadmat
 import os
+
+import mne
+import numpy as np
+from scipy.io import loadmat
 
 
 class BCICompetition4Set2A:
@@ -18,13 +19,38 @@ class BCICompetition4Set2A:
         return cnt
 
     def extract_data(self):
-        raw_gdf = mne.io.read_raw_edf(self.filename, stim_channel="auto", verbose='ERROR',
-                                      exclude=(["EOG-left", "EOG-central", "EOG-right"]))
+        raw_gdf = mne.io.read_raw_edf(
+            self.filename,
+            stim_channel="auto",
+            verbose="ERROR",
+            exclude=(["EOG-left", "EOG-central", "EOG-right"]),
+        )
         raw_gdf.rename_channels(
-            {'EEG-Fz': 'Fz', 'EEG-0': 'FC3', 'EEG-1': 'FC1', 'EEG-2': 'FCz', 'EEG-3': 'FC2', 'EEG-4': 'FC4',
-             'EEG-5': 'C5', 'EEG-C3': 'C3', 'EEG-6': 'C1', 'EEG-Cz': 'Cz', 'EEG-7': 'C2', 'EEG-C4': 'C4', 'EEG-8': 'C6',
-             'EEG-9': 'CP3', 'EEG-10': 'CP1', 'EEG-11': 'CPz', 'EEG-12': 'CP2', 'EEG-13': 'CP4',
-             'EEG-14': 'P1', 'EEG-15': 'Pz', 'EEG-16': 'P2', 'EEG-Pz': 'POz'})
+            {
+                "EEG-Fz": "Fz",
+                "EEG-0": "FC3",
+                "EEG-1": "FC1",
+                "EEG-2": "FCz",
+                "EEG-3": "FC2",
+                "EEG-4": "FC4",
+                "EEG-5": "C5",
+                "EEG-C3": "C3",
+                "EEG-6": "C1",
+                "EEG-Cz": "Cz",
+                "EEG-7": "C2",
+                "EEG-C4": "C4",
+                "EEG-8": "C6",
+                "EEG-9": "CP3",
+                "EEG-10": "CP1",
+                "EEG-11": "CPz",
+                "EEG-12": "CP2",
+                "EEG-13": "CP4",
+                "EEG-14": "P1",
+                "EEG-15": "Pz",
+                "EEG-16": "P2",
+                "EEG-Pz": "POz",
+            }
+        )
         raw_gdf.load_data()
         # correct nan values
         data = raw_gdf.get_data()
@@ -32,9 +58,7 @@ class BCICompetition4Set2A:
         for i_chan in range(data.shape[0]):
             # first set to nan, than replace nans by nanmean.
             this_chan = data[i_chan]
-            data[i_chan] = np.where(
-                this_chan == np.min(this_chan), np.nan, this_chan
-            )
+            data[i_chan] = np.where(this_chan == np.min(this_chan), np.nan, this_chan)
             mask = np.isnan(data[i_chan])
             chan_mean = np.nanmean(data[i_chan])
             data[i_chan, mask] = chan_mean
@@ -58,9 +82,18 @@ class BCICompetition4Set2A:
             #    # "cue unknown/undefined (used for BCI competition) "
             #    "783" in name_to_code
             # )
-        class_names = ['OVTK_GDF_Foot', 'OVTK_GDF_Left', 'OVTK_GDF_Right', 'OVTK_GDF_Tongue']
+        class_names = [
+            "OVTK_GDF_Foot",
+            "OVTK_GDF_Left",
+            "OVTK_GDF_Right",
+            "OVTK_GDF_Tongue",
+        ]
         if train_set:
-            trial_codes = [value_tag for class_name, value_tag in name_to_code.items() if any(class_name in x for x in class_names)]
+            trial_codes = [
+                value_tag
+                for class_name, value_tag in name_to_code.items()
+                if any(class_name in x for x in class_names)
+            ]
         else:
             trial_codes = [7]  # "unknown" class
 
@@ -81,7 +114,6 @@ class BCICompetition4Set2A:
                 if trial_class == unique_event:
                     trial_events[row_event, 2] = count
 
-
         # possibly overwrite with markers from labels file
         # if self.labels_filename is not None:
         #    classes = loadmat(self.labels_filename)["classlabel"].squeeze()
@@ -96,7 +128,11 @@ class BCICompetition4Set2A:
         # )
 
         # now also create 0-1 vector for rejected trials
-        trial_start_events_tag = [value_tag for class_name, value_tag in name_to_code.items() if class_name == 'OVTK_GDF_Start_Of_Trial']
+        trial_start_events_tag = [
+            value_tag
+            for class_name, value_tag in name_to_code.items()
+            if class_name == "OVTK_GDF_Start_Of_Trial"
+        ]
 
         trial_start_events = events[events[:, 2] == trial_start_events_tag[0]]
 
@@ -105,7 +141,7 @@ class BCICompetition4Set2A:
         artifact_events = events[events[:, 2] == 1]
 
         for artifact_time in artifact_events[:, 0]:
-            try: # I think this is poorly done. It should be "delete the trial that contains the boundary, that is the
+            try:  # I think this is poorly done. It should be "delete the trial that contains the boundary, that is the
                 # the one between the before and after the timestamp of the boundary"
                 i_trial = trial_start_events[:, 0].tolist().index(artifact_time)
                 artifact_trial_mask[i_trial] = 1
@@ -116,7 +152,7 @@ class BCICompetition4Set2A:
 
 
 def extract_segment_trial(raw_gdb, baseline=(-0.5, 0), duration=4):
-    '''
+    """
     get segmented data and corresponding labels from raw_gdb.
     :param raw_gdb: raw data
     :param baseline: unit: second. baseline for the segment data. The first value is time before cue.
@@ -124,10 +160,10 @@ def extract_segment_trial(raw_gdb, baseline=(-0.5, 0), duration=4):
                      negative values represent the time lead.
     :param duration: unit: seconds. mi duration time
     :return: array data: trial data, labels
-    '''
+    """
     events = raw_gdb.info["temp"]["events"]
     raw_data = raw_gdb.get_data()
-    freqs = raw_gdb.info['sfreq']
+    freqs = raw_gdb.info["sfreq"]
     mi_duration = int(freqs * duration)
     duration_before_mi = int(freqs * baseline[0])
     duration_after_mi = int(freqs * baseline[1])
@@ -136,16 +172,24 @@ def extract_segment_trial(raw_gdb, baseline=(-0.5, 0), duration=4):
 
     trial_data = []
     for i_event in events:  # i_event [time, 0, class]
-        segmented_data = raw_data[:,
-                         int(i_event[0]) + duration_before_mi:int(i_event[0]) + mi_duration + duration_after_mi]
-        assert segmented_data.shape[-1] == mi_duration - duration_before_mi + duration_after_mi
+        segmented_data = raw_data[
+            :,
+            int(i_event[0])
+            + duration_before_mi : int(i_event[0])
+            + mi_duration
+            + duration_after_mi,
+        ]
+        assert (
+            segmented_data.shape[-1]
+            == mi_duration - duration_before_mi + duration_after_mi
+        )
         trial_data.append(segmented_data)
     trial_data = np.stack(trial_data, 0)
 
     return trial_data, labels
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     subject_id = 3
     data_path = "/BCICIV_2a_edf"
 

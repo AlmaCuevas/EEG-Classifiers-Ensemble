@@ -1,7 +1,7 @@
-from scipy.signal import firwin, lfilter, filtfilt, butter
+import mne
 import numpy as np
 from scipy.linalg import sqrtm
-import mne
+from scipy.signal import butter, filtfilt, firwin, lfilter
 
 
 def mne_apply(func, raw, verbose="WARNING"):
@@ -31,7 +31,13 @@ def bandpass_cnt(data, low_cut_hz, high_cut_hz, fs, filt_order=200, zero_phase=F
     # high = high_cut_hz / nyq_freq
 
     # win = firwin(filt_order, [low, high], window='blackman', ass_zero='bandpass')
-    win = firwin(filt_order, [low_cut_hz, high_cut_hz], window='blackman', fs=fs, pass_zero='bandpass')
+    win = firwin(
+        filt_order,
+        [low_cut_hz, high_cut_hz],
+        window="blackman",
+        fs=fs,
+        pass_zero="bandpass",
+    )
 
     data_bandpassed = lfilter(win, 1, data)
     if zero_phase:

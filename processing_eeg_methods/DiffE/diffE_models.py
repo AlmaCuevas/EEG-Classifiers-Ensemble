@@ -1,11 +1,12 @@
 import math
-import numpy as np
 from functools import partial
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from einops import reduce
 from diffE_utils import *
+from einops import reduce
 
 
 def get_padding(kernel_size, dilation=1):
@@ -63,7 +64,9 @@ class WeightStandardizedConv1d(nn.Conv1d):
 
 
 class ResidualConvBlock(nn.Module):
-    def __init__(self, inc: int, num_channels: int, kernel_size: int, stride=1, num_groups=8):
+    def __init__(
+        self, inc: int, num_channels: int, kernel_size: int, stride=1, num_groups=8
+    ):
         super().__init__()
         """
         standard ResNet style convolutional block
@@ -71,8 +74,12 @@ class ResidualConvBlock(nn.Module):
         self.same_channels = inc == num_channels
         self.ks = kernel_size
         self.conv = nn.Sequential(
-            WeightStandardizedConv1d(inc, num_channels, self.ks, stride, get_padding(self.ks)),
-            nn.GroupNorm(num_groups, num_channels), # num_groups: int, num_channels: int
+            WeightStandardizedConv1d(
+                inc, num_channels, self.ks, stride, get_padding(self.ks)
+            ),
+            nn.GroupNorm(
+                num_groups, num_channels
+            ),  # num_groups: int, num_channels: int
             nn.PReLU(),
         )
 
@@ -89,7 +96,9 @@ class UnetDown(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, num_groups=8, factor=2):
         super(UnetDown, self).__init__()
         self.pool = nn.MaxPool1d(factor)
-        self.layer = ResidualConvBlock(in_channels, out_channels, kernel_size, num_groups=num_groups)
+        self.layer = ResidualConvBlock(
+            in_channels, out_channels, kernel_size, num_groups=num_groups
+        )
 
     def forward(self, x):
         x = self.layer(x)
@@ -101,7 +110,9 @@ class UnetUp(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, num_groups=8, factor=2):
         super(UnetUp, self).__init__()
         self.pool = nn.Upsample(scale_factor=factor, mode="nearest")
-        self.layer = ResidualConvBlock(in_channels, out_channels, kernel_size, num_groups=num_groups)
+        self.layer = ResidualConvBlock(
+            in_channels, out_channels, kernel_size, num_groups=num_groups
+        )
 
     def forward(self, x):
         x = self.pool(x)
@@ -113,7 +124,7 @@ class EmbedFC(nn.Module):
     def __init__(self, input_dim, emb_dim):
         super(EmbedFC, self).__init__()
         """
-        generic one layer FC NN for embedding things  
+        generic one layer FC NN for embedding things
         """
         self.input_dim = input_dim
         layers = [
@@ -150,13 +161,23 @@ class ConditionalUNet(nn.Module):
         # self.timeembed2 = EmbedFC(n_feat, self.u2_out)
         # self.timeembed3 = EmbedFC(n_feat, self.u3_out)
 
-        self.down1 = UnetDown(in_channels, self.d1_out, 1, num_groups=num_groups, factor=2)
-        self.down2 = UnetDown(self.d1_out, self.d2_out, 1, num_groups=num_groups, factor=2)
-        self.down3 = UnetDown(self.d2_out, self.d3_out, 1, num_groups=num_groups, factor=2)
+        self.down1 = UnetDown(
+            in_channels, self.d1_out, 1, num_groups=num_groups, factor=2
+        )
+        self.down2 = UnetDown(
+            self.d1_out, self.d2_out, 1, num_groups=num_groups, factor=2
+        )
+        self.down3 = UnetDown(
+            self.d2_out, self.d3_out, 1, num_groups=num_groups, factor=2
+        )
 
         self.up2 = UnetUp(self.d3_out, self.u2_out, 1, num_groups=num_groups, factor=2)
-        self.up3 = UnetUp(self.u2_out + self.d2_out, self.u3_out, 1, num_groups=num_groups, factor=2)
-        self.up4 = UnetUp(self.u3_out + self.d1_out, self.u4_out, 1, num_groups=num_groups, factor=2)
+        self.up3 = UnetUp(
+            self.u2_out + self.d2_out, self.u3_out, 1, num_groups=num_groups, factor=2
+        )
+        self.up4 = UnetUp(
+            self.u3_out + self.d1_out, self.u4_out, 1, num_groups=num_groups, factor=2
+        )
         self.out = nn.Conv1d(self.u4_out + in_channels, in_channels, 1)
 
     def forward(self, x, t):
@@ -185,9 +206,15 @@ class Encoder(nn.Module):
         self.e2_out = dim
         self.e3_out = dim
 
-        self.down1 = UnetDown(in_channels, self.e1_out, 1, num_groups=num_groups, factor=2)
-        self.down2 = UnetDown(self.e1_out, self.e2_out, 1, num_groups=num_groups, factor=2)
-        self.down3 = UnetDown(self.e2_out, self.e3_out, 1, num_groups=num_groups, factor=2)
+        self.down1 = UnetDown(
+            in_channels, self.e1_out, 1, num_groups=num_groups, factor=2
+        )
+        self.down2 = UnetDown(
+            self.e1_out, self.e2_out, 1, num_groups=num_groups, factor=2
+        )
+        self.down3 = UnetDown(
+            self.e2_out, self.e3_out, 1, num_groups=num_groups, factor=2
+        )
 
         self.avg_pooling = nn.AdaptiveAvgPool1d(output_size=1)
         self.max_pooling = nn.AdaptiveMaxPool1d(output_size=1)
@@ -205,7 +232,9 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, in_channels, n_feat=256, encoder_dim=512, n_classes=13, num_groups=8):
+    def __init__(
+        self, in_channels, n_feat=256, encoder_dim=512, n_classes=13, num_groups=8
+    ):
         super(Decoder, self).__init__()
 
         self.in_channels = in_channels
@@ -231,8 +260,12 @@ class Decoder(nn.Module):
         # self.contextembed3 = EmbedFC(self.e3_out, self.u3_out)
 
         # Unet up sampling
-        self.up1 = UnetUp(self.d3_out + self.e3_out, self.u2_out, 1, num_groups=num_groups, factor=2)
-        self.up2 = UnetUp(self.d2_out + self.u2_out, self.u3_out, 1, num_groups=num_groups, factor=2)
+        self.up1 = UnetUp(
+            self.d3_out + self.e3_out, self.u2_out, 1, num_groups=num_groups, factor=2
+        )
+        self.up2 = UnetUp(
+            self.d2_out + self.u2_out, self.u3_out, 1, num_groups=num_groups, factor=2
+        )
         self.up3 = nn.Sequential(
             nn.Upsample(scale_factor=2, mode="nearest"),
             nn.Conv1d(
@@ -285,8 +318,10 @@ class DiffE(nn.Module):
 
 
 class DecoderNoDiff(nn.Module):
-    def __init__(self, in_channels, n_feat=256, encoder_dim=512, n_classes=13, num_groups=8):
-        print('It does get here: DecoderNoDiff')
+    def __init__(
+        self, in_channels, n_feat=256, encoder_dim=512, n_classes=13, num_groups=8
+    ):
+        print("It does get here: DecoderNoDiff")
         super(DecoderNoDiff, self).__init__()
 
         self.in_channels = in_channels
@@ -310,7 +345,9 @@ class DecoderNoDiff(nn.Module):
 
         # Unet up sampling
         self.up2 = UnetUp(self.e3_out, self.u2_out, 1, num_groups=num_groups, factor=2)
-        self.up3 = UnetUp(self.e2_out + self.u2_out, self.u3_out, 1, num_groups=num_groups, factor=2)
+        self.up3 = UnetUp(
+            self.e2_out + self.u2_out, self.u3_out, 1, num_groups=num_groups, factor=2
+        )
         # self.up4 = UnetUp(self.e1_out+self.u3_out, self.u4_out, 1, 1, num_groups=in_channels, factor=2, is_res=True)
         self.up4 = nn.Sequential(
             nn.Upsample(scale_factor=2, mode="nearest"),
@@ -419,7 +456,9 @@ def ddpm_schedules(beta1, beta2, T):
 class DDPM(nn.Module):
     def __init__(self, nn_model, betas, n_T, device):
         super(DDPM, self).__init__()
-        self.nn_model = nn_model.to(device) # .double() This doesnt solve the double, float problem
+        self.nn_model = nn_model.to(
+            device
+        )  # .double() This doesnt solve the double, float problem
 
         for k, v in ddpm_schedules(betas[0], betas[1], n_T).items():
             self.register_buffer(k, v)

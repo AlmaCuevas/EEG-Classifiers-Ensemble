@@ -82,7 +82,7 @@ epochs: EEG data loaded as MNE Epochs objects.
 data: Processed EEG data in numpy array format.
 labels: Labels associated with the loaded EEG data.
 
-#### Main Function: 
+#### Main Function:
 The `load_data_labels_based_on_dataset` function is the main function that loads data based on the specified dataset name, subject ID, and data path. It calls the appropriate dataset loader function based on the dataset name provided.
 
 #### Defining Functions

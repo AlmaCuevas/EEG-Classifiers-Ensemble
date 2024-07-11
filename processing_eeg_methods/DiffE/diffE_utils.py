@@ -1,7 +1,8 @@
 import numpy as np
 import torch
-from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
+from torch.utils.data import DataLoader, Dataset
+
 
 # Define a function to perform z-score normalization on the data
 def zscore_norm(data):

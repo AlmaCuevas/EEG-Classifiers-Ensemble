@@ -1,19 +1,22 @@
 import torch.nn as nn
-from torch.nn import init
 import torch.nn.functional as F
-from braindecode.torch_ext.modules import Expression
 from braindecode.torch_ext.functions import safe_log, square
+from braindecode.torch_ext.modules import Expression
+from torch.nn import init
+
 
 class globalnetwork(nn.Module):
 
     def __init__(self, channels):
         super().__init__()
 
-        self.conv1 = nn.Conv2d(1, 40, kernel_size=(1,50), stride=(1,1), padding=0)
+        self.conv1 = nn.Conv2d(1, 40, kernel_size=(1, 50), stride=(1, 1), padding=0)
         init.xavier_uniform_(self.conv1.weight, gain=1)
         init.constant_(self.conv1.bias, 0)
 
-        self.conv2 = nn.Conv2d(40, 40, kernel_size=(channels,1), stride=(1,1), padding=0)
+        self.conv2 = nn.Conv2d(
+            40, 40, kernel_size=(channels, 1), stride=(1, 1), padding=0
+        )
         init.xavier_uniform_(self.conv2.weight, gain=1)
         init.constant_(self.conv2.bias, 0)
 
@@ -30,21 +33,22 @@ class globalnetwork(nn.Module):
         x = self.conv1(x)
         x = self.bn2(self.conv2(x))
         x = self.conv_nonlin(x)
-        x = F.avg_pool2d(x, (1,150), stride=(1,90))
+        x = F.avg_pool2d(x, (1, 150), stride=(1, 90))
         x = self.pool_nonlin(x)
 
         return x
+
 
 class localnetwork(nn.Module):
 
     def __init__(self, channels):
         super().__init__()
 
-        self.conv1 = nn.Conv2d(1, 40, kernel_size=(1,26), padding=0, stride=1)
+        self.conv1 = nn.Conv2d(1, 40, kernel_size=(1, 26), padding=0, stride=1)
         init.xavier_uniform_(self.conv1.weight, gain=1)
         init.constant_(self.conv1.bias, 0)
 
-        self.conv2 = nn.Conv2d(40,  40, kernel_size=(channels,1), padding=0, stride=1)
+        self.conv2 = nn.Conv2d(40, 40, kernel_size=(channels, 1), padding=0, stride=1)
         init.xavier_uniform_(self.conv2.weight, gain=1)
         init.constant_(self.conv2.bias, 0)
 
@@ -54,7 +58,7 @@ class localnetwork(nn.Module):
         init.constant_(self.bn2.weight, 1)
         init.constant_(self.bn2.bias, 0)
 
-        self.conv3 = nn.Conv2d(40,  40, kernel_size=(1,9), padding=0, stride=1)
+        self.conv3 = nn.Conv2d(40, 40, kernel_size=(1, 9), padding=0, stride=1)
         init.xavier_uniform_(self.conv3.weight, gain=1)
         init.constant_(self.conv3.bias, 0)
 
@@ -64,7 +68,7 @@ class localnetwork(nn.Module):
         init.constant_(self.bn3.weight, 1)
         init.constant_(self.bn3.bias, 0)
 
-        self.conv4 = nn.Conv2d(40,  40, kernel_size=(1,5), padding=0, stride=1)
+        self.conv4 = nn.Conv2d(40, 40, kernel_size=(1, 5), padding=0, stride=1)
         init.xavier_uniform_(self.conv4.weight, gain=1)
         init.constant_(self.conv4.bias, 0)
 
@@ -80,18 +84,19 @@ class localnetwork(nn.Module):
         x = self.conv1(x)
         x = self.bn2(self.conv2(x))
         x = self.conv12_nonlin(x)
-        x = F.avg_pool2d(x, (1,6), stride=(1,6))
+        x = F.avg_pool2d(x, (1, 6), stride=(1, 6))
         x = self.pool_nonlin(x)
         x = self.bn3(self.conv3(x))
         x = self.conv3_nonlin(x)
-        x = F.avg_pool2d(x, (1,3), stride=(1,3))
+        x = F.avg_pool2d(x, (1, 3), stride=(1, 3))
         x = self.pool_nonlin(x)
         x = self.bn4(self.conv4(x))
         x = self.conv4_nonlin(x)
-        x = F.avg_pool2d(x, (1,3), stride=(1,3))
+        x = F.avg_pool2d(x, (1, 3), stride=(1, 3))
         x = self.pool_nonlin(x)
 
         return x
+
 
 def _squeeze_final_output(x):
     assert x.size()[3] == 1
@@ -100,22 +105,22 @@ def _squeeze_final_output(x):
         x = x[:, :, 0]
     return x
 
+
 class topnetwork(nn.Module):
 
     def __init__(self, kernel_size):
         super().__init__()
 
-        self.conv1 = nn.Conv2d(40, 4, kernel_size=(1,kernel_size), stride=(1,1))
+        self.conv1 = nn.Conv2d(40, 4, kernel_size=(1, kernel_size), stride=(1, 1))
         init.xavier_uniform_(self.conv1.weight, gain=1)
         init.constant_(self.conv1.bias, 0)
-        
+
         self.log_softmax = nn.LogSoftmax(dim=1)
         self.squeeze = Expression(_squeeze_final_output)
-
 
     def forward(self, x):
         x = self.conv1(x)
         x = self.log_softmax(x)
         x = self.squeeze(x)
-              
+
         return x

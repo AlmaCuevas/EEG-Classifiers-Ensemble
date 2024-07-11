@@ -7,14 +7,14 @@
 # https://brainflow.readthedocs.io/en/stable/Examples.html
 
 
-from brainflow import BoardShim, BrainFlowInputParams, BoardIds
-from matplotlib import pyplot as plt
-from dataset_tools import ACTIONS, check_std_deviation, BOARD_SAMPLING_RATE
+import argparse
+import os
+import time
 
 import numpy as np
-import argparse
-import time
-import os
+from brainflow import BoardIds, BoardShim, BrainFlowInputParams
+from dataset_tools import ACTIONS, BOARD_SAMPLING_RATE, check_std_deviation
+from matplotlib import pyplot as plt
 
 
 def save_sample(sample, action):
@@ -26,7 +26,7 @@ def save_sample(sample, action):
     np.save(os.path.join(actiondir, f"{int(time.time())}.npy"), np.array(sample))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # This is intended for OpenBCI Cyton Board,
     # check: https://brainflow.readthedocs.io for other boards
 
@@ -45,8 +45,13 @@ if __name__ == '__main__':
         os.mkdir(datadir)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--serial-port', type=str, help='serial port',
-                        required=False, default='/dev/ttyUSB0')
+    parser.add_argument(
+        "--serial-port",
+        type=str,
+        help="serial port",
+        required=False,
+        default="/dev/ttyUSB0",
+    )
 
     # if you are on Linux remember to give permission to access the port:
     # sudo chmod 666 /dev/ttyUSB0
@@ -81,7 +86,9 @@ if __name__ == '__main__':
         time.sleep(1.5)  # waiting 1.5 sec after cue
 
         board.start_stream()  # use this for default options
-        time.sleep(1.5 * (NUM_TIMESTAMP_PER_SAMPLE / BOARD_SAMPLING_RATE))  # wait 50% more than necessary
+        time.sleep(
+            1.5 * (NUM_TIMESTAMP_PER_SAMPLE / BOARD_SAMPLING_RATE)
+        )  # wait 50% more than necessary
         data = board.get_current_board_data(NUM_TIMESTAMP_PER_SAMPLE)
         board.stop_stream()
 
@@ -94,7 +101,10 @@ if __name__ == '__main__':
         for j in range(0, 8):
             plt.plot(np.arange(len(sample[j])), sample[j])
 
-        if np.array(sample).shape == (NUM_CHANNELS, NUM_TIMESTAMP_PER_SAMPLE) and check_std_deviation(np.array(sample)):
+        if np.array(sample).shape == (
+            NUM_CHANNELS,
+            NUM_TIMESTAMP_PER_SAMPLE,
+        ) and check_std_deviation(np.array(sample)):
             save_sample(np.array(sample), ACTIONS[last_act])
         plt.show()
 

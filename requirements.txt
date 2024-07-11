@@ -29,3 +29,4 @@ statsmodels==0.14.2 # From EEGExtract Original: 0.10.1
 librosa==0.10.2.post1
 pyinform==0.2.0
 antropy==0.1.6
+pre-commit==3.7.1

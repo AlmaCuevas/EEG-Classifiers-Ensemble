@@ -1,34 +1,45 @@
+import time
+
 import numpy as np
 import pandas as pd
-
-from sklearn.model_selection import StratifiedKFold
-from diffE_models import Encoder, Decoder, LinearClassifier, DiffE
-from diffE_utils import get_dataloader
-from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
-from data_loaders import load_data_labels_based_on_dataset
-import time
-import torch.nn.functional as F
 import torch
+import torch.nn.functional as F
+from data_loaders import load_data_labels_based_on_dataset
+from diffE_models import Decoder, DiffE, Encoder, LinearClassifier
+from diffE_utils import get_dataloader
+from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
+from sklearn.model_selection import StratifiedKFold
 
 # todo: add the test template
 # todo: do the deap thing about the FFT: https://github.com/tongdaxu/EEG_Emotion_Classifier_DEAP/blob/master/Preprocess_Deap.ipynb
 
 threshold_for_bug = 0.00000001  # could be any value, ex numpy.min
 
+
 def diffE_train(data, labels) -> tuple[str, float]:
     pass
 
-def diffE_test(subject_id: int, X, dataset_info: dict, device: str =  "cuda:0"):
-    # From diffe_evaluation
-    model_path: str = f'{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_info["dataset_name"]}/Diffe/diffe_{dataset_info["dataset_name"]}_{subject_id}.pth'
 
-    X = X[:, :, : -1 * (X.shape[2] % 8)]  # 2^3=8 because there are 3 downs and ups halves.
+def diffE_test(subject_id: int, X, dataset_info: dict, device: str = "cuda:0"):
+    # From diffe_evaluation
+    model_path: str = (
+        f'{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_info["dataset_name"]}/Diffe/diffe_{dataset_info["dataset_name"]}_{subject_id}.pth'
+    )
+
+    X = X[
+        :, :, : -1 * (X.shape[2] % 8)
+    ]  # 2^3=8 because there are 3 downs and ups halves.
     # Dataloader
     batch_size = 32
     batch_size2 = 260
     seed = 42
     train_loader, _ = get_dataloader(
-        X, 0, batch_size, batch_size2, seed, shuffle=True # Y=0 JUST TO NOT LEAVE IT EMPTY, HERE IT ISN'T USED
+        X,
+        0,
+        batch_size,
+        batch_size2,
+        seed,
+        shuffle=True,  # Y=0 JUST TO NOT LEAVE IT EMPTY, HERE IT ISN'T USED
     )
 
     n_T = 1000
@@ -36,8 +47,8 @@ def diffE_test(subject_id: int, X, dataset_info: dict, device: str =  "cuda:0"):
     encoder_dim = 256
     fc_dim = 512
     # Define model
-    num_classes = dataset_info['#_class']
-    channels = dataset_info['#_channels']
+    num_classes = dataset_info["#_class"]
+    channels = dataset_info["#_channels"]
 
     encoder = Encoder(in_channels=channels, dim=encoder_dim).to(device)
     decoder = Decoder(
@@ -66,10 +77,10 @@ def diffE_test(subject_id: int, X, dataset_info: dict, device: str =  "cuda:0"):
 
 if __name__ == "__main__":
     # Manual Inputs
-    #dataset_name = "torres"  # Only two things I should be able to change
-    datasets = ['aguilera_traditional', 'aguilera_gamified', 'torres']
+    # dataset_name = "torres"  # Only two things I should be able to change
+    datasets = ["aguilera_traditional", "aguilera_gamified", "torres"]
     for dataset_name in datasets:
-        version_name = "customized_only" # To keep track what the output processing alteration went through
+        version_name = "customized_only"  # To keep track what the output processing alteration went through
 
         # Folders and paths
         dataset_foldername = dataset_name + "_dataset"
@@ -77,7 +88,7 @@ if __name__ == "__main__":
         data_path = computer_root_path + dataset_foldername
         print(data_path)
         # Initialize
-        processing_name: str = ''
+        processing_name: str = ""
         if dataset_name not in datasets_basic_infos:
             raise Exception(
                 f"Not supported dataset named '{dataset_name}', choose from the following: aguilera_traditional, aguilera_gamified, nieto, coretto or torres."
@@ -96,8 +107,12 @@ if __name__ == "__main__":
                 "a",
             ) as f:
                 f.write(f"Subject: {subject_id}\n\n")
-            epochs, data, labels = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
-            data[data < threshold_for_bug] = threshold_for_bug # To avoid the error "SVD did not convergence"
+            epochs, data, labels = load_data_labels_based_on_dataset(
+                dataset_info, subject_id, data_path
+            )
+            data[data < threshold_for_bug] = (
+                threshold_for_bug  # To avoid the error "SVD did not convergence"
+            )
             # Do cross-validation
             cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
             acc_over_cv = []
@@ -155,12 +170,21 @@ if __name__ == "__main__":
                 f.write(f"Final acc: {mean_acc_over_cv}\n\n\n\n")
             print(f"Final acc: {mean_acc_over_cv}")
 
-            temp = pd.DataFrame({'Methods': [processing_name] * len(acc_over_cv), 'Subject ID': [subject_id] * len(acc_over_cv),
-                                 'Version': [version_name] * len(acc_over_cv), 'Training Accuracy': [accuracy] * len(acc_over_cv), 'Training Time': training_time,
-                                 'Testing Accuracy': acc_over_cv, 'Testing Time': testing_time_over_cv}) # The idea is that the most famous one is the one I use for this dataset
+            temp = pd.DataFrame(
+                {
+                    "Methods": [processing_name] * len(acc_over_cv),
+                    "Subject ID": [subject_id] * len(acc_over_cv),
+                    "Version": [version_name] * len(acc_over_cv),
+                    "Training Accuracy": [accuracy] * len(acc_over_cv),
+                    "Training Time": training_time,
+                    "Testing Accuracy": acc_over_cv,
+                    "Testing Time": testing_time_over_cv,
+                }
+            )  # The idea is that the most famous one is the one I use for this dataset
             results_df = pd.concat([results_df, temp])
 
         results_df.to_csv(
-            f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.csv")
+            f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.csv"
+        )
 
     print("Congrats! The processing methods are done processing.")

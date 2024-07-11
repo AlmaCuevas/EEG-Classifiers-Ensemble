@@ -6,14 +6,18 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from data_loaders import load_data_labels_based_on_dataset
 from matplotlib.colors import ListedColormap
-
+from mne.decoding import CSP
+from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
 from sklearn.datasets import make_circles, make_classification, make_moons
-from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+from sklearn.discriminant_analysis import (LinearDiscriminantAnalysis,
+                                           QuadraticDiscriminantAnalysis)
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.inspection import DecisionBoundaryDisplay
+from sklearn.linear_model import RidgeClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
@@ -22,12 +26,6 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
-from mne.decoding import CSP
-from data_loaders import load_data_labels_based_on_dataset
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.linear_model import RidgeClassifier
-
-from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
 
 names = [
     "Nearest Neighbors",
@@ -58,10 +56,10 @@ classifiers = [
     GaussianNB(),
     QuadraticDiscriminantAnalysis(),
     LinearDiscriminantAnalysis(),
-    RidgeClassifier()
+    RidgeClassifier(),
 ]
 
-datasets = ['braincommand']
+datasets = ["braincommand"]
 
 for ds_cnt, ds in enumerate(datasets):
     # Manual Inputs
@@ -69,15 +67,17 @@ for ds_cnt, ds in enumerate(datasets):
 
     print(ROOT_VOTING_SYSTEM_PATH)
     # Folders and paths
-    dataset_foldername = ds + '_dataset'
+    dataset_foldername = ds + "_dataset"
     computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
     data_path = computer_root_path + dataset_foldername
     dataset_info: dict = datasets_basic_infos[ds]
 
-    epochs, data, y  = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path, selected_classes=[0, 1])
+    epochs, data, y = load_data_labels_based_on_dataset(
+        dataset_info, subject_id, data_path, selected_classes=[0, 1]
+    )
     print(y)
     figure = plt.figure(figsize=(27, 9))
-    i = 1 # for the subplot index
+    i = 1  # for the subplot index
     # iterate over datasets
 
     # preprocess dataset, split into training and test part
@@ -94,8 +94,8 @@ for ds_cnt, ds in enumerate(datasets):
     y_min, y_max = X[:, 1].min() - 0.5, X[:, 1].max() + 0.5
 
     # just plot the dataset first
-    cm = 'viridis'
-    cm_bright = 'viridis'
+    cm = "viridis"
+    cm_bright = "viridis"
     ax = plt.subplot(len(datasets), len(classifiers) + 1, i)
     if ds_cnt == 0:
         ax.set_title("Input data")

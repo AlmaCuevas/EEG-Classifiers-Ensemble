@@ -8,18 +8,19 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
+from custom_callbacks import GANMonitor
+from dataset_tools import load_all_raw_data, preprocess_raw_eeg
 from tensorflow import keras
 from tensorflow.keras import Model
 from tensorflow.keras.constraints import max_norm
-from tensorflow.keras.layers import Conv2D, BatchNormalization, AveragePooling2D, \
-    SpatialDropout2D, SeparableConv2D
-from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Input, DepthwiseConv2D
+from tensorflow.keras.layers import (Activation, AveragePooling2D,
+                                     BatchNormalization, Concatenate, Conv2D,
+                                     Dense, DepthwiseConv2D, Dropout,
+                                     Embedding, Flatten, Input,
+                                     LayerNormalization, LeakyReLU, Multiply,
+                                     Reshape, SeparableConv2D,
+                                     SpatialDropout2D, UpSampling2D)
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Concatenate, Reshape, LeakyReLU, UpSampling2D, Embedding, \
-    Multiply, LayerNormalization
-
-from custom_callbacks import GANMonitor
-from dataset_tools import load_all_raw_data, preprocess_raw_eeg
 
 # os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # shuts down GPU
 
@@ -29,49 +30,72 @@ config.gpu_options.allow_growth = True
 session = tf.compat.v1.InteractiveSession(config=config)
 
 
-def build_discriminator(Chans=8, Samples=250,
-                        dropoutRate=0.5, kernLength=125, F1=12,
-                        D=2, F2=24, norm_rate=0.25, dropoutType='Dropout', use_sigmoid_activation=True):
+def build_discriminator(
+    Chans=8,
+    Samples=250,
+    dropoutRate=0.5,
+    kernLength=125,
+    F1=12,
+    D=2,
+    F2=24,
+    norm_rate=0.25,
+    dropoutType="Dropout",
+    use_sigmoid_activation=True,
+):
     """
-        GAN discriminator based on EEGNet
-        http://iopscience.iop.org/article/10.1088/1741-2552/aace8c/meta
+    GAN discriminator based on EEGNet
+    http://iopscience.iop.org/article/10.1088/1741-2552/aace8c/meta
     """
 
-    if dropoutType == 'SpatialDropout2D':
+    if dropoutType == "SpatialDropout2D":
         dropoutType = SpatialDropout2D
-    elif dropoutType == 'Dropout':
+    elif dropoutType == "Dropout":
         dropoutType = Dropout
     else:
-        raise ValueError('dropoutType must be one of SpatialDropout2D '
-                         'or Dropout, passed as a string.')
+        raise ValueError(
+            "dropoutType must be one of SpatialDropout2D "
+            "or Dropout, passed as a string."
+        )
 
     input1 = Input(shape=(Chans, Samples, 2))
 
     ##################################################################
-    block1 = Conv2D(F1, (1, kernLength), padding='same',
-                    input_shape=(Chans, Samples, 2),
-                    use_bias=False)(input1)
+    block1 = Conv2D(
+        F1,
+        (1, kernLength),
+        padding="same",
+        input_shape=(Chans, Samples, 2),
+        use_bias=False,
+    )(input1)
     block1 = BatchNormalization()(block1)
-    block1 = DepthwiseConv2D((Chans, 1), use_bias=False,
-                             depth_multiplier=D,
-                             depthwise_constraint=max_norm(1.))(block1)
+    block1 = DepthwiseConv2D(
+        (Chans, 1),
+        use_bias=False,
+        depth_multiplier=D,
+        depthwise_constraint=max_norm(1.0),
+    )(block1)
     block1 = BatchNormalization()(block1)
     block1 = LeakyReLU(alpha=0.2)(block1)
     block1 = AveragePooling2D((1, 4))(block1)
     block1 = dropoutType(dropoutRate)(block1)
 
-    block2 = SeparableConv2D(F2, (1, 16), use_bias=False, padding='same')(block1)
+    block2 = SeparableConv2D(F2, (1, 16), use_bias=False, padding="same")(block1)
     block2 = BatchNormalization()(block2)
     block2 = LeakyReLU(alpha=0.2)(block2)
     block2 = AveragePooling2D((1, 8))(block2)
     block2 = dropoutType(dropoutRate)(block2)
 
-    flatten = Flatten(name='flatten')(block2)
+    flatten = Flatten(name="flatten")(block2)
 
     if use_sigmoid_activation:
-        output = Dense(1, name='output', kernel_constraint=max_norm(norm_rate), activation='sigmoid')(flatten)
+        output = Dense(
+            1,
+            name="output",
+            kernel_constraint=max_norm(norm_rate),
+            activation="sigmoid",
+        )(flatten)
     else:
-        output = Dense(1, name='output', kernel_constraint=max_norm(norm_rate))(flatten)
+        output = Dense(1, name="output", kernel_constraint=max_norm(norm_rate))(flatten)
 
     return Model(inputs=input1, outputs=output, name="EEGNet-discriminator")
 
@@ -81,15 +105,13 @@ def build_cgan_discriminator(img_shape, num_classes=3, use_sigmoid_activation=Tr
     img = Input(shape=img_shape)
 
     # Label for the input image
-    label = Input(shape=(1,), dtype='int32')
+    label = Input(shape=(1,), dtype="int32")
 
     # Label embedding:
     # ----------------
     # Turns labels into dense vectors of size z_dim
     # Produces 3D tensor with shape (batch_size, 1, 28*28*1)
-    label_embedding = Embedding(num_classes,
-                                np.prod(img_shape),
-                                input_length=1)(label)
+    label_embedding = Embedding(num_classes, np.prod(img_shape), input_length=1)(label)
 
     # Flatten the embedding 3D tensor into 2D tensor with shape (batch_size, 28*28*1)
     label_embedding = Flatten()(label_embedding)
@@ -113,56 +135,90 @@ def build_generator(z_dim):
 
     model.add(Dense(8 * 8 * 2, input_shape=(z_dim,)))
     model.add(BatchNormalization())
-    model.add(Activation('elu'))
+    model.add(Activation("elu"))
     model.add(Reshape((8, 8, 2)))
 
-    model.add(UpSampling2D(size=(1, 2), interpolation='bilinear'))
-    model.add(SeparableConv2D(2, kernel_size=(1, 8), padding='same'))
+    model.add(UpSampling2D(size=(1, 2), interpolation="bilinear"))
+    model.add(SeparableConv2D(2, kernel_size=(1, 8), padding="same"))
     model.add(BatchNormalization())
-    model.add(Activation('elu'))
+    model.add(Activation("elu"))
     model.add(
-        DepthwiseConv2D((16, 1), use_bias=False, depth_multiplier=2,
-                        depthwise_constraint=max_norm(1.), padding='same'))
+        DepthwiseConv2D(
+            (16, 1),
+            use_bias=False,
+            depth_multiplier=2,
+            depthwise_constraint=max_norm(1.0),
+            padding="same",
+        )
+    )
     model.add(BatchNormalization())
-    model.add(Activation('elu'))
+    model.add(Activation("elu"))
 
-    model.add(UpSampling2D(size=(1, 2), interpolation='bilinear'))
-    model.add(SeparableConv2D(4, kernel_size=(1, 16), padding='same'))
+    model.add(UpSampling2D(size=(1, 2), interpolation="bilinear"))
+    model.add(SeparableConv2D(4, kernel_size=(1, 16), padding="same"))
     model.add(BatchNormalization())
-    model.add(Activation('elu'))
+    model.add(Activation("elu"))
     model.add(
-        DepthwiseConv2D((16, 1), use_bias=False, depth_multiplier=2, depthwise_constraint=max_norm(1.), padding='same'))
+        DepthwiseConv2D(
+            (16, 1),
+            use_bias=False,
+            depth_multiplier=2,
+            depthwise_constraint=max_norm(1.0),
+            padding="same",
+        )
+    )
     model.add(BatchNormalization())
-    model.add(Activation('elu'))
+    model.add(Activation("elu"))
 
-    model.add(UpSampling2D(size=(1, 2), interpolation='bilinear'))
-    model.add(SeparableConv2D(8, kernel_size=(1, 32), padding='same'))
+    model.add(UpSampling2D(size=(1, 2), interpolation="bilinear"))
+    model.add(SeparableConv2D(8, kernel_size=(1, 32), padding="same"))
     model.add(BatchNormalization())
-    model.add(Activation('elu'))
+    model.add(Activation("elu"))
     model.add(
-        DepthwiseConv2D((16, 1), use_bias=False, depth_multiplier=2, depthwise_constraint=max_norm(1.), padding='same'))
+        DepthwiseConv2D(
+            (16, 1),
+            use_bias=False,
+            depth_multiplier=2,
+            depthwise_constraint=max_norm(1.0),
+            padding="same",
+        )
+    )
     model.add(BatchNormalization())
-    model.add(Activation('elu'))
+    model.add(Activation("elu"))
 
-    model.add(UpSampling2D(size=(1, 2), interpolation='bilinear'))
-    model.add(SeparableConv2D(8, kernel_size=(1, 64), padding='same'))
+    model.add(UpSampling2D(size=(1, 2), interpolation="bilinear"))
+    model.add(SeparableConv2D(8, kernel_size=(1, 64), padding="same"))
     model.add(BatchNormalization())
-    model.add(Activation('elu'))
-    model.add(DepthwiseConv2D((16, 1), use_bias=False, depth_multiplier=1, depthwise_constraint=max_norm(1.),
-                              padding='same'))
+    model.add(Activation("elu"))
+    model.add(
+        DepthwiseConv2D(
+            (16, 1),
+            use_bias=False,
+            depth_multiplier=1,
+            depthwise_constraint=max_norm(1.0),
+            padding="same",
+        )
+    )
     model.add(BatchNormalization())
-    model.add(Activation('elu'))
+    model.add(Activation("elu"))
 
     model.add(SeparableConv2D(4, kernel_size=(1, 4)))
     model.add(BatchNormalization())
-    model.add(Activation('elu'))
-    model.add(DepthwiseConv2D((16, 1), use_bias=False, depth_multiplier=1, depthwise_constraint=max_norm(1.),
-                              padding='same'))
+    model.add(Activation("elu"))
+    model.add(
+        DepthwiseConv2D(
+            (16, 1),
+            use_bias=False,
+            depth_multiplier=1,
+            depthwise_constraint=max_norm(1.0),
+            padding="same",
+        )
+    )
     model.add(BatchNormalization())
-    model.add(Activation('elu'))
+    model.add(Activation("elu"))
 
-    model.add(UpSampling2D(size=(1, 2), interpolation='bilinear'))
-    model.add(SeparableConv2D(1, kernel_size=(1, 125), padding='same'))
+    model.add(UpSampling2D(size=(1, 2), interpolation="bilinear"))
+    model.add(SeparableConv2D(1, kernel_size=(1, 125), padding="same"))
     model.add(LayerNormalization(axis=2))
 
     return model
@@ -173,7 +229,7 @@ def build_cgan_generator(z_dim, num_classes=3):
     z = Input(shape=(z_dim,))
 
     # Conditioning label: integer 0-9 specifying the number G should generate
-    label = Input(shape=(1,), dtype='int32')
+    label = Input(shape=(1,), dtype="int32")
 
     # Label embedding:
     # ----------------
@@ -197,7 +253,7 @@ def build_cgan_generator(z_dim, num_classes=3):
 
 class GAN(keras.Model):
     """
-        GAN code heavily based on https://keras.io/examples/generative/dcgan_overriding_train_step/
+    GAN code heavily based on https://keras.io/examples/generative/dcgan_overriding_train_step/
     """
 
     def __init__(self, discriminator, generator, latent_dim):
@@ -235,7 +291,8 @@ class GAN(keras.Model):
 
         # Assemble labels discriminating real from fake images
         labels = tf.concat(
-            [tf.zeros((batch_size, 1)), tf.ones((batch_size, 1)) * 0.9], axis=0  # One sided label smoothing
+            [tf.zeros((batch_size, 1)), tf.ones((batch_size, 1)) * 0.9],
+            axis=0,  # One sided label smoothing
         )
         # Add random noise to the labels - important trick!
         labels += 0.05 * tf.random.uniform(tf.shape(labels))
@@ -243,7 +300,9 @@ class GAN(keras.Model):
 
         # Train the discriminator
         with tf.GradientTape() as tape:
-            predictions = self.discriminator([combined_images, tf.concat([data_labels, data_labels], axis=0)])
+            predictions = self.discriminator(
+                [combined_images, tf.concat([data_labels, data_labels], axis=0)]
+            )
             d_loss = self.loss_fn(labels, predictions)
         grads = tape.gradient(d_loss, self.discriminator.trainable_weights)
         self.d_optimizer.apply_gradients(
@@ -276,16 +335,16 @@ class GAN(keras.Model):
 
 class WGAN(keras.Model):
     """
-        WGAN code heavily based on https://keras.io/examples/generative/wgan_gp/
+    WGAN code heavily based on https://keras.io/examples/generative/wgan_gp/
     """
 
     def __init__(
-            self,
-            discriminator,
-            generator,
-            latent_dim,
-            discriminator_extra_steps=3,
-            gp_weight=10.0,
+        self,
+        discriminator,
+        generator,
+        latent_dim,
+        discriminator_extra_steps=3,
+        gp_weight=10.0,
     ):
         super(WGAN, self).__init__()
         self.discriminator = discriminator
@@ -302,7 +361,7 @@ class WGAN(keras.Model):
         self.g_loss_fn = g_loss_fn
 
     def gradient_penalty(self, batch_size, real_images, fake_images, data_labels):
-        """ Calculates the gradient penalty.
+        """Calculates the gradient penalty.
 
         This loss is calculated on an interpolated image
         and added to the discriminator loss.
@@ -351,16 +410,24 @@ class WGAN(keras.Model):
             )
             with tf.GradientTape() as tape:
                 # Generate fake images from the latent vector
-                fake_images = self.generator([random_latent_vectors, data_labels], training=True)
+                fake_images = self.generator(
+                    [random_latent_vectors, data_labels], training=True
+                )
                 # Get the logits for the fake images
-                fake_logits = self.discriminator([fake_images, data_labels], training=True)
+                fake_logits = self.discriminator(
+                    [fake_images, data_labels], training=True
+                )
                 # Get the logits for the real images
-                real_logits = self.discriminator([real_images, data_labels], training=True)
+                real_logits = self.discriminator(
+                    [real_images, data_labels], training=True
+                )
 
                 # Calculate the discriminator loss using the fake and real image logits
                 d_cost = self.d_loss_fn(real_img=real_logits, fake_img=fake_logits)
                 # Calculate the gradient penalty
-                gp = self.gradient_penalty(batch_size, real_images, fake_images, data_labels)
+                gp = self.gradient_penalty(
+                    batch_size, real_images, fake_images, data_labels
+                )
                 # Add the gradient penalty to the original discriminator loss
                 d_loss = d_cost + gp * self.gp_weight
 
@@ -376,9 +443,13 @@ class WGAN(keras.Model):
         random_latent_vectors = tf.random.normal(shape=(batch_size, self.latent_dim))
         with tf.GradientTape() as tape:
             # Generate fake images using the generator
-            generated_images = self.generator([random_latent_vectors, data_labels], training=True)
+            generated_images = self.generator(
+                [random_latent_vectors, data_labels], training=True
+            )
             # Get the discriminator logits for fake images
-            gen_img_logits = self.discriminator([generated_images, data_labels], training=True)
+            gen_img_logits = self.discriminator(
+                [generated_images, data_labels], training=True
+            )
             # Calculate the generator loss
             g_loss = self.g_loss_fn(gen_img_logits)
 
@@ -406,15 +477,17 @@ def wgan_generator_loss(fake_img):
 
 
 def fit_GAN(train_X, train_y, gan_hyperparameters_dict):
-    latent_dim = gan_hyperparameters_dict['latent_dim']
-    epochs = gan_hyperparameters_dict['epochs']
-    batch_size = gan_hyperparameters_dict['batch_size']
+    latent_dim = gan_hyperparameters_dict["latent_dim"]
+    epochs = gan_hyperparameters_dict["epochs"]
+    batch_size = gan_hyperparameters_dict["batch_size"]
 
     num_classes = int(np.max(train_y) + 1)
     img_shape = train_X[0, ..., None].shape  # to transform (8,250) shape into (8,250,1)
 
     generator = build_cgan_generator(latent_dim, num_classes=num_classes)
-    discriminator = build_cgan_discriminator(img_shape=img_shape, use_sigmoid_activation=True)
+    discriminator = build_cgan_discriminator(
+        img_shape=img_shape, use_sigmoid_activation=True
+    )
 
     gan = GAN(discriminator=discriminator, generator=generator, latent_dim=latent_dim)
     gan.compile(
@@ -428,24 +501,34 @@ def fit_GAN(train_X, train_y, gan_hyperparameters_dict):
     callbacks_list = get_callback_lists(model_path, latent_dim)
     save_hyperparameters_dicts(gan_hyperparameters_dict, model_path)
 
-    history = gan.fit(train_X, train_y, epochs=epochs, batch_size=batch_size, callbacks=callbacks_list)
+    history = gan.fit(
+        train_X, train_y, epochs=epochs, batch_size=batch_size, callbacks=callbacks_list
+    )
     plot_gan_losses(history, model_path)
 
 
 def fit_WGAN(train_X, train_y, gan_hyperparameters_dict):
-    latent_dim = gan_hyperparameters_dict['latent_dim']
-    epochs = gan_hyperparameters_dict['epochs']
-    discriminator_extra_steps = gan_hyperparameters_dict['wgan_discriminator_extra_steps']
-    batch_size = gan_hyperparameters_dict['batch_size']
+    latent_dim = gan_hyperparameters_dict["latent_dim"]
+    epochs = gan_hyperparameters_dict["epochs"]
+    discriminator_extra_steps = gan_hyperparameters_dict[
+        "wgan_discriminator_extra_steps"
+    ]
+    batch_size = gan_hyperparameters_dict["batch_size"]
 
     num_classes = int(np.max(train_y) + 1)
     img_shape = train_X[0, ..., None].shape  # to transform (8,250) shape into (8,250,1)
 
     generator = build_cgan_generator(latent_dim, num_classes=num_classes)
-    discriminator = build_cgan_discriminator(img_shape=img_shape, use_sigmoid_activation=False)
+    discriminator = build_cgan_discriminator(
+        img_shape=img_shape, use_sigmoid_activation=False
+    )
 
-    wgan = WGAN(discriminator=discriminator, generator=generator, latent_dim=latent_dim,
-                discriminator_extra_steps=discriminator_extra_steps)
+    wgan = WGAN(
+        discriminator=discriminator,
+        generator=generator,
+        latent_dim=latent_dim,
+        discriminator_extra_steps=discriminator_extra_steps,
+    )
 
     wgan.compile(
         d_optimizer=keras.optimizers.Adam(learning_rate=0.0002, beta_1=0.5, beta_2=0.9),
@@ -460,67 +543,77 @@ def fit_WGAN(train_X, train_y, gan_hyperparameters_dict):
     callbacks_list = get_callback_lists(model_path, latent_dim)
     save_hyperparameters_dicts(gan_hyperparameters_dict, model_path)
 
-    history = wgan.fit(train_X, train_y, epochs=epochs, batch_size=batch_size, callbacks=callbacks_list)
+    history = wgan.fit(
+        train_X, train_y, epochs=epochs, batch_size=batch_size, callbacks=callbacks_list
+    )
     plot_gan_losses(history, model_path)
 
 
 def get_callback_lists(model_path, latent_dim=10):
-    models_path = model_path / 'models'
+    models_path = model_path / "models"
     models_path.mkdir(exist_ok=True)
     callbacks_list = [
         keras.callbacks.ModelCheckpoint(
-            filepath=f'{models_path}' + '/saved-models-{epoch:06d}.h5',
-            save_best_only=False
+            filepath=f"{models_path}" + "/saved-models-{epoch:06d}.h5",
+            save_best_only=False,
         ),
         keras.callbacks.CSVLogger(
-            filename=f'{model_path}/my_model.csv',
-            separator=',',
-            append=True
+            filename=f"{model_path}/my_model.csv", separator=",", append=True
         ),
-        GANMonitor(
-            model_path=model_path,
-            latent_dim=latent_dim
-        )
+        GANMonitor(model_path=model_path, latent_dim=latent_dim),
     ]
     return callbacks_list
 
 
 def plot_gan_losses(history, model_path):
     plt.clf()
-    d_loss = history.history['d_loss']
-    g_loss = history.history['g_loss']
+    d_loss = history.history["d_loss"]
+    g_loss = history.history["g_loss"]
     epochs = range(1, len(d_loss) + 1)
-    plt.plot(epochs, d_loss, 'g', label='Discriminator loss')
-    plt.plot(epochs, g_loss, 'b', label='Generator loss')
-    plt.title('Discriminator and Generator loss')
-    plt.xlabel('Epochs')
-    plt.ylabel('Losses')
+    plt.plot(epochs, d_loss, "g", label="Discriminator loss")
+    plt.plot(epochs, g_loss, "b", label="Generator loss")
+    plt.title("Discriminator and Generator loss")
+    plt.xlabel("Epochs")
+    plt.ylabel("Losses")
     plt.legend()
-    plt.savefig(f'{model_path}/generator-discriminator-loss')
+    plt.savefig(f"{model_path}/generator-discriminator-loss")
 
 
 def save_hyperparameters_dicts(gan_hyperparameters_dict, model_path):
-    with open(model_path / "gan_parameters.json", 'w+') as file:
+    with open(model_path / "gan_parameters.json", "w+") as file:
         json.dump(gan_hyperparameters_dict, file, sort_keys=True, indent=4)
 
 
 def main():
     STARTING_DIR = Path("../chris_personal_dataset")
     raw_data_X, data_y, label_mapping = load_all_raw_data(starting_dir=STARTING_DIR)
-    data_X, fft_data_X = preprocess_raw_eeg(raw_data_X, lowcut=8, highcut=45, coi3order=0)
+    data_X, fft_data_X = preprocess_raw_eeg(
+        raw_data_X, lowcut=8, highcut=45, coi3order=0
+    )
 
-    gan_hyperparameters_dict = {'latent_dim': 50,
-                                'epochs': 30000,
-                                'batch_size': 32,
-                                'wgan_discriminator_extra_steps': 5,
-                                'label_mapping': label_mapping}
+    gan_hyperparameters_dict = {
+        "latent_dim": 50,
+        "epochs": 30000,
+        "batch_size": 32,
+        "wgan_discriminator_extra_steps": 5,
+        "label_mapping": label_mapping,
+    }
 
     fit_WGAN(data_X, data_y, gan_hyperparameters_dict)
     # fit_GAN(train_X, train_y, gan_hyperparameters_dict)
 
 
-def generate_synthetic_data(model_folder: Path, samples_to_generate: int, attempts: int, label: int, latent_dim: int,
-                            initial_epoch=20000, epoch_step=50, data_shape=(8, 250, 1), num_classes=3):
+def generate_synthetic_data(
+    model_folder: Path,
+    samples_to_generate: int,
+    attempts: int,
+    label: int,
+    latent_dim: int,
+    initial_epoch=20000,
+    epoch_step=50,
+    data_shape=(8, 250, 1),
+    num_classes=3,
+):
     if type(model_folder) is str:
         model_folder = Path(model_folder)
     generated_samples = np.zeros((samples_to_generate,) + data_shape)
@@ -529,7 +622,9 @@ def generate_synthetic_data(model_folder: Path, samples_to_generate: int, attemp
         discriminator = build_cgan_discriminator(data_shape, num_classes, False)
         model = WGAN(discriminator, generator, latent_dim, 5)
         model.built = True
-        model.load_weights(str(model_folder / Path(f'saved-models-{initial_epoch:06d}.h5')))
+        model.load_weights(
+            str(model_folder / Path(f"saved-models-{initial_epoch:06d}.h5"))
+        )
 
         noise = np.random.normal(loc=0, scale=1, size=(attempts, latent_dim))
         labels = np.ones((attempts, 1)) * label
@@ -546,5 +641,5 @@ def generate_synthetic_data(model_folder: Path, samples_to_generate: int, attemp
     return generated_samples
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

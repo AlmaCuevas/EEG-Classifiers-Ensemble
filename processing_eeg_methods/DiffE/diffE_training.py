@@ -1,25 +1,19 @@
+import random
 from pathlib import Path
 
-from diffE_models import *
-from share import datasets_basic_infos, ROOT_VOTING_SYSTEM_PATH
-from data_loaders import load_data_labels_based_on_dataset
-from diffE_utils import *
-
-import random
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import torch.nn.functional as F
+import torch.optim as optim
+from data_loaders import load_data_labels_based_on_dataset
+from diffE_models import *
+from diffE_utils import *
 from ema_pytorch import EMA
+from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
+from sklearn.metrics import (f1_score, precision_score, recall_score,
+                             roc_auc_score, top_k_accuracy_score)
 from tqdm import tqdm
-from sklearn.metrics import (
-    f1_score,
-    roc_auc_score,
-    precision_score,
-    recall_score,
-    top_k_accuracy_score,
-)
 
 
 # Evaluate function
@@ -58,9 +52,11 @@ def evaluate(encoder, fc, generator, device, number_of_labels: int = 4):
     return metrics
 
 
-def diffE_train(subject_id: int, X, Y, dataset_info, device: str =  "cuda:0"):
+def diffE_train(subject_id: int, X, Y, dataset_info, device: str = "cuda:0"):
     # This saves the training in a file
-    X = X[:, :, : -1 * (X.shape[2] % 8)] # 2^3=8 because there are 3 downs and ups halves.
+    X = X[
+        :, :, : -1 * (X.shape[2] % 8)
+    ]  # 2^3=8 because there are 3 downs and ups halves.
 
     # Dataloader
     device = torch.device(device)
@@ -75,20 +71,31 @@ def diffE_train(subject_id: int, X, Y, dataset_info, device: str =  "cuda:0"):
     )
 
     # Define model
-    num_classes = dataset_info['#_class']
+    num_classes = dataset_info["#_class"]
     channels = X.shape[1]
     print(channels)
 
-    n_T = 1000 # Steps in the diffusion process, Timesteps for the Betas
+    n_T = 1000  # Steps in the diffusion process, Timesteps for the Betas
     ddpm_dim = 128
     encoder_dim = 256
     fc_dim = 512
-    num_groups = 1# 8 for aguilera
+    num_groups = 1  # 8 for aguilera
 
-    ddpm_model = ConditionalUNet(in_channels=channels, n_feat=ddpm_dim, num_groups=num_groups).to(device)
-    ddpm = DDPM(nn_model=ddpm_model, betas=(1e-6, 1e-2), n_T=n_T, device=device).to(device) # Betas tell us how much noise we want to add. It starts at 1.e-6 at increases up to 1e-2
-    encoder = Encoder(in_channels=channels, dim=encoder_dim, num_groups=num_groups).to(device)
-    decoder = Decoder(in_channels=channels, n_feat=ddpm_dim, encoder_dim=encoder_dim, num_groups=num_groups).to(device)
+    ddpm_model = ConditionalUNet(
+        in_channels=channels, n_feat=ddpm_dim, num_groups=num_groups
+    ).to(device)
+    ddpm = DDPM(nn_model=ddpm_model, betas=(1e-6, 1e-2), n_T=n_T, device=device).to(
+        device
+    )  # Betas tell us how much noise we want to add. It starts at 1.e-6 at increases up to 1e-2
+    encoder = Encoder(in_channels=channels, dim=encoder_dim, num_groups=num_groups).to(
+        device
+    )
+    decoder = Decoder(
+        in_channels=channels,
+        n_feat=ddpm_dim,
+        encoder_dim=encoder_dim,
+        num_groups=num_groups,
+    ).to(device)
     fc = LinearClassifier(encoder_dim, fc_dim, emb_dim=num_classes).to(device)
     diffe = DiffE(encoder, decoder, fc).to(device)
 
@@ -107,7 +114,12 @@ def diffE_train(subject_id: int, X, Y, dataset_info, device: str =  "cuda:0"):
     optim2 = optim.RMSprop(diffe.parameters(), lr=base_lr)
 
     # EMAs
-    fc_ema = EMA(diffe.fc, beta=0.95, update_after_step=100, update_every=10,)
+    fc_ema = EMA(
+        diffe.fc,
+        beta=0.95,
+        update_after_step=100,
+        update_every=10,
+    )
 
     step_size = 150
     scheduler1 = optim.lr_scheduler.CyclicLR(
@@ -129,7 +141,7 @@ def diffE_train(subject_id: int, X, Y, dataset_info, device: str =  "cuda:0"):
         gamma=0.9998,
     )
     # Train & Evaluate
-    num_epochs = dataset_info['total_trials']
+    num_epochs = dataset_info["total_trials"]
     test_period = 1
     start_test = test_period
     alpha = 0.1
@@ -150,7 +162,11 @@ def diffE_train(subject_id: int, X, Y, dataset_info, device: str =  "cuda:0"):
             ############################## Train ###########################################
             for x, y in train_loader:
                 x, y = x.to(device).float(), y.type(torch.LongTensor).to(device)
-                y_cat = F.one_hot(y, num_classes=num_classes).type(torch.FloatTensor).to(device)
+                y_cat = (
+                    F.one_hot(y, num_classes=num_classes)
+                    .type(torch.FloatTensor)
+                    .to(device)
+                )
                 # Train DDPM
                 optim1.zero_grad()
 
@@ -186,7 +202,9 @@ def diffE_train(subject_id: int, X, Y, dataset_info, device: str =  "cuda:0"):
                     ddpm.eval()
                     diffe.eval()
 
-                    metrics_test = evaluate(diffe.encoder, fc_ema, test_loader, device, num_classes)
+                    metrics_test = evaluate(
+                        diffe.encoder, fc_ema, test_loader, device, num_classes
+                    )
 
                     acc = metrics_test["accuracy"]
                     f1 = metrics_test["f1"]
@@ -203,7 +221,10 @@ def diffE_train(subject_id: int, X, Y, dataset_info, device: str =  "cuda:0"):
                     if best_acc_bool:
                         print("Saving model...")
                         best_acc = acc
-                        torch.save(diffe.state_dict(), f'{ROOT_VOTING_SYSTEM_PATH}/Results/Diffe/diffe_{dataset_info["dataset_name"]}_{subject_id}.pt')
+                        torch.save(
+                            diffe.state_dict(),
+                            f'{ROOT_VOTING_SYSTEM_PATH}/Results/Diffe/diffe_{dataset_info["dataset_name"]}_{subject_id}.pt',
+                        )
                     if best_f1_bool:
                         best_f1 = f1
                     if best_recall_bool:
@@ -247,7 +268,7 @@ def diffE_train(subject_id: int, X, Y, dataset_info, device: str =  "cuda:0"):
 
 
 if __name__ == "__main__":
-    print(f'CUDA is available? {torch.cuda.is_available()}')
+    print(f"CUDA is available? {torch.cuda.is_available()}")
 
     dataset_name = "braincommand"  # Only two things I should be able to change
 
@@ -258,6 +279,6 @@ if __name__ == "__main__":
     print(data_path)
     dataset_info = datasets_basic_infos[dataset_name]
 
-    for subject_id in range(1, dataset_info['subjects'] + 1):
+    for subject_id in range(1, dataset_info["subjects"] + 1):
         _, X, Y = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
         diffE_train(subject_id=subject_id, X=X, Y=Y, dataset_info=dataset_info)

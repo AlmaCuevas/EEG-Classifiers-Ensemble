@@ -53,7 +53,7 @@ We strongly recommend the use of the [**Anaconda**](https://www.anaconda.com/) p
 A conda installation guide for linux systems can be found [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html)
 
 ### Installation
- 
+
 1. Clone the repo
 ```sh
 git clone https://gitlab.com/ABaldrati/AugmentBrain
