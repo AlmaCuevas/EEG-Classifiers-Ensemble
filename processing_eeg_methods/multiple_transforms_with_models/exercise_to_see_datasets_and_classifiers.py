@@ -2,15 +2,10 @@
 #              Andreas Müller
 # Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
-from pathlib import Path
-
 import matplotlib.pyplot as plt
-import numpy as np
 from data_loaders import load_data_labels_based_on_dataset
-from matplotlib.colors import ListedColormap
 from mne.decoding import CSP
 from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
-from sklearn.datasets import make_circles, make_classification, make_moons
 from sklearn.discriminant_analysis import (LinearDiscriminantAnalysis,
                                            QuadraticDiscriminantAnalysis)
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier

@@ -5,8 +5,9 @@ import pandas as pd
 import torch
 import torch.nn.functional as F
 from data_loaders import load_data_labels_based_on_dataset
-from diffE_models import Decoder, DiffE, Encoder, LinearClassifier
-from diffE_utils import get_dataloader
+from data_utils import standard_saving_path
+from DiffE.diffE_models import Decoder, DiffE, Encoder, LinearClassifier
+from DiffE.diffE_utils import get_dataloader
 from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
 from sklearn.model_selection import StratifiedKFold
 
@@ -22,8 +23,8 @@ def diffE_train(data, labels) -> tuple[str, float]:
 
 def diffE_test(subject_id: int, X, dataset_info: dict, device: str = "cuda:0"):
     # From diffe_evaluation
-    model_path: str = (
-        f'{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_info["dataset_name"]}/Diffe/diffe_{dataset_info["dataset_name"]}_{subject_id}.pth'
+    model_path: str = standard_saving_path(
+        dataset_info, "DiffE", "", file_ending="pt", subject_id=subject_id
     )
 
     X = X[
@@ -35,11 +36,11 @@ def diffE_test(subject_id: int, X, dataset_info: dict, device: str = "cuda:0"):
     seed = 42
     train_loader, _ = get_dataloader(
         X,
-        0,
+        [0] * (X.shape[0]),  # Y=0 JUST TO NOT LEAVE IT EMPTY, HERE IT ISN'T USED
         batch_size,
         batch_size2,
         seed,
-        shuffle=True,  # Y=0 JUST TO NOT LEAVE IT EMPTY, HERE IT ISN'T USED
+        shuffle=True,
     )
 
     n_T = 1000

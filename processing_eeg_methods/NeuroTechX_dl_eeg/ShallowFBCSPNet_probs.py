@@ -10,11 +10,12 @@ from braindecode.datautil.signal_target import SignalAndTarget
 from braindecode.models.shallow_fbcsp import ShallowFBCSPNet
 from braindecode.torch_ext.util import np_to_var, set_random_seeds, var_to_np
 from data_loaders import load_data_labels_based_on_dataset
-from data_utils import convert_into_binary, create_folder
+from data_utils import (convert_into_binary, create_folder,
+                        is_dataset_name_available, standard_saving_path)
 from numpy.random import RandomState
 from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
 from sklearn.model_selection import StratifiedKFold, train_test_split
-from torch import nn, optim
+from torch import optim
 
 threshold_for_bug = 0.00000001  # could be any value, ex numpy.min
 accelerator = "cu80" if path.exists("/opt/bin/nvidia-smi") else "cpu"
@@ -131,7 +132,8 @@ def ShallowFBCSPNet_train(data, label) -> tuple[str, float]:
 
     # save/load only the model parameters(prefered solution)
     model_path: str = (
-        f'{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_info["dataset_name"]}/ShallowFBCSPNet/ShallowFBCSPNet_{dataset_info["dataset_name"]}_{subject_id}.pth'
+        f'{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_info["dataset_name"]}/'
+        f'ShallowFBCSPNet/ShallowFBCSPNet_{dataset_info["dataset_name"]}_{subject_id}.pth'
     )
     torch.save(model.state_dict(), model_path)
 
@@ -141,7 +143,8 @@ def ShallowFBCSPNet_train(data, label) -> tuple[str, float]:
 
 def ShallowFBCSPNet_test(subject_id: int, data, dataset_info: dict):
     model_path: str = (
-        f'{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_info["dataset_name"]}/ShallowFBCSPNet/ShallowFBCSPNet_{dataset_info["dataset_name"]}_{subject_id}.pth'
+        f'{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_info["dataset_name"]}/'
+        f'ShallowFBCSPNet/ShallowFBCSPNet_{dataset_info["dataset_name"]}_{subject_id}.pth'
     )
 
     test_set = SignalAndTarget(
@@ -211,11 +214,13 @@ if __name__ == "__main__":
         print(data_path)
         # Initialize
         processing_name: str = "ShallowFBCSPNet"
-        if dataset_name not in datasets_basic_infos:
-            raise Exception(
-                f"Not supported dataset named '{dataset_name}', choose from the following: braincommand, aguilera_traditional, aguilera_gamified, nieto, coretto or torres."
-            )
+
+        is_dataset_name_available(datasets_basic_infos, dataset_name)
+
         dataset_info: dict = datasets_basic_infos[dataset_name]
+        saving_txt_path: str = standard_saving_path(
+            dataset_info, processing_name, version_name
+        )
 
         mean_accuracy_per_subject: list = []
         results_df = pd.DataFrame()
@@ -224,12 +229,12 @@ if __name__ == "__main__":
             create_folder(dataset_name, processing_name)
             print(subject_id)
             with open(
-                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{processing_name}_{dataset_name}.txt",
+                saving_txt_path,
                 "a",
             ) as f:
                 f.write(f"Subject: {subject_id}\n\n")
             epochs, _, _ = load_data_labels_based_on_dataset(
-                dataset_info, subject_id, data_path, channels_independent=True
+                dataset_info, subject_id, data_path
             )
 
             data = (epochs.get_data() * 1e6).astype(np.float32)
@@ -255,7 +260,7 @@ if __name__ == "__main__":
                 accuracy = ShallowFBCSPNet_train(data[train], labels[train])
                 training_time.append(time.time() - start)
                 with open(
-                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{processing_name}_{dataset_name}.txt",
+                    saving_txt_path,
                     "a",
                 ) as f:
                     f.write(f"{processing_name}\n")
@@ -284,7 +289,7 @@ if __name__ == "__main__":
                 testing_time_over_cv.append(np.mean(testing_time))
                 acc_over_cv.append(acc)
                 with open(
-                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{processing_name}_{dataset_name}.txt",
+                    saving_txt_path,
                     "a",
                 ) as f:
                     f.write(f"Prediction: {pred_list}\n")
@@ -294,7 +299,7 @@ if __name__ == "__main__":
             mean_acc_over_cv = np.mean(acc_over_cv)
 
             with open(
-                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{processing_name}_{dataset_name}.txt",
+                saving_txt_path,
                 "a",
             ) as f:
                 f.write(f"Final acc: {mean_acc_over_cv}\n\n\n\n")

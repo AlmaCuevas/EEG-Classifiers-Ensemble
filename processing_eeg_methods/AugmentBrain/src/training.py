@@ -1,5 +1,4 @@
 import json
-import os
 from argparse import ArgumentParser
 from collections import namedtuple
 from datetime import datetime
@@ -14,7 +13,6 @@ from dataset_tools import (ACTIONS, emd_static_augmentation, load_all_raw_data,
 from matplotlib import pyplot as plt
 from neural_nets import EEGNet
 from sklearn.model_selection import StratifiedKFold, train_test_split
-# os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # shuts down GPU
 from src.GAN import generate_synthetic_data
 from tensorflow import keras
 

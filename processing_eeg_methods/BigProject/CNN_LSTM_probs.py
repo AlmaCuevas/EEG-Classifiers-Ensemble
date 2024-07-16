@@ -2,7 +2,7 @@ import time
 
 import numpy as np
 from data_loaders import load_data_labels_based_on_dataset
-from data_utils import train_test_val_split
+from data_utils import is_dataset_name_available, train_test_val_split
 from keras.layers import (LSTM, Activation, BatchNormalization, Conv1D, Dense,
                           Dropout, Flatten)
 from keras.models import Sequential
@@ -118,6 +118,7 @@ if __name__ == "__main__":
     dataset_foldername = dataset_name + "_dataset"
     computer_root_path = f"{ROOT_VOTING_SYSTEM_PATH}/Datasets/"
     data_path = computer_root_path + dataset_foldername
+    is_dataset_name_available(datasets_basic_infos, dataset_name)
     dataset_info = datasets_basic_infos[dataset_name]
 
     data, label = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)

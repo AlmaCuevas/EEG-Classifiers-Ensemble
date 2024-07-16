@@ -227,16 +227,21 @@ nieto_info = {
     "total_trials": 200,
 }  # Not really , it varies because some subjects couldn't finish the experiment
 
-# Coretto (no prestar tanta atención)
-# La frecuencia de muestreo se estrablecio en 1024Hz. De modo que cada intervalo de habla imaginada consta de 4096 muestras (4 segundos). Se implementaron filtrado digital pasabanda con frecuencias de paso de 2 y 45 HZ.
-# De modo que el registro de una palabra esta constituido por 24576 muestras correspondientes a los canales de EEG, más tres muestras adicionales que indican la modalidad, estimulo y la presencia de artefactos oculares.
+# Coretto
+# La frecuencia de muestreo se estrablecio en 1024Hz.
+# De modo que cada intervalo de habla imaginada consta de 4096 muestras (4 segundos).
+# Se implementaron filtrado digital pasabanda con frecuencias de paso de 2 y 45 HZ.
+# De modo que el registro de una palabra esta constituido por 24576 muestras
+# correspondientes a los canales de EEG,
+# más tres muestras adicionales que indican la
+# modalidad, estimulo y la presencia de artefactos oculares.
 coretto_info = {
     "dataset_name": "coretto",
-    "#_class": 6,  # arriba, abajo, izquierda, derecha, adelante and atrás (last two not counted, but the db also has vocals: a, e, i, o, u)
+    "#_class": 6,  # arriba, abajo, izquierda, derecha, adelante and atrás (last two not counted, but the db also has vocals: a, e, i, o, u) # noqa: E501
     "target_names": ["Arriba", "Abajo", "Derecha", "Izquierda"],
     "#_channels": 6,
-    "samples": 342,  # Originally 1365=(4096-1)/3 . Originally 4096, that would be 4s. But there were 3 trials inside that, so the first sample was removed and then divided in thirds.
-    "sample_rate": 256,  # Originally it was 1024 with 1365 samples = 1.3 seconds. But I downsampled to 256.
+    "samples": 342,  # Originally 1365=(4096-1)/3 . Originally 4096, that would be 4s. But there were 3 trials inside that, so the first sample was removed and then divided in thirds. # noqa: E501
+    "sample_rate": 256,  # Originally it was 1024 with 1365 samples = 1.3 seconds. But I downsampled to 256. # noqa: E501
     "channels_names": ["F3", "F4", "C3", "C4", "P3", "P4"],
     "subjects": 15,
     "total_trials": 606,
@@ -245,7 +250,7 @@ coretto_info = {
 # Torres
 torres_info = {
     "dataset_name": "torres",
-    "#_class": 5,  # 'arriba', 'abajo', 'izquierda', 'derecha', 'seleccionar'
+    "#_class": 5,
     "target_names": ["Arriba", "Abajo", "Izquierda", "Derecha", "Seleccionar"],
     "#_channels": 14,
     "samples": 463,  # The maximum, epochs are irregular.
@@ -369,7 +374,7 @@ braincommand = {  # BrainCommand
     "sample_rate": 250,
     "channels_names": ["C4", "FC3", "F5", "C3", "F7", "Cz", "P3", "C5"],
     "subjects": 1,  # PENDING
-    "total_trials": 200,  # VARIABLE SINCE THE SUBJECT HAS TOTAL CONTROL OF HOW MANY MOVEMENTS THEY WANT TO DO
+    "total_trials": 228,
 }
 
 datasets_basic_infos = {

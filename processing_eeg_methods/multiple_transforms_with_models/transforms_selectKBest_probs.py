@@ -1,26 +1,19 @@
-import pickle
 import time
-from collections import OrderedDict
-from pathlib import Path
 
 import mne
 import numpy as np
 import pandas as pd
 from data_loaders import load_data_labels_based_on_dataset
-from data_utils import ClfSwitcher, get_best_classificator_and_test_accuracy
-from mne.decoding import CSP, Vectorizer
+from data_utils import (ClfSwitcher, get_best_classificator_and_test_accuracy,
+                        is_dataset_name_available, standard_saving_path)
+from mne.decoding import CSP
 from pyriemann.estimation import Covariances, ERPCovariances, XdawnCovariances
 from pyriemann.tangentspace import TangentSpace
 from scipy import signal
 from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.feature_selection import SelectKBest, f_classif
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report
-from sklearn.model_selection import (GridSearchCV, StratifiedKFold,
-                                     train_test_split)
+from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
 
 # todo: add the test template
 # todo: do the deap thing about the FFT: https://github.com/tongdaxu/EEG_Emotion_Classifier_DEAP/blob/master/Preprocess_Deap.ipynb
@@ -128,27 +121,26 @@ if __name__ == "__main__":
     # Manual Inputs
     datasets = ["braincommand"]
     for dataset_name in datasets:
-        version_name = "22_23_independent_channels_one_transforms_table_of_selectKbest"  # To keep track what the output processing alteration went through
-
+        version_name = "22_23_independent_channels_one_transforms_table_of_selectKbest"
+        processing_name = ""
         # Folders and paths
         dataset_foldername = dataset_name + "_dataset"
         computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
         data_path = computer_root_path + dataset_foldername
         print(data_path)
         # Initialize
-        if dataset_name not in datasets_basic_infos:
-            raise Exception(
-                f"Not supported dataset named '{dataset_name}', choose from the following: aguilera_traditional, aguilera_gamified, nieto, coretto or torres."
-            )
+        is_dataset_name_available(datasets_basic_infos, dataset_name)
         dataset_info: dict = datasets_basic_infos[dataset_name]
-
+        saving_txt_path: str = standard_saving_path(
+            dataset_info, processing_name, version_name
+        )
         mean_accuracy_per_subject: list = []
         results_df = pd.DataFrame()
 
         for subject_id in range(22, 24):  # Only two things I should be able to change
             print(subject_id)
             with open(
-                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{dataset_name}.txt",
+                saving_txt_path,
                 "a",
             ) as f:
                 f.write(f"Subject: {subject_id}\n\n")
@@ -180,7 +172,7 @@ if __name__ == "__main__":
                 )
                 training_time.append(time.time() - start)
                 with open(
-                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{dataset_name}.txt",
+                    saving_txt_path,
                     "a",
                 ) as f:
                     f.write(f"Accuracy of training: {accuracy}\n")
@@ -214,7 +206,7 @@ if __name__ == "__main__":
                 testing_time_over_cv.append(np.mean(testing_time))
                 acc_over_cv.append(acc)
                 with open(
-                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{dataset_name}.txt",
+                    saving_txt_path,
                     "a",
                 ) as f:
                     f.write(f"Prediction: {pred_list}\n")
@@ -225,7 +217,7 @@ if __name__ == "__main__":
             mean_acc_over_cv = np.mean(acc_over_cv)
 
             with open(
-                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{dataset_name}.txt",
+                saving_txt_path,
                 "a",
             ) as f:
                 f.write(f"Final acc: {mean_acc_over_cv}\n\n\n\n")

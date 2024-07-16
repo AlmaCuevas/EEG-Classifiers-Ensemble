@@ -4,20 +4,21 @@ import numpy as np
 import pandas as pd
 from share import ROOT_VOTING_SYSTEM_PATH
 from sklearn.base import BaseEstimator
-from sklearn.discriminant_analysis import (LinearDiscriminantAnalysis,
-                                           QuadraticDiscriminantAnalysis)
-from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
-from sklearn.gaussian_process import GaussianProcessClassifier
-from sklearn.gaussian_process.kernels import RBF
-from sklearn.linear_model import (LogisticRegression, RidgeClassifier,
-                                  SGDClassifier)
+from sklearn.linear_model import RidgeClassifier, SGDClassifier
 from sklearn.model_selection import (GridSearchCV, StratifiedKFold,
                                      train_test_split)
-from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neural_network import MLPClassifier
-from sklearn.svm import SVC
-from sklearn.tree import DecisionTreeClassifier
+
+# from sklearn.linear_model import LogisticRegression
+# from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+# from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+# from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
+# from sklearn.gaussian_process import GaussianProcessClassifier
+# from sklearn.gaussian_process.kernels import RBF
+# from sklearn.naive_bayes import GaussianNB
+# from sklearn.neighbors import KNeighborsClassifier
+# from sklearn.neural_network import MLPClassifier
+# from sklearn.svm import SVC
+# from sklearn.tree import DecisionTreeClassifier
 
 # MDM() Always nan at the end
 classifiers = [  # The Good, Medium and Bad is decided on Torres dataset. This to avoid most of the processings.
@@ -27,7 +28,7 @@ classifiers = [  # The Good, Medium and Bad is decided on Torres dataset. This t
     # GaussianProcessClassifier(1.0 * RBF(1.0), random_state=42), # Good # It doesn't have .coef
     # DecisionTreeClassifier(max_depth=5, random_state=42), # Good # It doesn't have .coef
     # RandomForestClassifier(max_depth=5, n_estimators=100, max_features=1, random_state=42), # Good It doesn't have .coef
-    # MLPClassifier(alpha=1, max_iter=1000, random_state=42), # Good # 'MLPClassifier' object has no attribute 'coef_'. Did you mean: 'coefs_'?
+    # MLPClassifier(alpha=1, max_iter=1000, random_state=42), # Good
     # AdaBoostClassifier(algorithm="SAMME", random_state=42), # Medium
     # GaussianNB(), # Medium
     # QuadraticDiscriminantAnalysis(), # Bad
@@ -105,6 +106,33 @@ def train_test_val_split(dataX, dataY, valid_flag: bool = False):
     return x_train, x_test, x_val, y_train, y_test, y_val
 
 
+def standard_saving_path(
+    dataset_info: dict,
+    processing_name: str,
+    version_name: str,
+    file_ending: str = "txt",
+    subject_id: int = 0,
+):
+    if subject_id:
+        return (
+            f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_info['dataset_name']}/"
+            f"{processing_name}/{version_name}_{subject_id}.{file_ending}"
+        )
+    else:
+        return (
+            f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_info['dataset_name']}/"
+            f"{processing_name}/{version_name}.{file_ending}"
+        )
+
+
+def is_dataset_name_available(datasets_basic_infos: dict, dataset_name: str):
+    if dataset_name not in datasets_basic_infos:
+        raise Exception(
+            f"Not supported dataset named '{dataset_name}', choose from the following: "
+            f"braincommand, aguilera_traditional, aguilera_gamified, nieto, coretto, ic_bci_2020 or torres."
+        )
+
+
 def get_best_classificator_and_test_accuracy(data, labels, estimators):
     param_grid = []
     for classificator in classifiers:
@@ -116,8 +144,7 @@ def get_best_classificator_and_test_accuracy(data, labels, estimators):
     )  # https://stackoverflow.com/questions/52580023/how-to-get-the-best-estimator-parameters-out-from-pipelined-gridsearch-and-cro
     clf.fit(data, labels)
 
-    acc = clf.best_score_  # Best Test Score
-    print("Best Test Score: \n{}\n".format(clf.best_score_))
+    acc = clf.best_score_
 
     if acc <= 0.25:
         acc = np.nan
@@ -161,3 +188,11 @@ class ClfSwitcher(BaseEstimator):
 
     def coef_(self):
         return self.estimator.coef_
+
+
+def data_normalization(data):
+    min_val = np.min(data)
+    max_val = np.max(data)
+    scaled_data = (data - min_val) / (max_val - min_val)
+
+    return scaled_data

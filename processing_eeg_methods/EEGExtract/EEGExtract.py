@@ -4,15 +4,10 @@ import itertools
 import dit
 import librosa
 import numpy as np
-import pandas as pd
-import pywt
 import statsmodels.api as sm
 from dit.other import tsallis_entropy
-from pyinform import mutualinfo
-from scipy import integrate, signal, stats
+from scipy import signal
 from sklearn.metrics import mutual_info_score
-from sklearn.metrics.cluster import \
-    normalized_mutual_info_score as normed_mutual_info
 from statsmodels import tsa
 
 ################################################
@@ -129,19 +124,6 @@ def CoherenceDelta(eegData, i, j, fs=100):
 
 
 ##########
-# correlation across channels
-def PhaseLagIndex(eegData, i, j):
-    hxi = ss.hilbert(eegData[i, :, :])
-    hxj = ss.hilbert(eegData[j, :, :])
-    # calculating the INSTANTANEOUS PHASE
-    inst_phasei = np.arctan(np.angle(hxi))
-    inst_phasej = np.arctan(np.angle(hxj))
-
-    out = np.abs(np.mean(np.sign(inst_phasej - inst_phasei), axis=0))
-    return out
-
-
-##########
 # Cross Correlation
 def crossCorrelation(eegData, i, j):
     out = np.zeros(eegData.shape[2])
@@ -150,53 +132,6 @@ def crossCorrelation(eegData, i, j):
         absccor = np.abs(ccor)
         out[epoch] = (np.max(absccor) - np.mean(absccor)) / np.std(absccor)
     return out
-
-
-##########
-# Auxilary Cross-correlation Lag
-def corrCorrLagAux(eegData, ii, jj, Fs=100):
-    out = np.zeros(eegData.shape[2])
-    lagCorr = []
-    for lag in range(0, eegData.shape[1], int(0.2 * Fs)):
-        tmp = eegData.copy()
-        tmp[jj, :, :] = np.roll(tmp[jj, :, :], lag, axis=0)
-        lagCorr.append(CrossCorrelation(tmp, ii, jj, Fs))
-    return np.argmax(lagCorr, axis=0)
-
-
-################################################
-# 	bandpower Functions
-################################################
-
-
-##########
-# compute the bandpower (area under segment (from fband[0] to fband[1] in Hz)
-# of curve in freqency domain) of data, at sampling frequency of Fs (100 ussually)
-def bandpower(data, fs, fband):
-    freqs, powers = periodogram(data, fs)
-    idx_min = np.argmax(freqs > fband[0]) - 1
-    idx_max = np.argmax(freqs > fband[1]) - 1
-    idx_delta = np.zeros(dtype=bool, shape=freqs.shape)
-    idx_delta[idx_min:idx_max] = True
-    bpower = simps(powers[idx_delta], freqs[idx_delta])
-    return bpower
-
-
-##########
-# computes the same thing as vecbandpower but with a loop
-def pfvecbandpower(data, fs, fband):
-    bpowers = np.zeros((data.shape[0], data.shape[2]))
-    for i in range(data.shape[0]):
-        freqs, powers = periodogram(data[i, :, :], fs, axis=0)
-        idx_min = np.argmax(freqs > fband[0]) - 1
-        idx_max = np.argmax(freqs > fband[1]) - 1
-        idx_delta = np.zeros(dtype=bool, shape=freqs.shape)
-        idx_delta[idx_min:idx_max] = True
-
-        bpower = simps(powers[idx_delta, :], freqs[idx_delta], axis=0)
-        bpowers[i, :] = bpower
-
-    return bpowers
 
 
 ################################################
@@ -419,22 +354,6 @@ def bandPower(eegData, lowcut, highcut, fs):
 
 
 ##########
-# numberOfSpikes
-def spikeNum(eegData, minNumSamples=7, stdAway=3):
-    H = np.zeros((eegData.shape[0], eegData.shape[2]))
-    for chan in range(H.shape[0]):
-        for epoch in range(H.shape[1]):
-            mean = np.mean(eegData[chan, :, epoch])
-            std = np.std(eegData[chan, :, epoch], axis=1)
-            H[chan, epoch] = len(
-                signal.find_peaks(
-                    abs(eegData[chan, :, epoch] - mean), 3 * std, epoch, width=7
-                )[0]
-            )
-    return H
-
-
-##########
 # Standard Deviation
 def eegStd(eegData):
     std_res = np.std(eegData, axis=1)
@@ -444,13 +363,9 @@ def eegStd(eegData):
 ##########
 # α/δ Ratio
 def eegRatio(eegData, fs):
-    # alpha (8–12 Hz)
-    eegData_alpha = filt_data(eegData, 8, 12, fs)
-    # delta (0.5–4 Hz)
-    eegData_delta = filt_data(eegData, 0.5, 4, fs)
     # calculate the power
-    powers_alpha = bandPower(eegData, 8, 12, fs)
-    powers_delta = bandPower(eegData, 0.5, 4, fs)
+    powers_alpha = bandPower(eegData, 8, 12, fs)  # alpha (8–12 Hz)
+    powers_delta = bandPower(eegData, 0.5, 4, fs)  # delta (0.5–4 Hz)
     ratio_res = np.sum(powers_alpha, axis=0) / np.sum(powers_delta, axis=0)
     return np.expand_dims(ratio_res, axis=0)
 
@@ -484,26 +399,8 @@ def eegVoltage(eegData, voltage=20):
 
 
 ##########
-# Diffuse Slowing
-# look for diffuse slowing (bandpower max from frequency domain integral)
-# repeated integration of a huge tensor is really expensive
-def diffuseSlowing(eegData, Fs=100, fast=True):
-    maxBP = np.zeros((eegData.shape[0], eegData.shape[2]))
-    idx = np.zeros((eegData.shape[0], eegData.shape[2]))
-    if fast:
-        return idx
-    for j in range(1, Fs // 2):
-        print("BP", j)
-        cbp = bandpower(eegData, Fs, [j - 1, j])
-        biggerCIdx = cbp > maxBP
-        idx[biggerCIdx] = j
-        maxBP[biggerCIdx] = cbp[biggerCIdx]
-    return idx < 8
-
-
-##########
 # Spikes
-def spikeNum(eegData, minNumSamples=7, stdAway=3):
+def spikeNum(eegData):
     H = np.zeros((eegData.shape[0], eegData.shape[2]))
     for chan in range(H.shape[0]):
         for epoch in range(H.shape[1]):
@@ -715,19 +612,6 @@ def calcGrangerCausality(eegData, ii, jj):
             X, 1, addconst=True, verbose=False
         )[1][0]["ssr_ftest"][0]
     return H
-
-
-##########
-# phase Lag Index
-def phaseLagIndex(eegData, i, j):
-    hxi = ss.hilbert(eegData[i, :, :])
-    hxj = ss.hilbert(eegData[j, :, :])
-    # calculating the INSTANTANEOUS PHASE
-    inst_phasei = np.arctan(np.angle(hxi))
-    inst_phasej = np.arctan(np.angle(hxj))
-
-    out = np.abs(np.mean(np.sign(inst_phasej - inst_phasei), axis=0))
-    return out
 
 
 ##########

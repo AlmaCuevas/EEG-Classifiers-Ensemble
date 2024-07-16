@@ -7,15 +7,10 @@ numpy==1.26.0
 pandas==2.1.1
 scikit-learn==1.3.1
 scipy==1.11.3
-tensorflow==2.14.0
 termcolor==2.3.0
-torch==2.1.0
-torchsummary==1.5.1
-torchvision==0.16.0
 tqdm==4.66.1
 wget==3.2
 skorch==0.15.0
-moabb==1.0.0
 braindecode==0.4.85
 ema-pytorch==0.3.0
 einops==0.7.0
@@ -30,3 +25,10 @@ librosa==0.10.2.post1
 pyinform==0.2.0
 antropy==0.1.6
 pre-commit==3.7.1
+poetry==1.8.3
+Flake8-pyproject==1.2.3
+torch==2.1.0 # +cu121 or whichever cuda is compatible with your computer
+torchsummary==1.5.1
+torchvision==0.16.0 # tensorflow-io-gcs-filesystem==0.31.0
+tensorflow==2.14.0
+moabb==1.0.0 # todo: Poetry message: moabb (1.0.0) depends on pandas (>=1.5.2,<2.0.0)

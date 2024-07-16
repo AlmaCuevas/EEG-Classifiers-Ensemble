@@ -1,5 +1,4 @@
 import random
-from pathlib import Path
 
 import numpy as np
 import torch
@@ -7,8 +6,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from data_loaders import load_data_labels_based_on_dataset
-from diffE_models import *
-from diffE_utils import *
+from data_utils import standard_saving_path
+from DiffE.diffE_models import (DDPM, ConditionalUNet, Decoder, DiffE, Encoder,
+                                LinearClassifier)
+from DiffE.diffE_utils import get_dataloader
 from ema_pytorch import EMA
 from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
 from sklearn.metrics import (f1_score, precision_score, recall_score,
@@ -53,6 +54,10 @@ def evaluate(encoder, fc, generator, device, number_of_labels: int = 4):
 
 
 def diffE_train(subject_id: int, X, Y, dataset_info, device: str = "cuda:0"):
+    model_path: str = standard_saving_path(
+        dataset_info, "DiffE", "", file_ending="pt", subject_id=subject_id
+    )
+
     # This saves the training in a file
     X = X[
         :, :, : -1 * (X.shape[2] % 8)
@@ -159,7 +164,7 @@ def diffE_train(subject_id: int, X, Y, dataset_info, device: str = "cuda:0"):
             ddpm.train()
             diffe.train()
 
-            ############################## Train ###########################################
+            # ***************************** Train *****************************
             for x, y in train_loader:
                 x, y = x.to(device).float(), y.type(torch.LongTensor).to(device)
                 y_cat = (
@@ -194,7 +199,7 @@ def diffE_train(subject_id: int, X, Y, dataset_info, device: str = "cuda:0"):
                 # EMA update
                 fc_ema.update()
 
-            ############################## Test ###########################################
+            # ***************************** Test *****************************
             with torch.no_grad():
                 if epoch > start_test:
                     test_period = 1
@@ -223,7 +228,7 @@ def diffE_train(subject_id: int, X, Y, dataset_info, device: str = "cuda:0"):
                         best_acc = acc
                         torch.save(
                             diffe.state_dict(),
-                            f'{ROOT_VOTING_SYSTEM_PATH}/Results/Diffe/diffe_{dataset_info["dataset_name"]}_{subject_id}.pt',
+                            model_path,
                         )
                     if best_f1_bool:
                         best_f1 = f1

@@ -1,20 +1,13 @@
-import argparse
-import pickle
-import random
-
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
 from data_loaders import load_data_labels_based_on_dataset
-from diffE_models import *
-from diffE_utils import *
-from ema_pytorch import EMA
+from data_utils import standard_saving_path
+from DiffE.diffE_models import Decoder, DiffE, Encoder, LinearClassifier
+from DiffE.diffE_utils import EEGDataset
 from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
-from sklearn.metrics import (f1_score, precision_score, recall_score,
-                             roc_auc_score, top_k_accuracy_score)
-from tqdm import tqdm
+from sklearn.metrics import top_k_accuracy_score
+from torch.utils.data import DataLoader
 
 dataset_name = "aguilera_traditional"  # Only two things I should be able to change
 
@@ -39,8 +32,8 @@ def diffE_evaluation(subject_id: int, X, Y, dataset_info, device: str = "cuda:0"
     encoder_dim = 256
     fc_dim = 512
     # Define model
-    model_path: str = (
-        f'{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_info["dataset_name"]}/Diffe/diffe_{dataset_info["dataset_name"]}_{subject_id}.pth'
+    model_path: str = standard_saving_path(
+        dataset_info, "DiffE", "", file_ending="pt", subject_id=subject_id
     )
     num_classes = dataset_info["#_class"]
     channels = dataset_info["#_channels"]

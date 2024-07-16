@@ -5,27 +5,26 @@
 # I also tried doing voting system, but its simply bad.
 
 import time
-from pathlib import Path
 
 import numpy as np
 # EEGNet-specific imports
-from arl_eegmodels.EEGModels import DeepConvNet, EEGNet, ShallowConvNet
+from arl_eegmodels.EEGModels import DeepConvNet  # , EEGNet, ShallowConvNet
 from data_loaders import load_data_labels_based_on_dataset
-from data_utils import train_test_val_split
+from data_utils import standard_saving_path, train_test_val_split
 from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
 from tensorflow.keras import backend as K
 from tensorflow.keras import utils as np_utils
 from tensorflow.keras.callbacks import ModelCheckpoint
 
 
-def ERP_train(dataset_name, data, label, dataset_info):
+def ERP_train(data, label, dataset_info):
     X_train, X_test, X_validate, Y_train, Y_test, Y_validate = train_test_val_split(
         dataX=data, dataY=label, valid_flag=True
     )
 
     kernels, chans, samples = 1, dataset_info["#_channels"], dataset_info["samples"]
 
-    ############################# EEGNet portion ##################################
+    # ***************************** EEGNet portion *****************************
 
     # convert labels to one-hot encodings.
     Y_train = np_utils.to_categorical(Y_train)
@@ -48,9 +47,13 @@ def ERP_train(dataset_name, data, label, dataset_info):
         loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"]
     )
 
+    model_path: str = standard_saving_path(
+        dataset_info, "arl_eegmodels", "ERP", file_ending="h5", subject_id=subject_id
+    )
+
     # set a valid path for your system to record model checkpoints
     checkpointer = ModelCheckpoint(
-        filepath=f"{ROOT_VOTING_SYSTEM_PATH}/processing_eeg_methods/BigProject/ERP_model_{dataset_name}.h5",
+        filepath=model_path,
         verbose=1,
         save_best_only=True,
     )
@@ -83,9 +86,7 @@ def ERP_train(dataset_name, data, label, dataset_info):
     )
 
     # load optimal weights
-    model.load_weights(
-        f"{ROOT_VOTING_SYSTEM_PATH}/processing_eeg_methods/BigProject/ERP_model_{dataset_name}.h5"
-    )
+    model.load_weights(model_path)
     return model
 
 
@@ -124,7 +125,7 @@ if __name__ == "__main__":
 
     print("******************************** Training ********************************")
     start = time.time()
-    model = ERP_train(dataset_name, data_train, labels_train, dataset_info)
+    model = ERP_train(data_train, labels_train, dataset_info)
     end = time.time()
     print("Training time: ", end - start)
 

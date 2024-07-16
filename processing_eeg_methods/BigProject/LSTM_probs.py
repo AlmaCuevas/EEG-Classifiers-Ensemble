@@ -3,7 +3,8 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 from data_loaders import load_data_labels_based_on_dataset
-from data_utils import train_test_val_split
+from data_utils import (is_dataset_name_available, standard_saving_path,
+                        train_test_val_split)
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers import (LSTM, Activation, BatchNormalization, Dense, Dropout,
                           Flatten)
@@ -14,7 +15,9 @@ from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
 from sklearn import preprocessing
 
 
-def LSTM_train(dataset_name, data, labels, num_classes: int):
+def LSTM_train(dataset_info, data, labels, subject_id: int):
+    num_classes = dataset_info["#_class"]
+
     # substract data from list
     X_train, X_test, _, y_train, y_test, _ = train_test_val_split(
         dataX=data, dataY=labels, valid_flag=False
@@ -124,9 +127,13 @@ def LSTM_train(dataset_name, data, labels, num_classes: int):
         monitor="val_loss", min_delta=0.001, patience=30, mode="auto"
     )
 
+    model_path: str = standard_saving_path(
+        dataset_info, "BigProject", "LSTM", file_ending="hdf5", subject_id=subject_id
+    )
+
     # saves the model weights after each epoch if the validation loss decreased
     checkpointer = ModelCheckpoint(
-        filepath=f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/BigProject/LSTM_model_{dataset_name}.hdf5",
+        filepath=model_path,
         monitor="val_accuracy",
         verbose=1,
         save_best_only=True,
@@ -161,7 +168,7 @@ def LSTM_test(model, trial_data):
 
 if __name__ == "__main__":
     # Manual Inputs
-    subject_id = 29  # Only two things I should be able to change
+    subject_id = 22  # Only two things I should be able to change
     dataset_name = "braincommand"  # Only two things I should be able to change
     ONLY_GLOBAL_MODEL = True
 
@@ -171,10 +178,11 @@ if __name__ == "__main__":
     dataset_foldername = dataset_name + "_dataset"
     computer_root_path = f"{ROOT_VOTING_SYSTEM_PATH}/Datasets/"
     data_path = computer_root_path + dataset_foldername
+    is_dataset_name_available(datasets_basic_infos, dataset_name)
     dataset_info = datasets_basic_infos[dataset_name]
 
     _, data, label = load_data_labels_based_on_dataset(
-        dataset_info, subject_id, data_path, channels_independent=True
+        dataset_info, subject_id, data_path
     )
     data_train, data_test, _, labels_train, labels_test, _ = train_test_val_split(
         dataX=data, dataY=label, valid_flag=False
@@ -183,9 +191,7 @@ if __name__ == "__main__":
 
     print("******************************** Training ********************************")
     start = time.time()
-    model, acc = LSTM_train(
-        dataset_name, data_train, labels_train, dataset_info["#_class"]
-    )
+    model, acc = LSTM_train(dataset_info, data_train, labels_train, subject_id)
     end = time.time()
     print("Training time: ", end - start)
 

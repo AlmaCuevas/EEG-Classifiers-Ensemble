@@ -7,10 +7,10 @@
 import time
 
 import numpy as np
-from Code.data_utils import train_test_val_split
 from data_loaders import load_data_labels_based_on_dataset
+from data_utils import train_test_val_split
 # EEGNet-specific imports
-from EEGModels import DeepConvNet, EEGNet, ShallowConvNet
+from EEGModels import EEGNet  # , ShallowConvNet, DeepConvNet
 from share import datasets_basic_infos
 from tensorflow.keras import backend as K
 from tensorflow.keras import utils as np_utils
@@ -24,7 +24,7 @@ def ERP_train(data, label, dataset_info):
 
     kernels, chans, samples = 1, dataset_info["#_channels"], dataset_info["samples"]
 
-    ############################# EEGNet portion ##################################
+    # ***************************** EEGNet portion *****************************
 
     # convert labels to one-hot encodings.
     Y_train = np_utils.to_categorical(Y_train)

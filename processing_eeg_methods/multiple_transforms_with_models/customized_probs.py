@@ -4,7 +4,8 @@ from collections import OrderedDict
 import numpy as np
 import pandas as pd
 from data_loaders import load_data_labels_based_on_dataset
-from data_utils import ClfSwitcher, get_best_classificator_and_test_accuracy
+from data_utils import (ClfSwitcher, get_best_classificator_and_test_accuracy,
+                        is_dataset_name_available, standard_saving_path)
 from pyriemann.estimation import Covariances
 from pyriemann.tangentspace import TangentSpace
 from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
@@ -19,9 +20,9 @@ def customized_train(data, labels):  # v1
 
     estimators = OrderedDict()
     # Do not use 'Vect' transform, most of the time is nan or 0.25 if anything.
-    # estimators['ERPCov + TS'] = Pipeline([("ERPcova", ERPCovariances(estimator='oas')), ("ts", TangentSpace()), ('clf', ClfSwitcher())])
-    # estimators['XdawnCov + TS'] = Pipeline([("XdawnCova", XdawnCovariances(estimator='oas')), ("ts", TangentSpace()), ('clf', ClfSwitcher())])
-    # estimators['CSP'] = Pipeline( [ ("CSP", CSP(n_components=4, reg=None, log=True, norm_trace=False)), ('clf', ClfSwitcher())]) # Get into cov.py and do copy='auto' https://stackoverflow.com/questions/76431070/mne-valueerror-data-copying-was-not-requested-by-copy-none-but-it-was-require
+    # estimators['ERPCov + TS'] = Pipeline([("ERPcova", ERPCovariances(estimator='oas')), ("ts", TangentSpace()), ('clf', ClfSwitcher())]) #noqa
+    # estimators['XdawnCov + TS'] = Pipeline([("XdawnCova", XdawnCovariances(estimator='oas')), ("ts", TangentSpace()), ('clf', ClfSwitcher())]) #noqa
+    # estimators['CSP'] = Pipeline( [ ("CSP", CSP(n_components=4, reg=None, log=True, norm_trace=False)), ('clf', ClfSwitcher())]) # Get into cov.py and do copy='auto' https://stackoverflow.com/questions/76431070/mne-valueerror-data-copying-was-not-requested-by-copy-none-but-it-was-require #noqa
     estimators["Cova + TS"] = Pipeline(
         [("Cova", Covariances()), ("ts", TangentSpace()), ("clf", ClfSwitcher())]
     )  # This is probably the best one, at least for Torres
@@ -62,7 +63,7 @@ if __name__ == "__main__":
     # Manual Inputs
     datasets = ["ic_bci_2020"]
     for dataset_name in datasets:
-        version_name = "only_customized_two_classes_12_no_preprocess"  # To keep track what the output processing alteration went through
+        version_name = "only_customized_two_classes_12_no_preprocess"
 
         # Folders and paths
         dataset_foldername = dataset_name + "_dataset"
@@ -71,14 +72,12 @@ if __name__ == "__main__":
         print(data_path)
         # Initialize
         processing_name: str = ""
-        saving_txt_path: str = (
-            f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{processing_name}_{dataset_name}.txt"
-        )
-        if dataset_name not in datasets_basic_infos:
-            raise Exception(
-                f"Not supported dataset named '{dataset_name}', choose from the following: aguilera_traditional, aguilera_gamified, nieto, coretto or torres."
-            )
+
+        is_dataset_name_available(datasets_basic_infos, dataset_name)
         dataset_info: dict = datasets_basic_infos[dataset_name]
+        saving_txt_path: str = standard_saving_path(
+            dataset_info, processing_name, version_name
+        )
 
         mean_accuracy_per_subject: list = []
         results_df = pd.DataFrame()
@@ -172,7 +171,7 @@ if __name__ == "__main__":
             results_df = pd.concat([results_df, temp])
 
         results_df.to_csv(
-            f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{dataset_name}.csv"
+            f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{processing_name}_{dataset_name}.csv"
         )
 
     print("Congrats! The processing methods are done processing.")

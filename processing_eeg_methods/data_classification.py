@@ -6,14 +6,16 @@ import time
 
 import numpy as np
 import pandas as pd
-from arl_eegmodels.examples.ERP_probs import ERP_test, ERP_train
+from arl_eegmodels.ERP_probs import ERP_test, ERP_train
 from BigProject.CNN_LSTM_probs import CNN_LSTM_test, CNN_LSTM_train
 from BigProject.GRU_probs import GRU_test, GRU_train
 from BigProject.LSTM_probs import LSTM_test, LSTM_train
 from data_loaders import load_data_labels_based_on_dataset
-from diffE_evaluation import diffE_evaluation
-from diffE_training import diffE_train
-from Extraction.get_features_probs import (by_frequency_band, extractions_test,
+from data_utils import (convert_into_independent_channels, create_folder,
+                        is_dataset_name_available, standard_saving_path)
+from DiffE.diffE_probs import diffE_test
+from DiffE.diffE_training import diffE_train
+from EEGExtract.get_features_probs import (by_frequency_band, extractions_test,
                                            extractions_train)
 from multiple_transforms_with_models.customized_probs import (customized_test,
                                                               customized_train)
@@ -24,7 +26,6 @@ from NeuroTechX_dl_eeg.ShallowFBCSPNet_probs import (ShallowFBCSPNet_test,
 from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import normalize
-from XDAWN.xdawn_probs import xdawn_test, xdawn_train
 
 
 def group_methods_train(
@@ -33,17 +34,15 @@ def group_methods_train(
     methods: dict,
     models_outputs: dict,
     data,
-    epochs,
     labels,
     dataset_info,
 ):
-    target_names = dataset_info["target_names"]
     processing_name: str = ""
     columns_list: list = []
     transform_methods: dict = {}
     # Standard methods:
     if methods["selected_transformers"]:
-        print("selected_transformers")
+        print("Selected Transformers")
         start_time = time.time()
         features_train_df, transform_methods = transform_data(
             data, dataset_info=dataset_info, labels=labels
@@ -63,14 +62,6 @@ def group_methods_train(
             processing_name,
         ) = customized_train(copy.deepcopy(data), labels)
         models_outputs["customized_train_timer"] = time.time() - start_time
-    if methods["XDAWN_LogReg"]:
-        print("XDAWN_LogReg")
-        start_time = time.time()
-        (
-            models_outputs["XDAWN_LogReg_clf"],
-            models_outputs["XDAWN_LogReg_accuracy"],
-        ) = xdawn_train(epochs, labels, target_names)
-        models_outputs["XDAWN_LogReg_train_timer"] = time.time() - start_time
 
     if methods["ShallowFBCSPNet"]:
         print("ShallowFBCSPNet")
@@ -83,7 +74,7 @@ def group_methods_train(
         print("DeepConvNet")
         start_time = time.time()
         models_outputs["DeepConvNet_clf"] = ERP_train(
-            dataset_name, copy.deepcopy(data), labels, dataset_info
+            copy.deepcopy(data), labels, dataset_info
         )
         models_outputs["DeepConvNet_accuracy"] = (
             0.25  # You can't trust the accuracy, so I don't even calculate it.
@@ -93,7 +84,7 @@ def group_methods_train(
         print("LSTM")
         start_time = time.time()
         models_outputs["LSTM_clf"], models_outputs["LSTM_accuracy"] = LSTM_train(
-            dataset_name, data, labels, dataset_info["#_class"]
+            dataset_info, data, labels, subject_id
         )
         models_outputs["LSTM_train_timer"] = time.time() - start_time
     if methods["GRU"]:
@@ -121,11 +112,14 @@ def group_methods_train(
     if methods["feature_extraction"]:
         print("feature_extraction")
         start_time = time.time()
-        features_df = by_frequency_band(data, dataset_info)
+        data_simplified, labels_simplified = convert_into_independent_channels(
+            data, labels
+        )
+        features_df = by_frequency_band(data_simplified, dataset_info)
         (
             models_outputs["feature_extraction_clf"],
             models_outputs["feature_extraction_accuracy"],
-        ) = extractions_train(features_df, labels)
+        ) = extractions_train(features_df, labels_simplified)
         models_outputs["feature_extraction_train_timer"] = time.time() - start_time
 
     return models_outputs, processing_name, columns_list, transform_methods
@@ -137,7 +131,6 @@ def group_methods_test(
     transform_methods: dict,
     models_outputs: dict,
     data_array,
-    data_epoch,
 ):
     if methods["selected_transformers"] and models_outputs["selected_transformers_clf"]:
         print("selected_transformers")
@@ -162,13 +155,6 @@ def group_methods_test(
             customized_test(models_outputs["customized_clf"], data_array)
         )
         models_outputs["customized_test_timer"] = time.time() - start_time
-    if methods["XDAWN_LogReg"] and models_outputs["XDAWN_LogReg_clf"]:
-        print("XDAWN_LogReg")
-        start_time = time.time()
-        models_outputs["XDAWN_LogReg_probabilities"] = normalize(
-            xdawn_test(models_outputs["XDAWN_LogReg_clf"], data_epoch)
-        )
-        models_outputs["XDAWN_LogReg_test_timer"] = time.time() - start_time
 
     if methods["ShallowFBCSPNet"]:
         print("ShallowFBCSPNet")
@@ -212,17 +198,15 @@ def group_methods_test(
     if methods["diffE"]:
         print("diffE")
         start_time = time.time()
-        _, models_outputs["diffE_probabilities"] = normalize(
-            diffE_evaluation(
-                subject_id=subject_id, X=data_array, Y=[1], dataset_info=dataset_info
-            )
-        )  # Y is just a filling to avoid editing the code further, but its not used
+        models_outputs["diffE_probabilities"] = normalize(
+            diffE_test(subject_id=subject_id, X=data_array, dataset_info=dataset_info)
+        )
         models_outputs["diffE_test_timer"] = time.time() - start_time
-
     if methods["feature_extraction"]:
         print("feature_extraction")
         start_time = time.time()
-        features_df = by_frequency_band(data_array, dataset_info)
+        data_array_simplified, _ = convert_into_independent_channels(data, [1])
+        features_df = by_frequency_band(data_array_simplified, dataset_info)
         models_outputs["feature_extraction_probabilities"] = normalize(
             extractions_test(models_outputs["feature_extraction_clf"], features_df)
         )
@@ -268,10 +252,10 @@ if __name__ == "__main__":
     # dataset_name = "torres"  # Only two things I should be able to change
     # datasets = ['aguilera_gamified', 'aguilera_traditional', 'torres']
     datasets = ["braincommand"]
-    voting_by_mode = False
+    voting_by_mode = True
     for dataset_name in datasets:
         selected_classes = [0, 1, 2, 3]
-        version_name = "multiple_classifier"  # To keep track what the output processing alteration went through
+        version_name = "multiple_classifier_channel_independent_voting_by_mode"  # To keep track what the output processing alteration went through
 
         # Folders and paths
         dataset_foldername = dataset_name + "_dataset"
@@ -282,22 +266,19 @@ if __name__ == "__main__":
         methods = {
             "selected_transformers": True,  # Like customized but with frequency bands and selected columns
             "customized": True,
-            "XDAWN_LogReg": True,  # Todo: ValueError: Cannot apply correct_overlap if epochs were baselined.
             "ShallowFBCSPNet": False,
-            "diffE": True,  # todo: for ic_bci_2020 diffE evaluation doesnt run because the array shape is weird? check! # ERROR IN EVALUATION OF TEST, BRAINCOMMAND: setting an array element with a sequence. The requested array has an inhomogeneous shape after 2 dimensions. The detected shape was (2, 1) + inhomogeneous part.
-            "DeepConvNet": True,  # BAD #todo: ValueError: Shapes (None, 5) and (None, 4) are incompatible
-            "LSTM": True,  # BAD
-            "GRU": True,  # BAD
-            "CNN_LSTM": True,  # BAD
+            "diffE": False,  # Good for BrainCommand, fails with one channel.
+            "DeepConvNet": False,  # BAD for BrainCommand too
+            "LSTM": True,  # BAD, Good for BrainCommand
+            "GRU": True,  # BAD, Good for BrainCommand
+            "CNN_LSTM": False,  # BAD for BrainCommand too
             "feature_extraction": True,
         }
+
         keys = list(methods.keys())
 
         processing_name: str = ""
-        if dataset_name not in datasets_basic_infos:
-            raise Exception(
-                f"Not supported dataset named '{dataset_name}', choose from the following: aguilera_traditional, aguilera_gamified, nieto, coretto or torres."
-            )
+        is_dataset_name_available(datasets_basic_infos, dataset_name)
         dataset_info: dict = datasets_basic_infos[dataset_name]
 
         dataset_info["#_class"] = len(selected_classes)
@@ -312,17 +293,27 @@ if __name__ == "__main__":
 
         mean_accuracy_per_subject: list = []
         results_df = pd.DataFrame()
-        activated_methods: list = [k for k, v in methods.items() if v == True]
+        activated_methods: list = [k for k, v in methods.items() if v]
 
-        for subject_id in range(
-            1, dataset_info["subjects"] + 1
-        ):  # Only two things I should be able to change
+        saving_txt_path: str = standard_saving_path(
+            dataset_info, "_".join(activated_methods), version_name
+        )
+        create_folder(dataset_info["dataset_name"], "_".join(activated_methods))
+
+        save_original_channels = dataset_info[
+            "#_channels"
+        ]  # do something better with the division of independent channels
+
+        for subject_id in range(29, 30):  # Only two things I should be able to change
             print(subject_id)
             with open(
-                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{'_'.join(activated_methods)}_{dataset_name}.txt",
+                saving_txt_path,
                 "a",
             ) as f:
                 f.write(f"Subject: {subject_id}\n\n")
+
+            dataset_info["#_channels"] = save_original_channels
+
             epochs, data, labels = load_data_labels_based_on_dataset(
                 dataset_info,
                 subject_id,
@@ -330,6 +321,9 @@ if __name__ == "__main__":
                 selected_classes=selected_classes,
                 threshold_for_bug=0.00000001,
             )  # could be any value, ex numpy.min
+
+            # Only if using independent channels:
+            dataset_info["#_channels"] = 1
 
             cv = StratifiedKFold(
                 n_splits=10, shuffle=True, random_state=42
@@ -350,31 +344,34 @@ if __name__ == "__main__":
                 print(
                     "******************************** Training ********************************"
                 )
-                # start = time.time()
+                # Convert independent channels to pseudo-trials
+                data_train, labels_train = convert_into_independent_channels(
+                    data[train], labels[train]
+                )
+                data_train = np.transpose(np.array([data_train]), (1, 0, 2))
+
                 models_outputs, processing_name, columns_list, transform_methods = (
                     group_methods_train(
                         dataset_name,
                         subject_id,
                         methods,
                         models_outputs,
-                        data[train],
-                        epochs[train],
-                        labels[train],
+                        data_train,
+                        labels_train,
                         dataset_info,
                     )
                 )
-                # end = time.time()
+
                 activated_outputs = dict(
                     (k, v)
                     for k, v in models_outputs.items()
                     if k[:-9] in activated_methods
                 )
                 with open(
-                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{'_'.join(activated_methods)}_{dataset_name}.txt",
+                    saving_txt_path,
                     "a",
                 ) as f:
                     f.write(f"{activated_outputs}\n")
-                # print("Training time: ", end - start)
 
                 for k, v in models_outputs.items():
                     if "accuracy" in k and k[:-9] in activated_methods:
@@ -392,21 +389,27 @@ if __name__ == "__main__":
                 )
                 all_methods_pred_list = []
                 for epoch_number in test:
-                    # start = time.time()
-                    methods, models_outputs = group_methods_test(
-                        methods,
-                        columns_list,
-                        transform_methods,
-                        models_outputs,
-                        np.asarray([data[epoch_number]]),
-                        epochs[epoch_number],
+                    # Convert independent channels to pseudo-trials
+                    data_test, labels_test = convert_into_independent_channels(
+                        np.asarray([data[epoch_number]]), labels[epoch_number]
                     )
-                    probs = voting_decision(methods, models_outputs, voting_by_mode)
+                    data_test = np.transpose(np.array([data_test]), (1, 0, 2))
+                    probs_by_channel = []
+                    for pseudo_trial in range(len(data_test)):
+                        methods, models_outputs = group_methods_test(
+                            methods,
+                            columns_list,
+                            transform_methods,
+                            models_outputs,
+                            np.asarray([data_test[pseudo_trial]]),
+                        )
+                        probs_by_channel.append(
+                            voting_decision(methods, models_outputs, voting_by_mode)
+                        )
+                    probs = np.nanmean(probs_by_channel, axis=0)  # Mean over columns
+
                     voting_system_pred = probabilities_to_answer(probs, voting_by_mode)
-                    # end = time.time()
-                    # print("One epoch, testing time: ", end - start)
                     print(dataset_info["target_names"])
-                    # print("Probability voting system: ", array)
 
                     for k, v in models_outputs.items():
                         if "probabilities" in k and k[:-14] in activated_methods:
@@ -431,7 +434,7 @@ if __name__ == "__main__":
                 acc = np.mean(pred_list == labels[test])
                 acc_over_cv.append(acc)
                 with open(
-                    f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{'_'.join(activated_methods)}_{dataset_name}.txt",
+                    saving_txt_path,
                     "a",
                 ) as f:
                     f.write(f"Prediction: {pred_list}\n")
@@ -454,7 +457,7 @@ if __name__ == "__main__":
             )
 
             with open(
-                f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{'_'.join(activated_methods)}_{dataset_name}.txt",
+                saving_txt_path,
                 "a",
             ) as f:
                 f.write(f"Final acc: {mean_acc_over_cv}\n\n\n\n")
@@ -487,7 +490,12 @@ if __name__ == "__main__":
             results_df = pd.concat([results_df, temp])
 
         results_df.to_csv(
-            f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{'_'.join(activated_methods)}_{dataset_name}.csv"
+            standard_saving_path(
+                dataset_info,
+                "_".join(activated_methods),
+                version_name,
+                file_ending="csv",
+            )
         )
 
     print("Congrats! The processing methods are done processing.")

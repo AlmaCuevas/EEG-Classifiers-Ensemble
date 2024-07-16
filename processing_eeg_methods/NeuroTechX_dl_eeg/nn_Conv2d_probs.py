@@ -12,7 +12,8 @@ from braindecode.datautil.signal_target import SignalAndTarget
 from braindecode.models.shallow_fbcsp import ShallowFBCSPNet
 from braindecode.torch_ext.util import np_to_var, set_random_seeds, var_to_np
 from data_loaders import load_data_labels_based_on_dataset
-from data_utils import convert_into_binary, create_folder
+from data_utils import (convert_into_binary, create_folder,
+                        is_dataset_name_available, standard_saving_path)
 from numpy.random import RandomState
 from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
 from sklearn.model_selection import StratifiedKFold, train_test_split
@@ -225,20 +226,20 @@ if __name__ == "__main__":
         print(data_path)
         # Initialize
         processing_name: str = "nn_Conv2d"
-        saving_txt_path: str = (
-            f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{processing_name}_{dataset_name}.txt"
-        )
-        if dataset_name not in datasets_basic_infos:
-            raise Exception(
-                f"Not supported dataset named '{dataset_name}', choose from the following: braincommand, aguilera_traditional, aguilera_gamified, nieto, coretto or torres."
-            )
+
+        is_dataset_name_available(datasets_basic_infos, dataset_name)
         dataset_info: dict = datasets_basic_infos[dataset_name]
+
+        create_folder(dataset_name, processing_name)
+        saving_txt_path: str = standard_saving_path(
+            dataset_info, processing_name, version_name
+        )
 
         mean_accuracy_per_subject: list = []
         results_df = pd.DataFrame()
 
         for subject_id in range(29, 30):
-            create_folder(dataset_name, processing_name)
+
             print(subject_id)
             with open(
                 saving_txt_path,

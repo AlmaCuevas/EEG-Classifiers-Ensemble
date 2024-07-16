@@ -39,7 +39,7 @@ save_dir = root_dir + "derivatives/"
 N_Subj_arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 N_block_arr = [1, 2, 3]
 
-##################### Filtering
+# ***************************** Filtering
 # Cut-off frequencies
 Low_cut = 0.5
 High_cut = 100
@@ -50,7 +50,7 @@ Notch_bool = True
 # Downsampling rate
 DS_rate = 4
 
-##################### ICA
+# ***************************** ICA
 # If False, ICA is not applyed
 ICA_bool = True
 ICA_Components = None
@@ -59,7 +59,7 @@ ica_method = "infomax"
 max_pca_components = None
 fit_params = dict(extended=True)
 
-##################### EMG Control
+# ***************************** EMG Control
 low_f = 1
 high_f = 20
 # Slide window desing

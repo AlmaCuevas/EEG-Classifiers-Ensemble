@@ -3,18 +3,19 @@ import os
 import mne
 import numpy as np
 import pandas as pd
-from autoreject import AutoReject
-from data_preprocess import data_normalization
-from data_utils import class_selection, convert_into_independent_channels
+from data_utils import (class_selection, convert_into_independent_channels,
+                        data_normalization, is_dataset_name_available)
 from Inner_Speech_Dataset.Python_Processing.Data_extractions import \
     Extract_data_from_subject
 from Inner_Speech_Dataset.Python_Processing.Data_processing import (
     Select_time_window, Transform_for_classificator)
 from mne import Epochs, EpochsArray, events_from_annotations, io
-from mne.preprocessing import ICA, create_eog_epochs
 from scipy import signal
 from scipy.io import loadmat
 from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
+
+# from mne.preprocessing import ICA, create_eog_epochs
+# from autoreject import AutoReject
 
 
 def aguilera_dataset_loader(data_path: str, gamified: bool):  # typed
@@ -30,7 +31,7 @@ def aguilera_dataset_loader(data_path: str, gamified: bool):  # typed
             raw.rename_channels(
                 {"Fp1": "FP1", "Fp2": "FP2"}
             )  # do it for traditional too, that doesn't include the names
-        except:
+        except ValueError:
             pass
     else:
         raw.rename_channels(
@@ -120,7 +121,6 @@ def aguilera_dataset_loader(data_path: str, gamified: bool):  # typed
 
 
 def nieto_dataset_loader(root_dir: str, N_S: int):
-    ### Hyperparameters
     # N_S: Subject number
 
     # Data Type
@@ -383,7 +383,9 @@ def load_data_labels_based_on_dataset(
         data[data < threshold_for_bug] = (
             threshold_for_bug  # To avoid the error "SVD did not convergence"
         )
-    if channels_independent:
+    if (
+        channels_independent
+    ):  # You can't do this and then split train and test because you'll mix them
         data, label = convert_into_independent_channels(data, label)
         data = np.transpose(np.array([data]), (1, 0, 2))
         dataset_info["#_channels"] = 1
@@ -418,13 +420,10 @@ def load_data_labels_based_on_dataset(
 
 if __name__ == "__main__":
     # Manual Inputs
-    subject_id = 29  # Only two things I should be able to change
-    dataset_name = "braincommand"  # Only two things I should be able to change
+    subject_id = 1  # Only two things I should be able to change
+    dataset_name = "aguilera_gamified"  # Only two things I should be able to change
 
-    if dataset_name not in datasets_basic_infos:
-        raise Exception(
-            f"Not supported dataset named '{dataset_name}', choose from the following: aguilera_traditional, aguilera_gamified, nieto, coretto or torres."
-        )
+    is_dataset_name_available(datasets_basic_infos, dataset_name)
     dataset_info: dict = datasets_basic_infos[dataset_name]
 
     print(ROOT_VOTING_SYSTEM_PATH)
@@ -438,7 +437,6 @@ if __name__ == "__main__":
         subject_id,
         data_path,
         selected_classes=[2, 3],
-        channels_independent=True,
     )
 
     print("Before class selection")

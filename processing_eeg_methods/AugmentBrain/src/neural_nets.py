@@ -293,7 +293,7 @@ def recurrent_net(nb_classes=3):
 
 def CP_MixedNet(nb_classes, Chans=8, Samples=250, dropoutRate=0.25, F1=12, D=2, F2=24):
     """
-    Please refer to https://www.researchgate.net/publication/332953926_A_Channel-Projection_Mixed-Scale_Convolutional_Neural_Network_for_Motor_Imagery_EEG_Decoding
+    Please refer to https://www.researchgate.net/publication/332953926_A_Channel-Projection_Mixed-Scale_Convolutional_Neural_Network_for_Motor_Imagery_EEG_Decoding # noqa: E501
     """
     input = Input(shape=(Chans, Samples, 1))
     # reshaped_input = Reshape(target_shape=(1, Samples, Chans))(input)

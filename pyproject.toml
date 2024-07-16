@@ -1,7 +1,7 @@
 [project]
-name = "eeg-tasks-classification"
-version = "0.0.1"
-requires-python = "==3.10"
+name = "voting_system_platform"
+version = "0.1.0"
+requires-python = "3.10.11"
 authors = [
   {name = "Alma Cuevas", email = "almarosa.arcr@gmail.com"}
 ]
@@ -9,3 +9,53 @@ description = "Tools for processing and classifying EEG tasks in real-time."
 readme = "README.md"
 license = {file = "LICENSE"}
 keywords = ["EEG", "classification", "ERP", "feature extraction", "transforms"]
+
+[tool.poetry]
+name = "voting_system_platform"
+version = "0.1.0"
+description = "Tools for processing and classifying EEG tasks in real-time."
+authors = ["AlmaCuevas <almarosa.arcr@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.10.11"
+pyriemann = "0.5"
+keras = "2.14.0"
+matplotlib = "3.8.0"
+matplotlib-inline = "0.1.6"
+mne = "1.5.1"
+numpy = "1.26.0"
+pandas = "2.1.1"
+scikit-learn = "1.3.1"
+scipy = "1.11.3"
+termcolor = "2.3.0"
+torch = "2.1.0"
+torchsummary = "1.5.1"
+torchvision = "0.16.0"
+tqdm = "4.66.1"
+wget = "3.2"
+skorch = "0.15.0"
+braindecode = "0.4.85"
+ema-pytorch = "0.3.0"
+einops = "0.7.0"
+emd = "0.4.0"
+brainflow = "2.4.0"
+keras-preprocessing = "1.1.2"
+autoreject = "0.4.3"
+pywavelets = "1.6.0"
+dit = "1.5"
+statsmodels = "0.14.2"
+librosa = "0.10.2.post1"
+pyinform = "0.2.0"
+antropy = "0.1.6"
+pre-commit = "3.7.1"
+poetry = "1.8.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.flake8]
+max-line-length = 130
