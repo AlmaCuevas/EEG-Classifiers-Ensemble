@@ -15,7 +15,9 @@ repos:
     hooks:
       - id: isort
         name: isort (python)
+        args: ["--profile", "black"]
 -   repo: https://github.com/PyCQA/flake8
     rev: 7.1.0
     hooks:
     -   id: flake8
+        args: ["--extend-ignore", "F841, E203, E501"]

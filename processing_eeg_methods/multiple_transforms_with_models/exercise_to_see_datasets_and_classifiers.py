@@ -6,8 +6,10 @@ import matplotlib.pyplot as plt
 from data_loaders import load_data_labels_based_on_dataset
 from mne.decoding import CSP
 from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
-from sklearn.discriminant_analysis import (LinearDiscriminantAnalysis,
-                                           QuadraticDiscriminantAnalysis)
+from sklearn.discriminant_analysis import (
+    LinearDiscriminantAnalysis,
+    QuadraticDiscriminantAnalysis,
+)
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF

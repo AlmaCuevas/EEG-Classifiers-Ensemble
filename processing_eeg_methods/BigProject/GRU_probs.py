@@ -5,8 +5,7 @@ import numpy as np
 from data_loaders import load_data_labels_based_on_dataset
 from data_utils import is_dataset_name_available, train_test_val_split
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras.layers import (GRU, Activation, BatchNormalization, Dense, Dropout,
-                          Flatten)
+from keras.layers import GRU, Activation, BatchNormalization, Dense, Dropout, Flatten
 from keras.models import Sequential, load_model
 from scipy import signal
 from scipy.fftpack import dct, idct

@@ -9,8 +9,7 @@ Time Frecuency Representations
 
 import mne
 import numpy as np
-from Data_extractions import (Extract_block_data_from_subject,
-                              Extract_data_from_subject)
+from Data_extractions import Extract_block_data_from_subject, Extract_data_from_subject
 from Data_processing import Filter_by_class, Filter_by_condition
 from mne.time_frequency import tfr_morlet, tfr_multitaper
 from Utilitys import Ensure_dir, unify_names

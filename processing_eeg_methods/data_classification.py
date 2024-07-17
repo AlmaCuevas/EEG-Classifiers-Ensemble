@@ -11,18 +11,33 @@ from BigProject.CNN_LSTM_probs import CNN_LSTM_test, CNN_LSTM_train
 from BigProject.GRU_probs import GRU_test, GRU_train
 from BigProject.LSTM_probs import LSTM_test, LSTM_train
 from data_loaders import load_data_labels_based_on_dataset
-from data_utils import (convert_into_independent_channels, create_folder,
-                        is_dataset_name_available, standard_saving_path)
+from data_utils import (
+    convert_into_independent_channels,
+    create_folder,
+    flat_a_list,
+    is_dataset_name_available,
+    standard_saving_path,
+)
 from DiffE.diffE_probs import diffE_test
 from DiffE.diffE_training import diffE_train
-from EEGExtract.get_features_probs import (by_frequency_band, extractions_test,
-                                           extractions_train)
-from multiple_transforms_with_models.customized_probs import (customized_test,
-                                                              customized_train)
+from EEGExtract.get_features_probs import (
+    by_frequency_band,
+    extractions_test,
+    extractions_train,
+)
+from multiple_transforms_with_models.customized_probs import (
+    customized_test,
+    customized_train,
+)
 from multiple_transforms_with_models.transforms_selectKBest_probs import (
-    selected_transformers_test, selected_transformers_train, transform_data)
-from NeuroTechX_dl_eeg.ShallowFBCSPNet_probs import (ShallowFBCSPNet_test,
-                                                     ShallowFBCSPNet_train)
+    selected_transformers_test,
+    selected_transformers_train,
+    transform_data,
+)
+from NeuroTechX_dl_eeg.ShallowFBCSPNet_probs import (
+    ShallowFBCSPNet_test,
+    ShallowFBCSPNet_train,
+)
 from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import normalize
@@ -233,18 +248,18 @@ def voting_decision(methods: dict, models_outputs: dict, voting_by_mode: bool = 
         ]
 
         # You need to select at least two for this to work
-        print(probs_list)
         probs = np.nanmean(probs_list, axis=0)  # Mean over columns
 
         return probs
 
 
-def probabilities_to_answer(probs_list: list, voting_by_mode: bool = False):
+def probabilities_to_answer(probs_by_channels: list, voting_by_mode: bool = False):
     if voting_by_mode:
-        return max(set(probs_list), key=probs_list.count)
+        overall_decision = flat_a_list(probs_by_channels)
+        return max(set(overall_decision), key=list(overall_decision).count)
     else:  # voting_by_array_probabilities
-        probs = np.nanmean(probs_list, axis=0)  # Mean over columns
-        return np.argmax(probs)
+        by_channel_decision = np.nanmean(probs_by_channels, axis=0)  # Mean over columns
+        return np.argmax(by_channel_decision)
 
 
 if __name__ == "__main__":
@@ -252,7 +267,7 @@ if __name__ == "__main__":
     # dataset_name = "torres"  # Only two things I should be able to change
     # datasets = ['aguilera_gamified', 'aguilera_traditional', 'torres']
     datasets = ["braincommand"]
-    voting_by_mode = True
+    voting_by_mode = False
     for dataset_name in datasets:
         selected_classes = [0, 1, 2, 3]
         version_name = "multiple_classifier_channel_independent_voting_by_mode"  # To keep track what the output processing alteration went through
@@ -265,15 +280,26 @@ if __name__ == "__main__":
         # Initialize
         methods = {
             "selected_transformers": True,  # Like customized but with frequency bands and selected columns
-            "customized": True,
+            "customized": False,
             "ShallowFBCSPNet": False,
             "diffE": False,  # Good for BrainCommand, fails with one channel.
             "DeepConvNet": False,  # BAD for BrainCommand too
-            "LSTM": True,  # BAD, Good for BrainCommand
-            "GRU": True,  # BAD, Good for BrainCommand
+            "LSTM": False,  # BAD, Good for BrainCommand
+            "GRU": False,  # BAD, Good for BrainCommand
             "CNN_LSTM": False,  # BAD for BrainCommand too
             "feature_extraction": True,
         }
+        # methods = {
+        #     "selected_transformers": True,  # Like customized but with frequency bands and selected columns
+        #     "customized": True,
+        #     "ShallowFBCSPNet": False,
+        #     "diffE": False,  # Good for BrainCommand, fails with one channel.
+        #     "DeepConvNet": False,  # BAD for BrainCommand too
+        #     "LSTM": True,  # BAD, Good for BrainCommand
+        #     "GRU": True,  # BAD, Good for BrainCommand
+        #     "CNN_LSTM": False,  # BAD for BrainCommand too
+        #     "feature_extraction": True,
+        # }
 
         keys = list(methods.keys())
 
@@ -304,7 +330,7 @@ if __name__ == "__main__":
             "#_channels"
         ]  # do something better with the division of independent channels
 
-        for subject_id in range(29, 30):  # Only two things I should be able to change
+        for subject_id in range(22, 23):  # Only two things I should be able to change
             print(subject_id)
             with open(
                 saving_txt_path,
@@ -406,9 +432,10 @@ if __name__ == "__main__":
                         probs_by_channel.append(
                             voting_decision(methods, models_outputs, voting_by_mode)
                         )
-                    probs = np.nanmean(probs_by_channel, axis=0)  # Mean over columns
 
-                    voting_system_pred = probabilities_to_answer(probs, voting_by_mode)
+                    voting_system_pred = probabilities_to_answer(
+                        probs_by_channel, voting_by_mode
+                    )
                     print(dataset_info["target_names"])
 
                     for k, v in models_outputs.items():

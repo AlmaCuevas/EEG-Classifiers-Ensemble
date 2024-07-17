@@ -5,8 +5,7 @@ import pandas as pd
 from share import ROOT_VOTING_SYSTEM_PATH
 from sklearn.base import BaseEstimator
 from sklearn.linear_model import RidgeClassifier, SGDClassifier
-from sklearn.model_selection import (GridSearchCV, StratifiedKFold,
-                                     train_test_split)
+from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
 
 # from sklearn.linear_model import LogisticRegression
 # from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -157,6 +156,10 @@ def convert_into_independent_channels(data, labels):
     )  # [trials, channels, time] to [trials*channels, time]
     labels_independent_channels = np.repeat(labels, data.shape[1], axis=0)
     return data_independent_channels, labels_independent_channels
+
+
+def flat_a_list(list_to_flat: list):
+    return [x for xs in list_to_flat for x in xs]
 
 
 class ClfSwitcher(BaseEstimator):

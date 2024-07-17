@@ -8,8 +8,13 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 from custom_callbacks import ReturnBestEarlyStopping
-from dataset_tools import (ACTIONS, emd_static_augmentation, load_all_raw_data,
-                           preprocess_raw_eeg, train_generator_with_aug)
+from dataset_tools import (
+    ACTIONS,
+    emd_static_augmentation,
+    load_all_raw_data,
+    preprocess_raw_eeg,
+    train_generator_with_aug,
+)
 from matplotlib import pyplot as plt
 from neural_nets import EEGNet
 from sklearn.model_selection import StratifiedKFold, train_test_split

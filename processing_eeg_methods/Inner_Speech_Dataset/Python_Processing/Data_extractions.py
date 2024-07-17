@@ -14,7 +14,9 @@ import mne
 import numpy as np
 
 from processing_eeg_methods.Inner_Speech_Dataset.Python_Processing.Utilitys import (
-    sub_name, unify_names)
+    sub_name,
+    unify_names,
+)
 
 
 def Extract_subject_from_BDF(root_dir, N_S, N_B):

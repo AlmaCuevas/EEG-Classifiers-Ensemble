@@ -3,8 +3,15 @@ import time
 import numpy as np
 from data_loaders import load_data_labels_based_on_dataset
 from data_utils import is_dataset_name_available, train_test_val_split
-from keras.layers import (LSTM, Activation, BatchNormalization, Conv1D, Dense,
-                          Dropout, Flatten)
+from keras.layers import (
+    LSTM,
+    Activation,
+    BatchNormalization,
+    Conv1D,
+    Dense,
+    Dropout,
+    Flatten,
+)
 from keras.models import Sequential
 from keras.utils import to_categorical
 from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos

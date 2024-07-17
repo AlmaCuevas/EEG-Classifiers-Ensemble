@@ -7,6 +7,7 @@
 import time
 
 import numpy as np
+
 # EEGNet-specific imports
 from arl_eegmodels.EEGModels import DeepConvNet  # , EEGNet, ShallowConvNet
 from data_loaders import load_data_labels_based_on_dataset

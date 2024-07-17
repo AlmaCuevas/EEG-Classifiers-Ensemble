@@ -7,11 +7,11 @@ Event Related Potentials - Plotting
 """
 
 import matplotlib.pyplot as plt
+
 # In[] Imports modules
 import mne
 import numpy as np
-from Data_extractions import (Extract_block_data_from_subject,
-                              Extract_data_from_subject)
+from Data_extractions import Extract_block_data_from_subject, Extract_data_from_subject
 from Data_processing import Filter_by_class, Filter_by_condition
 from Utilitys import Ensure_dir, picks_from_channels
 

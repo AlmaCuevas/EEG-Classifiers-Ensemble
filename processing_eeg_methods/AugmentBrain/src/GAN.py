@@ -13,13 +13,26 @@ from dataset_tools import load_all_raw_data, preprocess_raw_eeg
 from tensorflow import keras
 from tensorflow.keras import Model
 from tensorflow.keras.constraints import max_norm
-from tensorflow.keras.layers import (Activation, AveragePooling2D,
-                                     BatchNormalization, Concatenate, Conv2D,
-                                     Dense, DepthwiseConv2D, Dropout,
-                                     Embedding, Flatten, Input,
-                                     LayerNormalization, LeakyReLU, Multiply,
-                                     Reshape, SeparableConv2D,
-                                     SpatialDropout2D, UpSampling2D)
+from tensorflow.keras.layers import (
+    Activation,
+    AveragePooling2D,
+    BatchNormalization,
+    Concatenate,
+    Conv2D,
+    Dense,
+    DepthwiseConv2D,
+    Dropout,
+    Embedding,
+    Flatten,
+    Input,
+    LayerNormalization,
+    LeakyReLU,
+    Multiply,
+    Reshape,
+    SeparableConv2D,
+    SpatialDropout2D,
+    UpSampling2D,
+)
 from tensorflow.keras.models import Sequential
 
 # os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # shuts down GPU

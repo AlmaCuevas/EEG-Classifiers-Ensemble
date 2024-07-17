@@ -21,10 +21,15 @@ import numpy as np
 from AdHoc_modification import adhoc_Subject_3
 from Data_extractions import Extract_subject_from_BDF
 from EMG_Control import EMG_control_single_th
-from Events_analysis import (Add_block_tag, Add_condition_tag,
-                             Check_Baseline_tags, Cognitive_control_check,
-                             Delete_trigger, Event_correction,
-                             Standarized_labels)
+from Events_analysis import (
+    Add_block_tag,
+    Add_condition_tag,
+    Check_Baseline_tags,
+    Cognitive_control_check,
+    Delete_trigger,
+    Event_correction,
+    Standarized_labels,
+)
 from Utilitys import Ensure_dir
 
 # In[]: Processing Variables

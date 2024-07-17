@@ -4,8 +4,12 @@ import mne
 import numpy as np
 import pandas as pd
 from data_loaders import load_data_labels_based_on_dataset
-from data_utils import (ClfSwitcher, get_best_classificator_and_test_accuracy,
-                        is_dataset_name_available, standard_saving_path)
+from data_utils import (
+    ClfSwitcher,
+    get_best_classificator_and_test_accuracy,
+    is_dataset_name_available,
+    standard_saving_path,
+)
 from mne.decoding import CSP
 from pyriemann.estimation import Covariances, ERPCovariances, XdawnCovariances
 from pyriemann.tangentspace import TangentSpace

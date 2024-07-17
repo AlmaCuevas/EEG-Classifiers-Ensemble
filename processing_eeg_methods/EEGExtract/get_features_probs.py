@@ -7,10 +7,14 @@ import numpy
 import numpy as np
 import pandas as pd
 from data_loaders import load_data_labels_based_on_dataset
-from data_utils import (ClfSwitcher, convert_into_independent_channels,
-                        create_folder,
-                        get_best_classificator_and_test_accuracy,
-                        is_dataset_name_available, standard_saving_path)
+from data_utils import (
+    ClfSwitcher,
+    convert_into_independent_channels,
+    create_folder,
+    get_best_classificator_and_test_accuracy,
+    is_dataset_name_available,
+    standard_saving_path,
+)
 from scipy import signal
 from scipy.stats import kurtosis, skew
 from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos

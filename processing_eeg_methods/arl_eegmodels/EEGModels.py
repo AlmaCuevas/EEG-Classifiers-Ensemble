@@ -42,11 +42,21 @@
 
 from tensorflow.keras import backend as K
 from tensorflow.keras.constraints import max_norm
-from tensorflow.keras.layers import (Activation, AveragePooling2D,
-                                     BatchNormalization, Conv2D, Dense,
-                                     DepthwiseConv2D, Dropout, Flatten, Input,
-                                     MaxPooling2D, Permute, SeparableConv2D,
-                                     SpatialDropout2D)
+from tensorflow.keras.layers import (
+    Activation,
+    AveragePooling2D,
+    BatchNormalization,
+    Conv2D,
+    Dense,
+    DepthwiseConv2D,
+    Dropout,
+    Flatten,
+    Input,
+    MaxPooling2D,
+    Permute,
+    SeparableConv2D,
+    SpatialDropout2D,
+)
 from tensorflow.keras.models import Model
 from tensorflow.keras.regularizers import l1_l2
 

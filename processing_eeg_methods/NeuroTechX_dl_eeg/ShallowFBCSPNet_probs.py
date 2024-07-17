@@ -10,8 +10,12 @@ from braindecode.datautil.signal_target import SignalAndTarget
 from braindecode.models.shallow_fbcsp import ShallowFBCSPNet
 from braindecode.torch_ext.util import np_to_var, set_random_seeds, var_to_np
 from data_loaders import load_data_labels_based_on_dataset
-from data_utils import (convert_into_binary, create_folder,
-                        is_dataset_name_available, standard_saving_path)
+from data_utils import (
+    convert_into_binary,
+    create_folder,
+    is_dataset_name_available,
+    standard_saving_path,
+)
 from numpy.random import RandomState
 from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
 from sklearn.model_selection import StratifiedKFold, train_test_split
@@ -131,9 +135,8 @@ def ShallowFBCSPNet_train(data, label) -> tuple[str, float]:
             accuracy_rec[i_epoch, sets[setname]] = accuracy
 
     # save/load only the model parameters(prefered solution)
-    model_path: str = (
-        f'{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_info["dataset_name"]}/'
-        f'ShallowFBCSPNet/ShallowFBCSPNet_{dataset_info["dataset_name"]}_{subject_id}.pth'
+    model_path: str = standard_saving_path(
+        dataset_info, "ShallowFBCSPNet", "", file_ending="pth", subject_id=subject_id
     )
     torch.save(model.state_dict(), model_path)
 
@@ -142,9 +145,8 @@ def ShallowFBCSPNet_train(data, label) -> tuple[str, float]:
 
 
 def ShallowFBCSPNet_test(subject_id: int, data, dataset_info: dict):
-    model_path: str = (
-        f'{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_info["dataset_name"]}/'
-        f'ShallowFBCSPNet/ShallowFBCSPNet_{dataset_info["dataset_name"]}_{subject_id}.pth'
+    model_path: str = standard_saving_path(
+        dataset_info, "ShallowFBCSPNet", "", file_ending="pth", subject_id=subject_id
     )
 
     test_set = SignalAndTarget(

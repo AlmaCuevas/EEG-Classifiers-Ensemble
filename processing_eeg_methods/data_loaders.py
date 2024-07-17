@@ -3,12 +3,19 @@ import os
 import mne
 import numpy as np
 import pandas as pd
-from data_utils import (class_selection, convert_into_independent_channels,
-                        data_normalization, is_dataset_name_available)
-from Inner_Speech_Dataset.Python_Processing.Data_extractions import \
-    Extract_data_from_subject
+from data_utils import (
+    class_selection,
+    convert_into_independent_channels,
+    data_normalization,
+    is_dataset_name_available,
+)
+from Inner_Speech_Dataset.Python_Processing.Data_extractions import (
+    Extract_data_from_subject,
+)
 from Inner_Speech_Dataset.Python_Processing.Data_processing import (
-    Select_time_window, Transform_for_classificator)
+    Select_time_window,
+    Transform_for_classificator,
+)
 from mne import Epochs, EpochsArray, events_from_annotations, io
 from scipy import signal
 from scipy.io import loadmat

@@ -5,11 +5,21 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import Model, regularizers
 from tensorflow.keras.constraints import max_norm
-from tensorflow.keras.layers import (Activation, AveragePooling2D,
-                                     BatchNormalization, Conv2D, Dense,
-                                     DepthwiseConv2D, Dropout, Flatten, Input,
-                                     Lambda, MaxPooling2D, SeparableConv2D,
-                                     SpatialDropout2D)
+from tensorflow.keras.layers import (
+    Activation,
+    AveragePooling2D,
+    BatchNormalization,
+    Conv2D,
+    Dense,
+    DepthwiseConv2D,
+    Dropout,
+    Flatten,
+    Input,
+    Lambda,
+    MaxPooling2D,
+    SeparableConv2D,
+    SpatialDropout2D,
+)
 from tensorflow.keras.models import Sequential
 from tensorflow.python.keras.layers import Concatenate
 
