@@ -13,7 +13,7 @@ def test_standard_saving_path():
             "processing_name",
             "version_name",
             "file_ending",
-            "subject_id",
+            3,
         )[-95:]
-        == "voting_system_platform/Results/braincommand/processing_name/version_name_subject_id.file_ending"
+        == "voting_system_platform/Results/braincommand/processing_name/version_name_3.file_ending"
     )

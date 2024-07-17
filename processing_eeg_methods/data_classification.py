@@ -6,8 +6,6 @@ import time
 
 import numpy as np
 import pandas as pd
-from arl_eegmodels.ERP_probs import ERP_test, ERP_train
-from BigProject.CNN_LSTM_probs import CNN_LSTM_test, CNN_LSTM_train
 from BigProject.GRU_probs import GRU_test, GRU_train
 from BigProject.LSTM_probs import LSTM_test, LSTM_train
 from data_loaders import load_data_labels_based_on_dataset
@@ -83,18 +81,6 @@ def group_methods_train(
         start_time = time.time()
         (models_outputs["model_accuracy"]) = ShallowFBCSPNet_train(data, labels)
         models_outputs["ShallowFBCSPNet_train_timer"] = time.time() - start_time
-    if methods[
-        "DeepConvNet"
-    ]:  # todo: UserWarning: You are saving your model as an HDF5 file via `model.save()`. This file format is considered legacy
-        print("DeepConvNet")
-        start_time = time.time()
-        models_outputs["DeepConvNet_clf"] = ERP_train(
-            copy.deepcopy(data), labels, dataset_info
-        )
-        models_outputs["DeepConvNet_accuracy"] = (
-            0.25  # You can't trust the accuracy, so I don't even calculate it.
-        )
-        models_outputs["DeepConvNet_train_timer"] = time.time() - start_time
     if methods["LSTM"]:
         print("LSTM")
         start_time = time.time()
@@ -109,13 +95,6 @@ def group_methods_train(
             dataset_name, data, labels, dataset_info["#_class"]
         )
         models_outputs["GRU_train_timer"] = time.time() - start_time
-    if methods["CNN_LSTM"]:
-        print("CNN_LSTM")
-        start_time = time.time()
-        models_outputs["CNN_LSTM_clf"], models_outputs["CNN_LSTM_accuracy"] = (
-            CNN_LSTM_train(data, labels, dataset_info["#_class"])
-        )
-        models_outputs["CNN_LSTM_train_timer"] = time.time() - start_time
     if methods["diffE"]:
         print("diffE")
         start_time = time.time()
@@ -182,13 +161,6 @@ def group_methods_test(
             )
         )
         models_outputs["ShallowFBCSPNet_test_timer"] = time.time() - start_time
-    if methods["DeepConvNet"]:
-        print("DeepConvNet")
-        start_time = time.time()
-        models_outputs["DeepConvNet_probabilities"] = normalize(
-            ERP_test(models_outputs["DeepConvNet_clf"], copy.deepcopy(data_array))
-        )
-        models_outputs["DeepConvNet_test_timer"] = time.time() - start_time
     if methods["LSTM"]:
         print("LSTM")
         start_time = time.time()
@@ -203,13 +175,6 @@ def group_methods_test(
             GRU_test(models_outputs["GRU_clf"], data_array)
         )
         models_outputs["GRU_test_timer"] = time.time() - start_time
-    if methods["CNN_LSTM"]:
-        print("CNN_LSTM")
-        start_time = time.time()
-        models_outputs["CNN_LSTM_probabilities"] = normalize(
-            CNN_LSTM_test(models_outputs["CNN_LSTM_clf"], data_array)
-        )
-        models_outputs["CNN_LSTM_test_timer"] = time.time() - start_time
     if methods["diffE"]:
         print("diffE")
         start_time = time.time()
@@ -230,7 +195,12 @@ def group_methods_test(
     return methods, models_outputs
 
 
-def voting_decision(methods: dict, models_outputs: dict, voting_by_mode: bool = False):
+def voting_decision(
+    methods: dict,
+    models_outputs: dict,
+    voting_by_mode: bool = False,
+    weighted_accuracy: bool = True,
+):
     if voting_by_mode:
         probs_list = [
             np.argmax(models_outputs[f"{method}_probabilities"])
@@ -239,13 +209,18 @@ def voting_decision(methods: dict, models_outputs: dict, voting_by_mode: bool = 
         ]
         return probs_list
     else:  # voting_by_array_probabilities
-        probs_list = [
-            np.multiply(
-                models_outputs[f"{method}_probabilities"],
-                models_outputs[f"{method}_accuracy"],
-            )
-            for method in methods
-        ]
+        if weighted_accuracy:
+            probs_list = [
+                np.multiply(
+                    models_outputs[f"{method}_probabilities"],
+                    models_outputs[f"{method}_accuracy"],
+                )
+                for method in methods
+            ]
+        else:
+            probs_list = [
+                models_outputs[f"{method}_probabilities"] for method in methods
+            ]
 
         # You need to select at least two for this to work
         probs = np.nanmean(probs_list, axis=0)  # Mean over columns
@@ -264,13 +239,13 @@ def probabilities_to_answer(probs_by_channels: list, voting_by_mode: bool = Fals
 
 if __name__ == "__main__":
     # Manual Inputs
-    # dataset_name = "torres"  # Only two things I should be able to change
-    # datasets = ['aguilera_gamified', 'aguilera_traditional', 'torres']
     datasets = ["braincommand"]
     voting_by_mode = False
+    weighted_accuracy = False
+
     for dataset_name in datasets:
         selected_classes = [0, 1, 2, 3]
-        version_name = "multiple_classifier_channel_independent_voting_by_mode"  # To keep track what the output processing alteration went through
+        version_name = "multiple_classifier_channel_independent_unweighted_accuracy"  # To keep track what the output processing alteration went through
 
         # Folders and paths
         dataset_foldername = dataset_name + "_dataset"
@@ -280,26 +255,13 @@ if __name__ == "__main__":
         # Initialize
         methods = {
             "selected_transformers": True,  # Like customized but with frequency bands and selected columns
-            "customized": False,
+            "customized": True,
             "ShallowFBCSPNet": False,
             "diffE": False,  # Good for BrainCommand, fails with one channel.
-            "DeepConvNet": False,  # BAD for BrainCommand too
-            "LSTM": False,  # BAD, Good for BrainCommand
-            "GRU": False,  # BAD, Good for BrainCommand
-            "CNN_LSTM": False,  # BAD for BrainCommand too
+            "LSTM": True,  # BAD, Good for BrainCommand
+            "GRU": True,  # BAD, Good for BrainCommand
             "feature_extraction": True,
         }
-        # methods = {
-        #     "selected_transformers": True,  # Like customized but with frequency bands and selected columns
-        #     "customized": True,
-        #     "ShallowFBCSPNet": False,
-        #     "diffE": False,  # Good for BrainCommand, fails with one channel.
-        #     "DeepConvNet": False,  # BAD for BrainCommand too
-        #     "LSTM": True,  # BAD, Good for BrainCommand
-        #     "GRU": True,  # BAD, Good for BrainCommand
-        #     "CNN_LSTM": False,  # BAD for BrainCommand too
-        #     "feature_extraction": True,
-        # }
 
         keys = list(methods.keys())
 
@@ -326,11 +288,9 @@ if __name__ == "__main__":
         )
         create_folder(dataset_info["dataset_name"], "_".join(activated_methods))
 
-        save_original_channels = dataset_info[
-            "#_channels"
-        ]  # do something better with the division of independent channels
+        save_original_channels = dataset_info["#_channels"]
 
-        for subject_id in range(22, 23):  # Only two things I should be able to change
+        for subject_id in range(29, 30):
             print(subject_id)
             with open(
                 saving_txt_path,
@@ -430,7 +390,12 @@ if __name__ == "__main__":
                             np.asarray([data_test[pseudo_trial]]),
                         )
                         probs_by_channel.append(
-                            voting_decision(methods, models_outputs, voting_by_mode)
+                            voting_decision(
+                                methods,
+                                models_outputs,
+                                voting_by_mode,
+                                weighted_accuracy,
+                            )
                         )
 
                     voting_system_pred = probabilities_to_answer(
