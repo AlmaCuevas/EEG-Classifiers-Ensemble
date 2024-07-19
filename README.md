@@ -1,4 +1,4 @@
-# Voting system EEG Data Classification
+# Ensemble-EEG: Real-Time Data Classification System
 
 ## Table of Contents
 1. [Processing Methods](https://github.com/AlmaCuevas/voting_system_platform/tree/main#processing-methods)
