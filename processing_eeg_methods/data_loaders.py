@@ -9,13 +9,14 @@ from data_utils import (
     data_normalization,
     is_dataset_name_available,
 )
-from Inner_Speech_Dataset.Python_Processing.Data_extractions import (
-    Extract_data_from_subject,
-)
-from Inner_Speech_Dataset.Python_Processing.Data_processing import (
-    Select_time_window,
-    Transform_for_classificator,
-)
+
+# from Inner_Speech_Dataset.Python_Processing.Data_extractions import (
+#     Extract_data_from_subject,
+# )
+# from Inner_Speech_Dataset.Python_Processing.Data_processing import (
+#     Select_time_window,
+#     Transform_for_classificator,
+# )
 from mne import Epochs, EpochsArray, events_from_annotations, io
 from scipy import signal
 from scipy.io import loadmat
@@ -127,37 +128,37 @@ def aguilera_dataset_loader(data_path: str, gamified: bool):  # typed
     return epochs, label, event_dict
 
 
-def nieto_dataset_loader(root_dir: str, N_S: int):
-    # N_S: Subject number
-
-    # Data Type
-    datatype = "EEG"
-
-    # Sampling rate
-    fs = 256
-
-    # Select the useful par of each trial. Time in seconds
-    t_start = 1.5
-    t_end = 3.5
-
-    # Load all trials for a single subject
-    X, Y = Extract_data_from_subject(
-        root_dir, N_S, datatype
-    )  # This uses the derivatives folder
-
-    # Cut useful time. i.e action interval
-    X = Select_time_window(X=X, t_start=t_start, t_end=t_end, fs=fs)
-
-    # Conditions to compared
-    Conditions = [["Inner"], ["Inner"], ["Inner"], ["Inner"]]
-    # The class for the above condition
-    Classes = [["Up"], ["Down"], ["Right"], ["Left"]]
-
-    # Transform data and keep only the trials of interest
-    X, Y = Transform_for_classificator(X, Y, Classes, Conditions)
-    Y = Y.astype(int)
-    event_dict = {"Arriba": 0, "Abajo": 1, "Derecha": 2, "Izquierda": 3}
-    return X, Y, event_dict
+# def nieto_dataset_loader(root_dir: str, N_S: int):
+#     # N_S: Subject number
+#
+#     # Data Type
+#     datatype = "EEG"
+#
+#     # Sampling rate
+#     fs = 256
+#
+#     # Select the useful par of each trial. Time in seconds
+#     t_start = 1.5
+#     t_end = 3.5
+#
+#     # Load all trials for a single subject
+#     X, Y = Extract_data_from_subject(
+#         root_dir, N_S, datatype
+#     )  # This uses the derivatives folder
+#
+#     # Cut useful time. i.e action interval
+#     X = Select_time_window(X=X, t_start=t_start, t_end=t_end, fs=fs)
+#
+#     # Conditions to compared
+#     Conditions = [["Inner"], ["Inner"], ["Inner"], ["Inner"]]
+#     # The class for the above condition
+#     Classes = [["Up"], ["Down"], ["Right"], ["Left"]]
+#
+#     # Transform data and keep only the trials of interest
+#     X, Y = Transform_for_classificator(X, Y, Classes, Conditions)
+#     Y = Y.astype(int)
+#     event_dict = {"Arriba": 0, "Abajo": 1, "Derecha": 2, "Izquierda": 3}
+#     return X, Y, event_dict
 
 
 def torres_dataset_loader(
@@ -353,8 +354,8 @@ def load_data_labels_based_on_dataset(
         else:
             epochs, label, event_dict = aguilera_dataset_loader(filepath, False)
         data = epochs.get_data()
-    elif dataset_name == "nieto":
-        data, label, event_dict = nieto_dataset_loader(data_path, subject_id)
+    # elif dataset_name == "nieto":
+    #     data, label, event_dict = nieto_dataset_loader(data_path, subject_id)
     elif dataset_name == "coretto":
         foldername = "S{:02d}".format(subject_id)
         filename = foldername + "_EEG.mat"
