@@ -10,7 +10,7 @@ import tensorflow as tf
 from AugmentBrain.src.GAN import generate_synthetic_data
 from custom_callbacks import ReturnBestEarlyStopping
 from data_loaders import load_data_labels_based_on_dataset
-from data_utils import is_dataset_name_available
+from data_utils import get_dataset_basic_info
 from dataset_tools import (
     ACTIONS,
     emd_static_augmentation,
@@ -702,7 +702,7 @@ def main():
     subject_id = 29  # Only two things I should be able to change
     dataset_name = "braincommand"  # Only two things I should be able to change
 
-    is_dataset_name_available(datasets_basic_infos, dataset_name)
+    get_dataset_basic_info(datasets_basic_infos, dataset_name)
     dataset_info: dict = datasets_basic_infos[dataset_name]
 
     print(ROOT_VOTING_SYSTEM_PATH)

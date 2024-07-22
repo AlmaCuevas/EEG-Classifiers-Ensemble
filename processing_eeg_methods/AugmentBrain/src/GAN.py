@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 from custom_callbacks import GANMonitor
 from data_loaders import load_data_labels_based_on_dataset
-from data_utils import is_dataset_name_available
+from data_utils import get_dataset_basic_info
 from dataset_tools import preprocess_raw_eeg
 from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
 from tensorflow import keras
@@ -626,7 +626,7 @@ def main():
     subject_id = 29  # Only two things I should be able to change
     dataset_name = "braincommand"  # Only two things I should be able to change
 
-    is_dataset_name_available(datasets_basic_infos, dataset_name)
+    get_dataset_basic_info(datasets_basic_infos, dataset_name)
     dataset_info: dict = datasets_basic_infos[dataset_name]
 
     print(ROOT_VOTING_SYSTEM_PATH)

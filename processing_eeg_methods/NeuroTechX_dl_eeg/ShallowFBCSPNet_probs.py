@@ -13,11 +13,12 @@ from data_loaders import load_data_labels_based_on_dataset
 from data_utils import (
     convert_into_binary,
     create_folder,
-    is_dataset_name_available,
+    get_dataset_basic_info,
+    get_input_data_path,
     standard_saving_path,
 )
 from numpy.random import RandomState
-from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
+from share import datasets_basic_infos
 from sklearn.model_selection import StratifiedKFold, train_test_split
 from torch import optim
 
@@ -207,19 +208,15 @@ if __name__ == "__main__":
     ]  # , 'aguilera_traditional', 'aguilera_gamified', 'torres']
     for dataset_name in datasets:
         chosen_numbered_label = 3
-        version_name = f"independent_channels_{chosen_numbered_label}"  # To keep track what the output processing alteration went through
-
-        # Folders and paths
-        dataset_foldername = dataset_name + "_dataset"
-        computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
-        data_path = computer_root_path + dataset_foldername
-        print(data_path)
-        # Initialize
+        version_name: str = (
+            f"independent_channels_{chosen_numbered_label}"  # To keep track what the output processing alteration went through
+        )
         processing_name: str = "ShallowFBCSPNet"
 
-        is_dataset_name_available(datasets_basic_infos, dataset_name)
+        data_path: str = get_input_data_path(dataset_name)
+        dataset_info: dict = get_dataset_basic_info(datasets_basic_infos, dataset_name)
+        create_folder(dataset_name, processing_name)
 
-        dataset_info: dict = datasets_basic_infos[dataset_name]
         saving_txt_path: str = standard_saving_path(
             dataset_info, processing_name, version_name
         )
@@ -228,7 +225,6 @@ if __name__ == "__main__":
         results_df = pd.DataFrame()
 
         for subject_id in range(29, 30):
-            create_folder(dataset_name, processing_name)
             print(subject_id)
             with open(
                 saving_txt_path,
@@ -321,7 +317,12 @@ if __name__ == "__main__":
             results_df = pd.concat([results_df, temp])
 
         results_df.to_csv(
-            f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{version_name}_{processing_name}_{dataset_name}.csv"
+            standard_saving_path(
+                dataset_info,
+                processing_name,
+                version_name,
+                file_ending="csv",
+            )
         )
 
     print("Congrats! The processing methods are done processing.")

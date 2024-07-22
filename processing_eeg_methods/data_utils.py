@@ -124,12 +124,14 @@ def standard_saving_path(
         )
 
 
-def is_dataset_name_available(datasets_basic_infos: dict, dataset_name: str):
+def get_dataset_basic_info(datasets_basic_infos: dict, dataset_name: str) -> dict:
     if dataset_name not in datasets_basic_infos:
         raise Exception(
             f"Not supported dataset named '{dataset_name}', choose from the following: "
-            f"braincommand, aguilera_traditional, aguilera_gamified, nieto, coretto, ic_bci_2020 or torres."
+            f"{list(datasets_basic_infos.keys())}"
         )
+    else:
+        return datasets_basic_infos[dataset_name]
 
 
 def get_best_classificator_and_test_accuracy(data, labels, estimators):
@@ -199,3 +201,7 @@ def data_normalization(data):
     scaled_data = (data - min_val) / (max_val - min_val)
 
     return scaled_data
+
+
+def get_input_data_path(dataset_name: str) -> str:
+    return ROOT_VOTING_SYSTEM_PATH + "/Datasets/" + dataset_name + "_dataset"

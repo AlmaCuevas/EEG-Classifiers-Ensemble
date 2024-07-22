@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from data_loaders import load_data_labels_based_on_dataset
-from data_utils import standard_saving_path
+from data_utils import get_dataset_basic_info, get_input_data_path, standard_saving_path
 from DiffE.diffE_models import (
     DDPM,
     ConditionalUNet,
@@ -17,7 +17,7 @@ from DiffE.diffE_models import (
 )
 from DiffE.diffE_utils import get_dataloader
 from ema_pytorch import EMA
-from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
+from share import datasets_basic_infos
 from sklearn.metrics import (
     f1_score,
     precision_score,
@@ -288,12 +288,8 @@ if __name__ == "__main__":
 
     dataset_name = "braincommand"  # Only two things I should be able to change
 
-    # Folders and paths
-    dataset_foldername = dataset_name + "_dataset"
-    computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
-    data_path = computer_root_path + dataset_foldername
-    print(data_path)
-    dataset_info = datasets_basic_infos[dataset_name]
+    data_path: str = get_input_data_path(dataset_name)
+    dataset_info: dict = get_dataset_basic_info(datasets_basic_infos, dataset_name)
 
     for subject_id in range(1, dataset_info["subjects"] + 1):
         _, X, Y = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)

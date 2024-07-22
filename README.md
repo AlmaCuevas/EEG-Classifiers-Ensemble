@@ -12,7 +12,9 @@ Abdulghani, Walters, and Abed [2], Agarwal and Kumar [3], and Kumar and Scheme [
 classify speech imagery. An LSTM, a recurrent neural network, can learn long-term dependencies between the discrete
 steps in a time series data. The code used was obtained from GitHub by [5].
 
-### XDAWN+RG
+# Transforms
+
+#### XDAWN+RG
 The XDAWN spatial filter and Riemannian Geometry classifier (RG) algorithm [7] achieved an accuracy of 0.836. Riemannian
 Geometry represents data as symmetric positive definite covariance matrices and maps them onto a specific geometric space.
 It can be computationally intensive when dealing with high-dimensional data, so dimensionality reduction techniques like
@@ -20,6 +22,15 @@ XDAWN spatial filters are used alongside it. The approach is based on the idea t
 and mental states have a degree of invariance that covariance matrices can capture. Due to its logarithmic nature, the Riemann
 distance is robust to noise. This method can potentially reduce or eliminate the calibration phase, especially when limited
 training data is available.
+
+# Features
+
+#### EEGExtract
+EEGExtract is a feature extraction code designed to process EEG data, here the input is segmented into various frequency
+bands before feeding it to the extraction process. For each frequency band, EEGExtract computes a set of features,
+including entropy, mobility, complexity, ratio, Lyapunov exponent, standard deviation, mean, kurtosis, skewness, and
+variance. These features are organized into columns with descriptive names, facilitating feature selection. The
+resulting table of features serves as the input for classifiers, enabling the analysis of EEG signals.
 
 ##  Datasets used:
 ### [Aguilera](https://data.mendeley.com/datasets/57g8z63tmy/1) [15]

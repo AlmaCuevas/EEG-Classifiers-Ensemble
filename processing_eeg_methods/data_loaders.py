@@ -7,7 +7,7 @@ from data_utils import (
     class_selection,
     convert_into_independent_channels,
     data_normalization,
-    is_dataset_name_available,
+    get_dataset_basic_info,
 )
 
 # from Inner_Speech_Dataset.Python_Processing.Data_extractions import (
@@ -425,7 +425,7 @@ if __name__ == "__main__":
     subject_id = 1  # Only two things I should be able to change
     dataset_name = "aguilera_gamified"  # Only two things I should be able to change
 
-    is_dataset_name_available(datasets_basic_infos, dataset_name)
+    get_dataset_basic_info(datasets_basic_infos, dataset_name)
     dataset_info: dict = datasets_basic_infos[dataset_name]
 
     print(ROOT_VOTING_SYSTEM_PATH)

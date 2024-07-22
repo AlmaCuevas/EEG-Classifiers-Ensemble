@@ -13,7 +13,8 @@ from data_utils import (
     convert_into_independent_channels,
     create_folder,
     flat_a_list,
-    is_dataset_name_available,
+    get_dataset_basic_info,
+    get_input_data_path,
     standard_saving_path,
 )
 from DiffE.diffE_probs import diffE_test
@@ -36,7 +37,7 @@ from NeuroTechX_dl_eeg.ShallowFBCSPNet_probs import (
     ShallowFBCSPNet_test,
     ShallowFBCSPNet_train,
 )
-from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
+from share import datasets_basic_infos
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import normalize
 
@@ -246,12 +247,10 @@ if __name__ == "__main__":
     for dataset_name in datasets:
         selected_classes = [0, 1, 2, 3]
         version_name = "2223only_one_method_channel_independent_unweighted_accuracy"  # To keep track what the output processing alteration went through
+        processing_name: str = ""
 
-        # Folders and paths
-        dataset_foldername = dataset_name + "_dataset"
-        computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
-        data_path = computer_root_path + dataset_foldername
-        print(data_path)
+        data_path = get_input_data_path(dataset_name)
+
         # Initialize
         methods = {
             "selected_transformers": True,  # Training is over-fitted. Training accuracy >90
@@ -262,13 +261,9 @@ if __name__ == "__main__":
             "diffE": False,
             "feature_extraction": True,
         }
-
         keys = list(methods.keys())
 
-        processing_name: str = ""
-        is_dataset_name_available(datasets_basic_infos, dataset_name)
-        dataset_info: dict = datasets_basic_infos[dataset_name]
-
+        dataset_info = get_dataset_basic_info(datasets_basic_infos, dataset_name)
         dataset_info["#_class"] = len(selected_classes)
 
         models_outputs = dict.fromkeys([key + "_accuracy" for key in keys], np.nan)

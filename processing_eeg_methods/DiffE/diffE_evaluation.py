@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from data_loaders import load_data_labels_based_on_dataset
-from data_utils import standard_saving_path
+from data_utils import get_dataset_basic_info, get_input_data_path, standard_saving_path
 from DiffE.diffE_models import Decoder, DiffE, Encoder, LinearClassifier
 from DiffE.diffE_utils import EEGDataset
 from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
@@ -11,12 +11,8 @@ from torch.utils.data import DataLoader
 
 dataset_name = "aguilera_traditional"  # Only two things I should be able to change
 
-# Folders and paths
-dataset_foldername = dataset_name + "_dataset"
-computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
-data_path = computer_root_path + dataset_foldername
-
-dataset_info = datasets_basic_infos[dataset_name]
+data_path: str = get_input_data_path(dataset_name)
+dataset_info: dict = get_dataset_basic_info(datasets_basic_infos, dataset_name)
 
 
 def diffE_evaluation(subject_id: int, X, Y, dataset_info, device: str = "cuda:0"):

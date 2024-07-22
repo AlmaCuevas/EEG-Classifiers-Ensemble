@@ -6,8 +6,10 @@ import pandas as pd
 from data_loaders import load_data_labels_based_on_dataset
 from data_utils import (
     ClfSwitcher,
+    create_folder,
     get_best_classificator_and_test_accuracy,
-    is_dataset_name_available,
+    get_dataset_basic_info,
+    get_input_data_path,
     standard_saving_path,
 )
 from pyriemann.estimation import Covariances
@@ -68,17 +70,12 @@ if __name__ == "__main__":
     datasets = ["ic_bci_2020"]
     for dataset_name in datasets:
         version_name = "only_customized_two_classes_12_no_preprocess"
-
-        # Folders and paths
-        dataset_foldername = dataset_name + "_dataset"
-        computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
-        data_path = computer_root_path + dataset_foldername
-        print(data_path)
-        # Initialize
         processing_name: str = ""
 
-        is_dataset_name_available(datasets_basic_infos, dataset_name)
-        dataset_info: dict = datasets_basic_infos[dataset_name]
+        data_path: str = get_input_data_path(dataset_name)
+        dataset_info: dict = get_dataset_basic_info(datasets_basic_infos, dataset_name)
+        create_folder(dataset_name, processing_name)
+
         saving_txt_path: str = standard_saving_path(
             dataset_info, processing_name, version_name
         )

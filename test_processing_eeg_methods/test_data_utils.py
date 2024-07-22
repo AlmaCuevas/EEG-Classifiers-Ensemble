@@ -1,9 +1,10 @@
-from data_utils import is_dataset_name_available, standard_saving_path
+from data_utils import get_dataset_basic_info, standard_saving_path
 from share import datasets_basic_infos
 
 
 def test_is_dataset_name_available():
-    assert is_dataset_name_available(datasets_basic_infos, "braincommand") is None
+    datasets_basic_info = get_dataset_basic_info(datasets_basic_infos, "braincommand")
+    assert isinstance(datasets_basic_info, dict)
 
 
 def test_standard_saving_path():

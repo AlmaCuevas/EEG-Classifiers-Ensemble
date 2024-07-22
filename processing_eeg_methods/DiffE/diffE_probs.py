@@ -5,7 +5,7 @@ import pandas as pd
 import torch
 import torch.nn.functional as F
 from data_loaders import load_data_labels_based_on_dataset
-from data_utils import standard_saving_path
+from data_utils import get_dataset_basic_info, get_input_data_path, standard_saving_path
 from DiffE.diffE_models import Decoder, DiffE, Encoder, LinearClassifier
 from DiffE.diffE_utils import get_dataloader
 from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
@@ -83,18 +83,10 @@ if __name__ == "__main__":
     for dataset_name in datasets:
         version_name = "customized_only"  # To keep track what the output processing alteration went through
 
-        # Folders and paths
-        dataset_foldername = dataset_name + "_dataset"
-        computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
-        data_path = computer_root_path + dataset_foldername
-        print(data_path)
-        # Initialize
+        data_path: str = get_input_data_path(dataset_name)
+        dataset_info: dict = get_dataset_basic_info(datasets_basic_infos, dataset_name)
+
         processing_name: str = ""
-        if dataset_name not in datasets_basic_infos:
-            raise Exception(
-                f"Not supported dataset named '{dataset_name}', choose from the following: aguilera_traditional, aguilera_gamified, nieto, coretto or torres."
-            )
-        dataset_info: dict = datasets_basic_infos[dataset_name]
 
         mean_accuracy_per_subject: list = []
         results_df = pd.DataFrame()

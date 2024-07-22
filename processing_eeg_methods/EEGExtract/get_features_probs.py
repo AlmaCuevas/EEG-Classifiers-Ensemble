@@ -12,12 +12,13 @@ from data_utils import (
     convert_into_independent_channels,
     create_folder,
     get_best_classificator_and_test_accuracy,
-    is_dataset_name_available,
+    get_dataset_basic_info,
+    get_input_data_path,
     standard_saving_path,
 )
 from scipy import signal
 from scipy.stats import kurtosis, skew
-from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
+from share import datasets_basic_infos
 from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import Pipeline
 
@@ -246,15 +247,8 @@ if __name__ == "__main__":
             "all"  # To keep track what the output processing alteration went through
         )
         processing_name = "get_features_by_channel_by_frequency"
-        # Folders and paths
-        dataset_foldername = dataset_name + "_dataset"
-        computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
-        data_path = computer_root_path + dataset_foldername
-
-        print(data_path)
-        # Initialize
-        is_dataset_name_available(datasets_basic_infos, dataset_name)
-        dataset_info: dict = datasets_basic_infos[dataset_name]
+        data_path: str = get_input_data_path(dataset_name)
+        dataset_info: dict = get_dataset_basic_info(datasets_basic_infos, dataset_name)
 
         create_folder(dataset_name, processing_name)
         saving_txt_path: str = standard_saving_path(
