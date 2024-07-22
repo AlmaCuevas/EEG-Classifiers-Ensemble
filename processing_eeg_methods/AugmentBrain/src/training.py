@@ -7,18 +7,20 @@ from pathlib import Path
 
 import numpy as np
 import tensorflow as tf
+from AugmentBrain.src.GAN import generate_synthetic_data
 from custom_callbacks import ReturnBestEarlyStopping
+from data_loaders import load_data_labels_based_on_dataset
+from data_utils import is_dataset_name_available
 from dataset_tools import (
     ACTIONS,
     emd_static_augmentation,
-    load_all_raw_data,
     preprocess_raw_eeg,
     train_generator_with_aug,
 )
 from matplotlib import pyplot as plt
 from neural_nets import EEGNet
+from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
 from sklearn.model_selection import StratifiedKFold, train_test_split
-from src.GAN import generate_synthetic_data
 from tensorflow import keras
 
 print(tf.__version__)
@@ -73,6 +75,13 @@ def fit_model(
                 attempts=gan_attempt_per_sample,
                 label=label,
                 latent_dim=50,
+                num_classes=num_classes,
+                data_shape=(
+                    train_X.shape[1],
+                    train_X.shape[2],
+                    1,
+                ),  # original = (8, 250, 1)
+                discriminator_extra_step=5,
             )
             generated_data = generated_data.squeeze(-1)
             train_X = np.vstack([train_X, generated_data])
@@ -197,9 +206,10 @@ def kfold_cross_val(
     training_start = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     num_folds = network_hyperparameters_dict["num_folds"] = 10
 
-    models_path: Path = Path(f"../Aug_Test_{random_state}") / Path(
-        f"{model_name}_{training_start}_{num_folds}folded_{training_name}"
-    )
+    file_name: str = f"{model_name}_{training_start}_{num_folds}folded_{training_name}"
+    file_name = file_name.replace(":", "")
+
+    models_path: Path = Path(f"../Aug_Test_{random_state}") / Path(file_name)
     Path.mkdir(models_path, exist_ok=True, parents=True)
 
     save_hyperparameters_dicts(
@@ -263,6 +273,9 @@ def kfold_cross_val(
                     attempts=gan_attempt_per_sample,
                     label=label,
                     latent_dim=50,
+                    num_classes=num_classes,
+                    data_shape=(train_X.shape[1], train_X.shape[2], 1),
+                    discriminator_extra_step=5,
                 )
                 generated_data = generated_data.squeeze(-1)
                 train_X = np.vstack([train_X, generated_data])
@@ -280,7 +293,9 @@ def kfold_cross_val(
             validation_data=(val_X, val_y),
             callbacks=callback_lists,
         )
-        scores = model.evaluate(test_X, test_y, verbose=0)
+        scores = model.evaluate(
+            test_X, test_y, verbose=0
+        )  # todo: you would need to take this
 
         print(
             f"Score for fold {fold_no}: {model.metrics_names[0]} of {scores[0]};"
@@ -385,7 +400,7 @@ class Hyperparameters:
         return network_hyperparameters_dict, aug_hyperparameters_dict
 
 
-def test_routine(
+def routine_test(
     GAN_PATH, data_X, data_y, hyperparameters, fixed_random_state: int = None
 ):
     if fixed_random_state:
@@ -673,7 +688,7 @@ def main():
     RANDOM_STATE = args.random_state
 
     STARTING_DIR = Path("../chris_personal_dataset")
-    GAN_PATH = "../WGAN_2021-04-16 00:58:22/models"  # Insert GAN model path here or comment such line
+    GAN_PATH = "../WGAN_2024-07-19 18_34_31/models"  # Insert GAN model path here or comment such line
     SPLITTING_PERCENTAGE = namedtuple("SPLITTING_PERCENTAGE", ["train", "val", "test"])
     SPLITTING_PERCENTAGE.train, SPLITTING_PERCENTAGE.val, SPLITTING_PERCENTAGE.test = (
         70,
@@ -681,9 +696,29 @@ def main():
         10,
     )
 
-    raw_data_X, data_y, label_mapping = load_all_raw_data(starting_dir=STARTING_DIR)
+    # raw_data_X, data_y, label_mapping = load_all_raw_data(starting_dir=STARTING_DIR)
 
-    # todo: import my data
+    # Manual Inputs
+    subject_id = 29  # Only two things I should be able to change
+    dataset_name = "braincommand"  # Only two things I should be able to change
+
+    is_dataset_name_available(datasets_basic_infos, dataset_name)
+    dataset_info: dict = datasets_basic_infos[dataset_name]
+
+    print(ROOT_VOTING_SYSTEM_PATH)
+    # Folders and paths
+    dataset_foldername = dataset_name + "_dataset"
+    computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
+    data_path = computer_root_path + dataset_foldername
+    label_mapping = {0: "Derecha", 1: "Izquierda", 2: "Arriba"}
+
+    _, raw_data_X, data_y = load_data_labels_based_on_dataset(
+        dataset_info,
+        subject_id,
+        data_path,
+        selected_classes=[0, 1, 2],
+    )  # todo: divide this train and test like in GAN, and then use the test here.
+    raw_data_X = raw_data_X[:, :, :250]
 
     hyperparameters = Hyperparameters(RANDOM_STATE, label_mapping)
 
@@ -713,7 +748,7 @@ def main():
         stratify=tmp_train_y,
     )
 
-    test_routine(GAN_PATH, data_X, data_y, hyperparameters)
+    routine_test(GAN_PATH, data_X, data_y, hyperparameters)
 
 
 if __name__ == "__main__":

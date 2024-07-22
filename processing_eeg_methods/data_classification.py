@@ -245,7 +245,7 @@ if __name__ == "__main__":
 
     for dataset_name in datasets:
         selected_classes = [0, 1, 2, 3]
-        version_name = "multiple_classifier_channel_independent_unweighted_accuracy"  # To keep track what the output processing alteration went through
+        version_name = "2223only_one_method_channel_independent_unweighted_accuracy"  # To keep track what the output processing alteration went through
 
         # Folders and paths
         dataset_foldername = dataset_name + "_dataset"
@@ -254,12 +254,12 @@ if __name__ == "__main__":
         print(data_path)
         # Initialize
         methods = {
-            "selected_transformers": True,  # Like customized but with frequency bands and selected columns
-            "customized": True,
+            "selected_transformers": True,  # Training is over-fitted. Training accuracy >90
+            "customized": False,  # Simpler than selected_transformers, only one transformer and no frequency bands. No need to activate both at the same time
             "ShallowFBCSPNet": False,
-            "diffE": False,  # Good for BrainCommand, fails with one channel.
-            "LSTM": True,  # BAD, Good for BrainCommand
-            "GRU": True,  # BAD, Good for BrainCommand
+            "LSTM": False,  # Training is over-fitted. Training accuracy >90
+            "GRU": False,  # Training is over-fitted. Training accuracy >90
+            "diffE": False,
             "feature_extraction": True,
         }
 
@@ -290,7 +290,7 @@ if __name__ == "__main__":
 
         save_original_channels = dataset_info["#_channels"]
 
-        for subject_id in range(29, 30):
+        for subject_id in range(22, 24):
             print(subject_id)
             with open(
                 saving_txt_path,

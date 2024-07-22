@@ -1,6 +1,3 @@
-# The are 3000 epochs, this didn't work with the tensorflow-gpu==2.4.1 in python 3.8
-# and when using the python 3.10 it asks to save the model, but I couldn't do it, I tried but even if I was able,
-# there are too many epochs and I don't think it will be useful.
 import json
 from datetime import datetime
 from pathlib import Path
@@ -9,7 +6,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from custom_callbacks import GANMonitor
-from dataset_tools import load_all_raw_data, preprocess_raw_eeg
+from data_loaders import load_data_labels_based_on_dataset
+from data_utils import is_dataset_name_available
+from dataset_tools import preprocess_raw_eeg
+from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
 from tensorflow import keras
 from tensorflow.keras import Model
 from tensorflow.keras.constraints import max_norm
@@ -113,7 +113,9 @@ def build_discriminator(
     return Model(inputs=input1, outputs=output, name="EEGNet-discriminator")
 
 
-def build_cgan_discriminator(img_shape, num_classes=3, use_sigmoid_activation=True):
+def build_cgan_discriminator(
+    img_shape, num_classes=3, use_sigmoid_activation=True, Samples=250, Chans=8
+):
     # Input image
     img = Input(shape=img_shape)
 
@@ -135,7 +137,9 @@ def build_cgan_discriminator(img_shape, num_classes=3, use_sigmoid_activation=Tr
     # Concatenate images with their label embeddings
     concatenated = Concatenate(axis=-1)([img, label_embedding])
 
-    discriminator = build_discriminator(use_sigmoid_activation=use_sigmoid_activation)
+    discriminator = build_discriminator(
+        Chans=Chans, Samples=Samples, use_sigmoid_activation=use_sigmoid_activation
+    )
 
     # Classify the image-label pair
     classification = discriminator(concatenated)
@@ -215,7 +219,7 @@ def build_generator(z_dim):
     model.add(BatchNormalization())
     model.add(Activation("elu"))
 
-    model.add(SeparableConv2D(4, kernel_size=(1, 4)))
+    model.add(SeparableConv2D(4, kernel_size=(1, 4)))  # output = (None, 8, 125, 4)
     model.add(BatchNormalization())
     model.add(Activation("elu"))
     model.add(
@@ -356,7 +360,7 @@ class WGAN(keras.Model):
         discriminator,
         generator,
         latent_dim,
-        discriminator_extra_steps=3,
+        discriminator_extra_steps=5,
         gp_weight=10.0,
     ):
         super(WGAN, self).__init__()
@@ -493,19 +497,25 @@ def fit_GAN(train_X, train_y, gan_hyperparameters_dict):
     latent_dim = gan_hyperparameters_dict["latent_dim"]
     epochs = gan_hyperparameters_dict["epochs"]
     batch_size = gan_hyperparameters_dict["batch_size"]
+    Samples = gan_hyperparameters_dict["samples"]
+    Chans = gan_hyperparameters_dict["chans"]
 
     num_classes = int(np.max(train_y) + 1)
     img_shape = train_X[0, ..., None].shape  # to transform (8,250) shape into (8,250,1)
 
     generator = build_cgan_generator(latent_dim, num_classes=num_classes)
     discriminator = build_cgan_discriminator(
-        img_shape=img_shape, use_sigmoid_activation=True
+        img_shape=img_shape,
+        num_classes=num_classes,
+        use_sigmoid_activation=True,
+        Samples=Samples,
+        Chans=Chans,
     )
 
     gan = GAN(discriminator=discriminator, generator=generator, latent_dim=latent_dim)
     gan.compile(
-        d_optimizer=keras.optimizers.Adam(learning_rate=0.0001),
-        g_optimizer=keras.optimizers.Adam(learning_rate=0.0001),
+        d_optimizer=keras.optimizers.legacy.Adam(learning_rate=0.0001),
+        g_optimizer=keras.optimizers.legacy.Adam(learning_rate=0.0001),
         loss_fn=keras.losses.BinaryCrossentropy(),
     )
     training_start = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -527,13 +537,19 @@ def fit_WGAN(train_X, train_y, gan_hyperparameters_dict):
         "wgan_discriminator_extra_steps"
     ]
     batch_size = gan_hyperparameters_dict["batch_size"]
+    Samples = gan_hyperparameters_dict["samples"]
+    Chans = gan_hyperparameters_dict["chans"]
 
     num_classes = int(np.max(train_y) + 1)
     img_shape = train_X[0, ..., None].shape  # to transform (8,250) shape into (8,250,1)
 
     generator = build_cgan_generator(latent_dim, num_classes=num_classes)
     discriminator = build_cgan_discriminator(
-        img_shape=img_shape, use_sigmoid_activation=False
+        img_shape=img_shape,
+        num_classes=num_classes,
+        use_sigmoid_activation=False,
+        Samples=Samples,
+        Chans=Chans,
     )
 
     wgan = WGAN(
@@ -544,8 +560,12 @@ def fit_WGAN(train_X, train_y, gan_hyperparameters_dict):
     )
 
     wgan.compile(
-        d_optimizer=keras.optimizers.Adam(learning_rate=0.0002, beta_1=0.5, beta_2=0.9),
-        g_optimizer=keras.optimizers.Adam(learning_rate=0.0002, beta_1=0.5, beta_2=0.9),
+        d_optimizer=keras.optimizers.legacy.Adam(
+            learning_rate=0.0002, beta_1=0.5, beta_2=0.9
+        ),
+        g_optimizer=keras.optimizers.legacy.Adam(
+            learning_rate=0.0002, beta_1=0.5, beta_2=0.9
+        ),
         g_loss_fn=wgan_generator_loss,
         d_loss_fn=wgan_discriminator_loss,
     )
@@ -567,8 +587,9 @@ def get_callback_lists(model_path, latent_dim=10):
     models_path.mkdir(exist_ok=True)
     callbacks_list = [
         keras.callbacks.ModelCheckpoint(
-            filepath=f"{models_path}" + "/saved-models-{epoch:06d}.h5",
+            filepath=f"{models_path}" + "/saved-models-{epoch:06d}.tf",
             save_best_only=False,
+            save_weights_only=True,
         ),
         keras.callbacks.CSVLogger(
             filename=f"{model_path}/my_model.csv", separator=",", append=True
@@ -598,10 +619,37 @@ def save_hyperparameters_dicts(gan_hyperparameters_dict, model_path):
 
 
 def main():
-    STARTING_DIR = Path("../chris_personal_dataset")
-    raw_data_X, data_y, label_mapping = load_all_raw_data(starting_dir=STARTING_DIR)
+    # STARTING_DIR = Path("../chris_personal_dataset")
+    # raw_data_X, data_y, label_mapping = load_all_raw_data(starting_dir=STARTING_DIR)
+
+    # Manual Inputs
+    subject_id = 29  # Only two things I should be able to change
+    dataset_name = "braincommand"  # Only two things I should be able to change
+
+    is_dataset_name_available(datasets_basic_infos, dataset_name)
+    dataset_info: dict = datasets_basic_infos[dataset_name]
+
+    print(ROOT_VOTING_SYSTEM_PATH)
+    # Folders and paths
+    dataset_foldername = dataset_name + "_dataset"
+    computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
+    data_path = computer_root_path + dataset_foldername
+    label_mapping = {0: "Derecha", 1: "Izquierda", 2: "Arriba"}
+
+    _, raw_data_X, data_y = load_data_labels_based_on_dataset(
+        dataset_info,
+        subject_id,
+        data_path,
+        selected_classes=[0, 1, 2],
+    )  # todo: divide for train and test, because this is only the train
+    raw_data_X = raw_data_X[:, :, :250]
     data_X, fft_data_X = preprocess_raw_eeg(
-        raw_data_X, lowcut=8, highcut=45, coi3order=0
+        raw_data_X,
+        lowcut=8,
+        highcut=45,
+        coi3order=0,
+        fs=dataset_info["sample_rate"],
+        power_hz=60,
     )
 
     gan_hyperparameters_dict = {
@@ -610,8 +658,12 @@ def main():
         "batch_size": 32,
         "wgan_discriminator_extra_steps": 5,
         "label_mapping": label_mapping,
+        "samples": data_X.shape[2],
+        "chans": dataset_info["#_channels"],
+        "data_shape": (data_X.shape[1], data_X.shape[2], 1),  # original = (8, 250, 1)
     }
 
+    # Input data must be [trials, channels, time]
     fit_WGAN(data_X, data_y, gan_hyperparameters_dict)
     # fit_GAN(train_X, train_y, gan_hyperparameters_dict)
 
@@ -626,17 +678,29 @@ def generate_synthetic_data(
     epoch_step=50,
     data_shape=(8, 250, 1),
     num_classes=3,
+    discriminator_extra_step=5,
 ):
     if type(model_folder) is str:
         model_folder = Path(model_folder)
     generated_samples = np.zeros((samples_to_generate,) + data_shape)
     for i in range(samples_to_generate):
-        generator = build_cgan_generator(latent_dim)
-        discriminator = build_cgan_discriminator(data_shape, num_classes, False)
-        model = WGAN(discriminator, generator, latent_dim, 5)
+        generator = build_cgan_generator(latent_dim, num_classes=num_classes)
+        discriminator = build_cgan_discriminator(
+            data_shape,
+            num_classes,
+            use_sigmoid_activation=False,
+            Samples=data_shape[1],
+            Chans=data_shape[0],
+        )
+        model = WGAN(
+            discriminator,
+            generator,
+            latent_dim,
+            discriminator_extra_steps=discriminator_extra_step,
+        )
         model.built = True
         model.load_weights(
-            str(model_folder / Path(f"saved-models-{initial_epoch:06d}.h5"))
+            str(model_folder / Path(f"saved-models-{initial_epoch:06d}.tf"))
         )
 
         noise = np.random.normal(loc=0, scale=1, size=(attempts, latent_dim))

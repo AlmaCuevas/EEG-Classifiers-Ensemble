@@ -36,6 +36,8 @@
       <excludeFolder url="file://$MODULE_DIR$/Results" />
       <excludeFolder url="file://$MODULE_DIR$/processing310_env" />
       <excludeFolder url="file://$MODULE_DIR$/processing_env" />
+      <excludeFolder url="file://$MODULE_DIR$/processing_eeg_methods/AugmentBrain/Aug_Test_42" />
+      <excludeFolder url="file://$MODULE_DIR$/processing_eeg_methods/AugmentBrain/WGAN_2024-07-19 18_34_31" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.10" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

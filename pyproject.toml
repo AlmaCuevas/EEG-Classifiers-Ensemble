@@ -1,5 +1,5 @@
 [project]
-name = "voting_system_platform"
+name = "Emsemble-EEG"
 version = "0.1.0"
 requires-python = "3.10.11"
 authors = [
@@ -11,7 +11,7 @@ license = {file = "LICENSE"}
 keywords = ["EEG", "classification", "ERP", "feature extraction", "transforms"]
 
 [tool.poetry]
-name = "voting_system_platform"
+name = "Emsemble-EEG"
 version = "0.1.0"
 description = "Tools for processing and classifying EEG tasks in real-time."
 authors = ["AlmaCuevas <almarosa.arcr@gmail.com>"]

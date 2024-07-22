@@ -32,13 +32,9 @@ def aguilera_dataset_loader(data_path: str, gamified: bool):  # typed
     raw = io.read_raw_edf(
         data_path, preload=True, verbose=40, exclude=["Gyro 1", "Gyro 2", "Gyro 3"]
     )
-    # 1, 3, 8, 10, 11, 13, 15, 18, 21, 23
-    # include=['FP1', 'F3', 'P4', 'O2', 'F7', 'T7', 'P7', 'Cz', 'M2', 'CPz'] # electrodes that I think have an ERP
     if gamified:
         try:
-            raw.rename_channels(
-                {"Fp1": "FP1", "Fp2": "FP2"}
-            )  # do it for traditional too, that doesn't include the names
+            raw.rename_channels({"Fp1": "FP1", "Fp2": "FP2"})
         except ValueError:
             pass
     else:
@@ -117,7 +113,7 @@ def aguilera_dataset_loader(data_path: str, gamified: bool):  # typed
     # Read epochs
     epochs = Epochs(
         raw, events, event_id, preload=True, tmin=0, tmax=1.4, baseline=(None, None)
-    )  # , detrend=1)#, decim=2) # Better results when there is no baseline for traditional. Decim is for lowering the sample rate
+    )  # , detrend=1)#, decim=2) # Decim is for lowering the sample rate
     # epochs = ar.fit_transform(epochs)
     # epochs.average().plot()
     label = epochs.events[:, -1]
@@ -232,10 +228,8 @@ def coretto_dataset_loader(filepath: str):
                              2 - Presencia de parpadeo(blink)
     """
 
-    x = []
-    y = []
-
-    # for i in np.arange(1, 10): # import all data in 9 .mat files # TODO: We are still not loading everyone. Just one subject at a time.
+    # for i in np.arange(1, 10): # import all data in 9 .mat files
+    # We are interested in loading one subject at a time.
     EEG = loadmat(filepath)  # Channels and labels are concat
 
     # modality = EEG['EEG'][:,24576]
