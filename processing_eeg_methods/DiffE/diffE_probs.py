@@ -7,6 +7,7 @@ import torch.nn.functional as F
 from data_loaders import load_data_labels_based_on_dataset
 from data_utils import get_dataset_basic_info, get_input_data_path, standard_saving_path
 from DiffE.diffE_models import Decoder, DiffE, Encoder, LinearClassifier
+from DiffE.diffE_training import diffE_train
 from DiffE.diffE_utils import get_dataloader
 from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
 from sklearn.model_selection import StratifiedKFold
@@ -15,10 +16,6 @@ from sklearn.model_selection import StratifiedKFold
 # todo: do the deap thing about the FFT: https://github.com/tongdaxu/EEG_Emotion_Classifier_DEAP/blob/master/Preprocess_Deap.ipynb
 
 threshold_for_bug = 0.00000001  # could be any value, ex numpy.min
-
-
-def diffE_train(data, labels) -> tuple[str, float]:
-    pass
 
 
 def diffE_test(subject_id: int, X, dataset_info: dict, device: str = "cuda:0"):
@@ -117,7 +114,12 @@ if __name__ == "__main__":
                     "******************************** Training ********************************"
                 )
                 start = time.time()
-                clf, accuracy, processing_name = diffE_train(data[train], labels[train])
+                accuracy = diffE_train(
+                    subject_id=subject_id,
+                    X=data[train],
+                    Y=labels[train],
+                    dataset_info=dataset_info,
+                )
                 training_time.append(time.time() - start)
                 with open(
                     f"{ROOT_VOTING_SYSTEM_PATH}/Results/{version_name}_{dataset_name}.txt",
@@ -132,7 +134,9 @@ if __name__ == "__main__":
                 testing_time = []
                 for epoch_number in test:
                     start = time.time()
-                    array = diffE_test(clf, np.asarray([data[epoch_number]]))
+                    array = diffE_test(
+                        subject_id, np.asarray([data[epoch_number]]), dataset_info
+                    )
                     end = time.time()
                     testing_time.append(end - start)
                     print(dataset_info["target_names"])

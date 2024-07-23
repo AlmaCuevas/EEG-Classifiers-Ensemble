@@ -10,8 +10,8 @@ from BigProject.GRU_probs import GRU_test, GRU_train
 from BigProject.LSTM_probs import LSTM_test, LSTM_train
 from data_loaders import load_data_labels_based_on_dataset
 from data_utils import (
+    convert_into_binary,
     convert_into_independent_channels,
-    create_folder,
     flat_a_list,
     get_dataset_basic_info,
     get_input_data_path,
@@ -19,7 +19,7 @@ from data_utils import (
 )
 from DiffE.diffE_probs import diffE_test
 from DiffE.diffE_training import diffE_train
-from EEGExtract.get_features_probs import (
+from features_extraction.get_features_probs import (
     by_frequency_band,
     extractions_test,
     extractions_train,
@@ -43,7 +43,6 @@ from sklearn.preprocessing import normalize
 
 
 def group_methods_train(
-    dataset_name: str,
     subject_id: int,
     methods: dict,
     models_outputs: dict,
@@ -80,7 +79,24 @@ def group_methods_train(
     if methods["ShallowFBCSPNet"]:
         print("ShallowFBCSPNet")
         start_time = time.time()
-        (models_outputs["model_accuracy"]) = ShallowFBCSPNet_train(data, labels)
+        temp_data = (data * 1e6).astype(np.float32)
+        model_ShallowFBCSPNet_accuracies = []
+        for chosen_numbered_label in range(0, dataset_info["#_class"] + 1):
+            temp_labels = convert_into_binary(
+                labels.copy(), chosen_numbered_label=chosen_numbered_label
+            )
+            model_ShallowFBCSPNet_accuracies.append(
+                ShallowFBCSPNet_train(
+                    temp_data,
+                    temp_labels,
+                    chosen_numbered_label=chosen_numbered_label,
+                    dataset_info=dataset_info,
+                    subject_id=subject_id,
+                )
+            )
+        models_outputs["ShallowFBCSPNet_accuracy"] = np.mean(
+            model_ShallowFBCSPNet_accuracies
+        )
         models_outputs["ShallowFBCSPNet_train_timer"] = time.time() - start_time
     if methods["LSTM"]:
         print("LSTM")
@@ -93,7 +109,7 @@ def group_methods_train(
         print("GRU")
         start_time = time.time()
         models_outputs["GRU_clf"], models_outputs["GRU_accuracy"] = GRU_train(
-            dataset_name, data, labels, dataset_info["#_class"]
+            dataset_info["dataset_name"], data, labels, dataset_info["#_class"]
         )
         models_outputs["GRU_train_timer"] = time.time() - start_time
     if methods["diffE"]:
@@ -130,7 +146,7 @@ def group_methods_test(
     if methods["selected_transformers"] and models_outputs["selected_transformers_clf"]:
         print("selected_transformers")
         start_time = time.time()
-        features_test_df, _ = transform_data(
+        transforms_test_df, _ = transform_data(
             data_array,
             dataset_info=dataset_info,
             labels=None,
@@ -139,7 +155,7 @@ def group_methods_test(
         models_outputs["selected_transformers_probabilities"] = normalize(
             selected_transformers_test(
                 models_outputs["selected_transformers_clf"],
-                features_test_df[columns_list],
+                transforms_test_df[columns_list],
             )
         )
         models_outputs["selected_transformers_test_timer"] = time.time() - start_time
@@ -154,11 +170,20 @@ def group_methods_test(
     if methods["ShallowFBCSPNet"]:
         print("ShallowFBCSPNet")
         start_time = time.time()
+        temp_data_array = (data_array * 1e6).astype(np.float32)
+        ShallowFBCSPNet_arrays = []
+        for chosen_numbered_label in range(0, dataset_info["#_class"]):
+            ShallowFBCSPNet_arrays.append(
+                ShallowFBCSPNet_test(
+                    subject_id,
+                    temp_data_array,
+                    dataset_info,
+                    chosen_numbered_label=chosen_numbered_label,
+                )[0]
+            )
         models_outputs["ShallowFBCSPNet_array"] = normalize(
-            ShallowFBCSPNet_test(  # TODO: This array is binary, you could call it as many classes there are.
-                subject_id,
-                data_array,
-                dataset_info,
+            np.array([prob_array[1] for prob_array in ShallowFBCSPNet_arrays]).reshape(
+                1, -1
             )
         )
         models_outputs["ShallowFBCSPNet_test_timer"] = time.time() - start_time
@@ -246,22 +271,26 @@ if __name__ == "__main__":
 
     for dataset_name in datasets:
         selected_classes = [0, 1, 2, 3]
-        version_name = "2223only_one_method_channel_independent_unweighted_accuracy"  # To keep track what the output processing alteration went through
+        version_name = "channel_independent_unweighted_accuracy"  # To keep track what the output processing alteration went through
         processing_name: str = ""
 
         data_path = get_input_data_path(dataset_name)
 
         # Initialize
         methods = {
-            "selected_transformers": True,  # Training is over-fitted. Training accuracy >90
+            "selected_transformers": False,  # Training is over-fitted. Training accuracy >90
             "customized": False,  # Simpler than selected_transformers, only one transformer and no frequency bands. No need to activate both at the same time
-            "ShallowFBCSPNet": False,
+            "ShallowFBCSPNet": True,
             "LSTM": False,  # Training is over-fitted. Training accuracy >90
             "GRU": False,  # Training is over-fitted. Training accuracy >90
-            "diffE": False,
-            "feature_extraction": True,
+            "diffE": False,  # It doesn't work if you only use one channel in the data
+            "feature_extraction": False,
         }
         keys = list(methods.keys())
+        # todo: It would be more convenient to get all the outputs, save all probabilities, and then do the combinations
+        # todo:     instead of running all the code everytime I want to do a different combination.
+        # todo:     With that idea, a notebook where all the combination results are calculated would be able plus
+        # todo:     graphs and a "random" version, to know what the baseline is.
 
         dataset_info = get_dataset_basic_info(datasets_basic_infos, dataset_name)
         dataset_info["#_class"] = len(selected_classes)
@@ -281,9 +310,9 @@ if __name__ == "__main__":
         saving_txt_path: str = standard_saving_path(
             dataset_info, "_".join(activated_methods), version_name
         )
-        create_folder(dataset_info["dataset_name"], "_".join(activated_methods))
 
         save_original_channels = dataset_info["#_channels"]
+        save_original_trials = dataset_info["total_trials"]
 
         for subject_id in range(22, 24):
             print(subject_id)
@@ -294,6 +323,7 @@ if __name__ == "__main__":
                 f.write(f"Subject: {subject_id}\n\n")
 
             dataset_info["#_channels"] = save_original_channels
+            dataset_info["total_trials"] = save_original_trials
 
             epochs, data, labels = load_data_labels_based_on_dataset(
                 dataset_info,
@@ -304,6 +334,7 @@ if __name__ == "__main__":
             )  # could be any value, ex numpy.min
 
             # Only if using independent channels:
+            dataset_info["total_trials"] = save_original_trials * save_original_channels
             dataset_info["#_channels"] = 1
 
             cv = StratifiedKFold(
@@ -333,7 +364,6 @@ if __name__ == "__main__":
 
                 models_outputs, processing_name, columns_list, transform_methods = (
                     group_methods_train(
-                        dataset_name,
                         subject_id,
                         methods,
                         models_outputs,

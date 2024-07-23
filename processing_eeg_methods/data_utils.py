@@ -64,15 +64,6 @@ def class_selection(dataX, dataY, event_dict: dict, selected_classes: list[int])
     )
 
 
-def create_folder(dataset_name: str, subfolder_name: str):
-    # Create the folder if it doesn't exist already
-    saving_folder = (
-        f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{subfolder_name}/"
-    )
-    if not os.path.exists(saving_folder):
-        os.makedirs(saving_folder)
-
-
 def convert_into_binary(label, chosen_numbered_label):
     label_copy = label.copy()
     for i, label_i in enumerate(label_copy):
@@ -112,16 +103,14 @@ def standard_saving_path(
     file_ending: str = "txt",
     subject_id: int = 0,
 ):
+    saving_folder: str = (
+        f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_info['dataset_name']}/{processing_name}"
+    )
+    os.makedirs(saving_folder, exist_ok=True)
     if subject_id:
-        return (
-            f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_info['dataset_name']}/"
-            f"{processing_name}/{version_name}_{subject_id}.{file_ending}"
-        )
+        return f"{saving_folder}/{version_name}_{subject_id}.{file_ending}"
     else:
-        return (
-            f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_info['dataset_name']}/"
-            f"{processing_name}/{version_name}.{file_ending}"
-        )
+        return f"{saving_folder}/{version_name}.{file_ending}"
 
 
 def get_dataset_basic_info(datasets_basic_infos: dict, dataset_name: str) -> dict:

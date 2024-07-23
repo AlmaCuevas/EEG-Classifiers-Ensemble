@@ -6,7 +6,6 @@ import pandas as pd
 from data_loaders import load_data_labels_based_on_dataset
 from data_utils import (
     ClfSwitcher,
-    create_folder,
     get_best_classificator_and_test_accuracy,
     get_dataset_basic_info,
     get_input_data_path,
@@ -132,7 +131,6 @@ if __name__ == "__main__":
 
         data_path: str = get_input_data_path(dataset_name)
         dataset_info: dict = get_dataset_basic_info(datasets_basic_infos, dataset_name)
-        create_folder(dataset_name, processing_name)
 
         saving_txt_path: str = standard_saving_path(
             dataset_info, processing_name, version_name

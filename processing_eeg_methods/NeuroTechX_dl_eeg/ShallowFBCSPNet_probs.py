@@ -12,7 +12,6 @@ from braindecode.torch_ext.util import np_to_var, set_random_seeds, var_to_np
 from data_loaders import load_data_labels_based_on_dataset
 from data_utils import (
     convert_into_binary,
-    create_folder,
     get_dataset_basic_info,
     get_input_data_path,
     standard_saving_path,
@@ -26,9 +25,10 @@ threshold_for_bug = 0.00000001  # could be any value, ex numpy.min
 accelerator = "cu80" if path.exists("/opt/bin/nvidia-smi") else "cpu"
 
 
-def ShallowFBCSPNet_train(data, label) -> tuple[str, float]:
+def ShallowFBCSPNet_train(
+    data, label, chosen_numbered_label: int, dataset_info: dict, subject_id: int
+) -> tuple[str, float]:
     rng = RandomState(None)
-    # rng = RandomState((2017,6,30))
 
     nb_epoch = 160
     loss_rec = np.zeros((nb_epoch, 2))
@@ -90,7 +90,6 @@ def ShallowFBCSPNet_train(data, label) -> tuple[str, float]:
             optimizer.zero_grad()
             # Compute outputs of the network
             outputs = model(net_in)
-            print(net_target)
             # Compute the loss
             loss = F.nll_loss(outputs, net_target)
             # Do the backpropagation
@@ -137,7 +136,11 @@ def ShallowFBCSPNet_train(data, label) -> tuple[str, float]:
 
     # save/load only the model parameters(prefered solution)
     model_path: str = standard_saving_path(
-        dataset_info, "ShallowFBCSPNet", "", file_ending="pth", subject_id=subject_id
+        dataset_info,
+        processing_name="ShallowFBCSPNet",
+        version_name=str(chosen_numbered_label),
+        file_ending="pth",
+        subject_id=subject_id,
     )
     torch.save(model.state_dict(), model_path)
 
@@ -145,9 +148,15 @@ def ShallowFBCSPNet_train(data, label) -> tuple[str, float]:
     return acc
 
 
-def ShallowFBCSPNet_test(subject_id: int, data, dataset_info: dict):
+def ShallowFBCSPNet_test(
+    subject_id: int, data, dataset_info: dict, chosen_numbered_label: int
+):
     model_path: str = standard_saving_path(
-        dataset_info, "ShallowFBCSPNet", "", file_ending="pth", subject_id=subject_id
+        dataset_info,
+        processing_name="ShallowFBCSPNet",
+        version_name=str(chosen_numbered_label),
+        file_ending="pth",
+        subject_id=subject_id,
     )
 
     test_set = SignalAndTarget(
@@ -185,20 +194,15 @@ def ShallowFBCSPNet_test(subject_id: int, data, dataset_info: dict):
 
     dataset = test_set
 
-    i_trials_in_batch = get_balanced_batches(
-        len(dataset.X), rng, batch_size=32, shuffle=False
-    )
-    outputs = []
-    for i_trials in i_trials_in_batch:
-        batch_X = dataset.X[i_trials][:, :, :, None]
+    batch_X = dataset.X[[0]][
+        :, :, :, None
+    ]  # [0] because there is only one: the first one
 
-        net_in = np_to_var(batch_X)
-        if cuda:
-            net_in = net_in.cuda()
-        output = var_to_np(model(net_in))
-        outputs.append(output)
-    outputs = np_to_var(np.concatenate(outputs))
-    return var_to_np(outputs)
+    net_in = np_to_var(batch_X)
+    if cuda:
+        net_in = net_in.cuda()
+    output = var_to_np(model(net_in))
+    return output
 
 
 if __name__ == "__main__":
@@ -209,13 +213,12 @@ if __name__ == "__main__":
     for dataset_name in datasets:
         chosen_numbered_label = 3
         version_name: str = (
-            f"independent_channels_{chosen_numbered_label}"  # To keep track what the output processing alteration went through
+            f"independent_channels_{chosen_numbered_label}"  # To keep track the output processing alteration
         )
         processing_name: str = "ShallowFBCSPNet"
 
         data_path: str = get_input_data_path(dataset_name)
         dataset_info: dict = get_dataset_basic_info(datasets_basic_infos, dataset_name)
-        create_folder(dataset_name, processing_name)
 
         saving_txt_path: str = standard_saving_path(
             dataset_info, processing_name, version_name
@@ -242,7 +245,7 @@ if __name__ == "__main__":
             )
 
             data[data < threshold_for_bug] = (
-                threshold_for_bug  # To avoid the error "SVD did not convergence"
+                threshold_for_bug  # Consider removing this, for label 3 for sub29 it was slightly better to keep it
             )
             # Do cross-validation
             cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
@@ -255,7 +258,13 @@ if __name__ == "__main__":
                     "******************************** Training ********************************"
                 )
                 start = time.time()
-                accuracy = ShallowFBCSPNet_train(data[train], labels[train])
+                accuracy = ShallowFBCSPNet_train(
+                    data[train],
+                    labels[train],
+                    chosen_numbered_label=chosen_numbered_label,
+                    dataset_info=dataset_info,
+                    subject_id=subject_id,
+                )
                 training_time.append(time.time() - start)
                 with open(
                     saving_txt_path,
@@ -271,7 +280,10 @@ if __name__ == "__main__":
                 for epoch_number in test:
                     start = time.time()
                     array = ShallowFBCSPNet_test(
-                        subject_id, np.asarray([data[epoch_number]]), dataset_info
+                        subject_id,
+                        np.asarray([data[epoch_number]]),
+                        dataset_info,
+                        chosen_numbered_label=chosen_numbered_label,
                     )
                     end = time.time()
                     testing_time.append(end - start)
