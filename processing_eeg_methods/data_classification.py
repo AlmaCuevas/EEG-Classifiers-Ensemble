@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from BigProject.GRU_probs import GRU_test, GRU_train
 from BigProject.LSTM_probs import LSTM_test, LSTM_train
+from data_dataclass import complete_experiment, probability_input
 from data_loaders import load_data_labels_based_on_dataset
 from data_utils import (
     convert_into_binary,
@@ -42,7 +43,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import normalize
 
 
-def group_methods_train(
+def group_methods_train(  # todo: implement a dataclass for the methods where a function is for time and a call for the train and test
     subject_id: int,
     methods: dict,
     models_outputs: dict,
@@ -269,6 +270,8 @@ if __name__ == "__main__":
     voting_by_mode = False
     weighted_accuracy = False
 
+    ce = complete_experiment()
+
     for dataset_name in datasets:
         selected_classes = [0, 1, 2, 3]
         version_name = "channel_independent_unweighted_accuracy"  # To keep track what the output processing alteration went through
@@ -278,19 +281,15 @@ if __name__ == "__main__":
 
         # Initialize
         methods = {
-            "selected_transformers": False,  # Training is over-fitted. Training accuracy >90
+            "selected_transformers": True,  # Training is over-fitted. Training accuracy >90
             "customized": False,  # Simpler than selected_transformers, only one transformer and no frequency bands. No need to activate both at the same time
-            "ShallowFBCSPNet": True,
-            "LSTM": False,  # Training is over-fitted. Training accuracy >90
-            "GRU": False,  # Training is over-fitted. Training accuracy >90
+            "ShallowFBCSPNet": False,
+            "LSTM": True,  # Training is over-fitted. Training accuracy >90
+            "GRU": True,  # Training is over-fitted. Training accuracy >90
             "diffE": False,  # It doesn't work if you only use one channel in the data
-            "feature_extraction": False,
+            "feature_extraction": True,
         }
         keys = list(methods.keys())
-        # todo: It would be more convenient to get all the outputs, save all probabilities, and then do the combinations
-        # todo:     instead of running all the code everytime I want to do a different combination.
-        # todo:     With that idea, a notebook where all the combination results are calculated would be able plus
-        # todo:     graphs and a "random" version, to know what the baseline is.
 
         dataset_info = get_dataset_basic_info(datasets_basic_infos, dataset_name)
         dataset_info["#_class"] = len(selected_classes)
@@ -314,7 +313,7 @@ if __name__ == "__main__":
         save_original_channels = dataset_info["#_channels"]
         save_original_trials = dataset_info["total_trials"]
 
-        for subject_id in range(22, 24):
+        for subject_id in range(29, 30):
             print(subject_id)
             with open(
                 saving_txt_path,
@@ -352,10 +351,12 @@ if __name__ == "__main__":
             train_timer_dict_lists = dict(
                 (f"{k}_train_timer", []) for k in activated_methods
             )
+            count_Kfolds: int = 0
             for train, test in cv.split(epochs, labels):
                 print(
                     "******************************** Training ********************************"
                 )
+                count_Kfolds += 1
                 # Convert independent channels to pseudo-trials
                 data_train, labels_train = convert_into_independent_channels(
                     data[train], labels[train]
@@ -422,6 +423,19 @@ if __name__ == "__main__":
                                 weighted_accuracy,
                             )
                         )
+                        for method in methods:
+                            ce.data_point.append(
+                                probability_input(
+                                    methods=method,
+                                    probabilities=models_outputs[
+                                        f"{method}_probabilities"
+                                    ],
+                                    subject_id=subject_id,
+                                    channel=pseudo_trial,
+                                    kfold=count_Kfolds,
+                                    label=labels[epoch_number],
+                                )
+                            )
 
                     voting_system_pred = probabilities_to_answer(
                         probs_by_channel, voting_by_mode
@@ -511,6 +525,15 @@ if __name__ == "__main__":
                 dataset_info,
                 "_".join(activated_methods),
                 version_name,
+                file_ending="csv",
+            )
+        )
+
+        ce.to_df().to_csv(
+            standard_saving_path(
+                dataset_info,
+                "_".join(activated_methods),
+                version_name + "_all_probabilities",
                 file_ending="csv",
             )
         )
