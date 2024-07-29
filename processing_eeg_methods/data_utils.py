@@ -194,3 +194,12 @@ def data_normalization(data):
 
 def get_input_data_path(dataset_name: str) -> str:
     return ROOT_VOTING_SYSTEM_PATH + "/Datasets/" + dataset_name + "_dataset"
+
+
+def probabilities_to_answer(probs_by_channels: list, voting_by_mode: bool = False):
+    if voting_by_mode:
+        overall_decision = flat_a_list(probs_by_channels)
+        return max(set(overall_decision), key=list(overall_decision).count)
+    else:  # voting_by_array_probabilities
+        by_channel_decision = np.nanmean(probs_by_channels, axis=0)  # Mean over columns
+        return np.argmax(by_channel_decision)
