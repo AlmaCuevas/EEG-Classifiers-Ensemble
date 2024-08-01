@@ -25,11 +25,11 @@ if __name__ == "__main__":
     pm.activate_methods(
         selected_transformers=True,  # Training is over-fitted. Training accuracy >90
         customized=True,  # Simpler than selected_transformers, only one transformer and no frequency bands. No need to activate both at the same time
-        ShallowFBCSPNet=False,
-        LSTM=False,  # Training is over-fitted. Training accuracy >90
-        GRU=False,  # Training is over-fitted. Training accuracy >90
+        ShallowFBCSPNet=True,
+        LSTM=True,  # Training is over-fitted. Training accuracy >90
+        GRU=True,  # Training is over-fitted. Training accuracy >90
         diffE=False,  # It doesn't work if you only use one channel in the data
-        feature_extraction=False,
+        feature_extraction=True,
         number_of_classes=dataset_info["#_class"],
     )
     activated_methods: list[str] = pm.get_activated_methods()
@@ -65,6 +65,8 @@ if __name__ == "__main__":
         )  # Do cross-validation
 
         count_Kfolds: int = 0
+        index_count: int = 0
+        trial_index_count: int = 0
         for train, test in cv.split(epochs, labels):
             print(
                 "******************************** Training ********************************"
@@ -88,6 +90,7 @@ if __name__ == "__main__":
             )
 
             for epoch_number in test:
+                trial_index_count += 1
                 # Convert independent channels to pseudo-trials
                 data_test, labels_test = convert_into_independent_channels(
                     np.asarray([data[epoch_number]]), labels[epoch_number]
@@ -95,6 +98,7 @@ if __name__ == "__main__":
                 data_test = np.transpose(np.array([data_test]), (1, 0, 2))
 
                 for pseudo_trial in range(len(data_test)):
+                    index_count += 1
                     pm.test(
                         subject_id=subject_id,
                         data=np.asarray([data_test[pseudo_trial]]),
@@ -105,6 +109,8 @@ if __name__ == "__main__":
                         method = getattr(pm, method_name)
                         ce.data_point.append(
                             probability_input(
+                                trial_group_index=trial_index_count,
+                                group_index=index_count,
                                 dataset_name=dataset_name,
                                 methods=method_name,
                                 probabilities=method.testing.probabilities,

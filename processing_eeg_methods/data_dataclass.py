@@ -18,6 +18,8 @@ from classifiers_classes import (
 
 @dataclass
 class probability_input:
+    trial_group_index: int
+    group_index: int
     dataset_name: str
     methods: str
     probabilities: List[float]
