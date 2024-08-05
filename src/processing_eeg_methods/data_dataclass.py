@@ -168,7 +168,7 @@ class ProcessingMethods:
                     data=data,
                     labels=labels,
                     dataset_info=dataset_info,
-                )
+                )  # todo: Training accuracies are not reliable (its in reality a mini-testing inside the training), therefore it would be better to stop getting them and focus all the samples into pure training
                 method.training.timing = time.time() - start_time
 
     def test(self, subject_id: int, data, dataset_info: dict):

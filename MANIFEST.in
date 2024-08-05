@@ -1,0 +1,15 @@
+include README.md
+include LICENSE
+include setup.py
+include pyproject.toml
+recursive-include processing_eeg_methods *.py
+recursive-include tests *.py
+exclude .gitignore
+exclude .git/*
+exclude Datasets
+exclude Results
+include pyproject.toml
+include poetry.lock
+exclude processing310_env/*
+exclude processing_env/*
+include .pre-commit-config.yaml

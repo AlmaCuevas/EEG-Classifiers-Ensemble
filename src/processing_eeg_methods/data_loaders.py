@@ -357,7 +357,7 @@ def load_data_labels_based_on_dataset(
         filepath = os.path.join(*path)
         data, label, event_dict = coretto_dataset_loader(filepath)
     elif dataset_name == "torres":
-        filename = "IndividuosS1-S27(17columnas)-Epocas.mat"
+        filename = "Datasets/torres_dataset/IndividuosS1-S27(17columnas)-Epocas.mat"
         filepath = os.path.join(data_path, filename)
         data, label, event_dict = torres_dataset_loader(filepath, subject_id)
     elif dataset_name == "ic_bci_2020":

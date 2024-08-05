@@ -1,5 +1,5 @@
 /Datasets/
 /Results/
 **/__pycache__
-/processing_eeg_methods/AugmentBrain/Aug_Test_42/
-/processing_eeg_methods/AugmentBrain/WGAN_2024-07-19 18_34_31/
+.DS_Store
+.idea/
