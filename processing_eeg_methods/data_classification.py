@@ -10,35 +10,14 @@ from data_utils import (
 from share import datasets_basic_infos
 from sklearn.model_selection import StratifiedKFold
 
-if __name__ == "__main__":
-    # Manual Inputs
-    dataset_name = "braincommand"
-    selected_classes = [0, 1, 2, 3]
 
-    ce = complete_experiment()
-
-    pm = ProcessingMethods()
-
-    dataset_info = get_dataset_basic_info(datasets_basic_infos, dataset_name)
-    dataset_info["#_class"] = len(selected_classes)
-
-    pm.activate_methods(
-        selected_transformers=True,  # Training is over-fitted. Training accuracy >90
-        customized=True,  # Simpler than selected_transformers, only one transformer and no frequency bands. No need to activate both at the same time
-        ShallowFBCSPNet=True,
-        LSTM=True,  # Training is over-fitted. Training accuracy >90
-        GRU=True,  # Training is over-fitted. Training accuracy >90
-        diffE=False,  # It doesn't work if you only use one channel in the data
-        feature_extraction=True,
-        number_of_classes=dataset_info["#_class"],
-    )
-    activated_methods: list[str] = pm.get_activated_methods()
-
-    version_name = "test_delete_later"  # To keep track what the output processing alteration went through
-    processing_name: str = "test_delete_later"
-
-    data_path = get_input_data_path(dataset_name)
-
+def pseudo_trial_exhaustive_training_and_testing(
+    ce: complete_experiment,
+    pm: ProcessingMethods,
+    dataset_info: dict,
+    data_path: str,
+    selected_classes: list[int],
+):
     save_original_channels = dataset_info["#_channels"]
     save_original_trials = dataset_info["total_trials"]
 
@@ -123,6 +102,109 @@ if __name__ == "__main__":
                                 testing_timing=method.testing.timing,
                             )
                         )
+
+
+def trial_exhaustive_training_and_testing(
+    ce: complete_experiment,
+    pm: ProcessingMethods,
+    dataset_info: dict,
+    data_path: str,
+    selected_classes: list[int],
+):
+    for subject_id in range(29, 30):
+        print(subject_id)
+
+        epochs, data, labels = load_data_labels_based_on_dataset(
+            dataset_info,
+            subject_id,
+            data_path,
+            selected_classes=selected_classes,
+            threshold_for_bug=0.00000001,
+        )
+
+        cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
+
+        count_Kfolds: int = 0
+        trial_index_count: int = 0
+        for train, test in cv.split(epochs, labels):
+            print(
+                "******************************** Training ********************************"
+            )
+            count_Kfolds += 1
+            pm.train(
+                subject_id=subject_id,
+                data=data[train],
+                labels=labels[train],
+                dataset_info=dataset_info,
+            )
+
+            print(
+                "******************************** Test ********************************"
+            )
+
+            for epoch_number in test:
+                trial_index_count += 1
+
+                pm.test(
+                    subject_id=subject_id,
+                    data=np.asarray([data[epoch_number]]),
+                    dataset_info=dataset_info,
+                )
+
+                for method_name in vars(pm):
+                    method = getattr(pm, method_name)
+                    if method.activation:
+                        ce.data_point.append(
+                            probability_input(
+                                trial_group_index=trial_index_count,
+                                group_index=99,
+                                dataset_name=dataset_name,
+                                methods=method_name,
+                                probabilities=method.testing.probabilities,
+                                subject_id=subject_id,
+                                channel=99,
+                                kfold=count_Kfolds,
+                                label=labels[epoch_number],
+                                training_accuracy=method.training.accuracy,
+                                training_timing=method.training.timing,
+                                testing_timing=method.testing.timing,
+                            )
+                        )
+    return ce
+
+
+if __name__ == "__main__":
+    # Manual Inputs
+    dataset_name = "braincommand"
+    selected_classes = [0, 1, 2, 3]
+
+    ce = complete_experiment()
+
+    pm = ProcessingMethods()
+
+    dataset_info = get_dataset_basic_info(datasets_basic_infos, dataset_name)
+    dataset_info["#_class"] = len(selected_classes)
+
+    pm.activate_methods(
+        selected_transformers=False,  # Training is over-fitted. Training accuracy >90
+        customized=False,  # Simpler than selected_transformers, only one transformer and no frequency bands. No need to activate both at the same time
+        ShallowFBCSPNet=False,
+        LSTM=False,  # Training is over-fitted. Training accuracy >90
+        GRU=False,  # Training is over-fitted. Training accuracy >90
+        diffE=True,  # It doesn't work if you only use one channel in the data
+        feature_extraction=False,
+        number_of_classes=dataset_info["#_class"],
+    )
+    activated_methods: list[str] = pm.get_activated_methods()
+
+    version_name = "all_channels_normally_not_independent_function_version"  # To keep track what the output processing alteration went through
+
+    data_path = get_input_data_path(dataset_name)
+
+    # ce = trial_exhaustive_training_and_testing(ce, pm, dataset_info, data_path, selected_classes)
+    ce = pseudo_trial_exhaustive_training_and_testing(
+        ce, pm, dataset_info, data_path, selected_classes
+    )
 
     ce.to_df().to_csv(
         standard_saving_path(

@@ -5,7 +5,11 @@ from typing import Any, List, Optional
 import numpy as np
 from BigProject.GRU_probs import GRU_test, GRU_train
 from BigProject.LSTM_probs import LSTM_test, LSTM_train
-from data_utils import convert_into_binary, convert_into_independent_channels
+from data_utils import (
+    convert_into_binary,
+    convert_into_independent_channels,
+    data_normalization,
+)
 from DiffE.diffE_probs import diffE_test
 from DiffE.diffE_training import diffE_train
 from features_extraction.get_features_probs import (
@@ -26,7 +30,6 @@ from NeuroTechX_dl_eeg.ShallowFBCSPNet_probs import (
     ShallowFBCSPNet_test,
     ShallowFBCSPNet_train,
 )
-from sklearn.preprocessing import normalize
 
 
 class ProcessingMethod:
@@ -71,7 +74,7 @@ class selected_transformers_function(ProcessingMethod):
             labels=None,
             transform_methods=self.transform_methods,
         )
-        return normalize(
+        return data_normalization(
             selected_transformers_test(
                 self.clf,
                 transforms_test_df[self.columns_list],
@@ -92,7 +95,7 @@ class customized_function(ProcessingMethod):
         return accuracy
 
     def test(self, data, **kwargs):
-        return normalize(customized_test(self.clf, data))
+        return data_normalization(customized_test(self.clf, data))
 
 
 @dataclass
@@ -128,7 +131,7 @@ class ShallowFBCSPNet_function(ProcessingMethod):
                     chosen_numbered_label=chosen_numbered_label,
                 )[0]
             )
-        return normalize(
+        return data_normalization(
             np.array([prob_array[1] for prob_array in ShallowFBCSPNet_arrays]).reshape(
                 1, -1
             )
@@ -144,7 +147,7 @@ class LSTM_function(ProcessingMethod):
         return accuracy
 
     def test(self, data, **kwargs):
-        return normalize(LSTM_test(self.clf, data))
+        return data_normalization(LSTM_test(self.clf, data))
 
 
 @dataclass
@@ -158,7 +161,7 @@ class GRU_function(ProcessingMethod):
         return accuracy
 
     def test(self, data, **kwargs):
-        return normalize(GRU_test(self.clf, data))
+        return data_normalization(GRU_test(self.clf, data))
 
 
 @dataclass
@@ -170,7 +173,7 @@ class diffE_function(ProcessingMethod):
         )  # The trained clf is saved in a file
 
     def test(self, data, dataset_info: dict, subject_id: int, **kwargs):
-        return normalize(
+        return data_normalization(
             diffE_test(subject_id=subject_id, X=data, dataset_info=dataset_info)
         )
 
@@ -193,4 +196,4 @@ class feature_extraction_function(ProcessingMethod):
     def test(self, data, dataset_info: dict, subject_id: int, **kwargs):
         data_array_simplified, _ = convert_into_independent_channels(data, [1])
         features_df = by_frequency_band(data_array_simplified, dataset_info)
-        return normalize(extractions_test(self.clf, features_df))
+        return data_normalization(extractions_test(self.clf, features_df))

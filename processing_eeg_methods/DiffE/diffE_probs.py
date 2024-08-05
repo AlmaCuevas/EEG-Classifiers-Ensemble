@@ -8,9 +8,10 @@ from data_loaders import load_data_labels_based_on_dataset
 from data_utils import get_dataset_basic_info, get_input_data_path, standard_saving_path
 from DiffE.diffE_models import Decoder, DiffE, Encoder, LinearClassifier
 from DiffE.diffE_training import diffE_train
-from DiffE.diffE_utils import get_dataloader
+from DiffE.diffE_utils import EEGDataset
 from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
 from sklearn.model_selection import StratifiedKFold
+from torch.utils.data import DataLoader
 
 # todo: add the test template
 # todo: do the deap thing about the FFT: https://github.com/tongdaxu/EEG_Emotion_Classifier_DEAP/blob/master/Preprocess_Deap.ipynb
@@ -28,17 +29,11 @@ def diffE_test(subject_id: int, X, dataset_info: dict, device: str = "cuda:0"):
         :, :, : -1 * (X.shape[2] % 8)
     ]  # 2^3=8 because there are 3 downs and ups halves.
     # Dataloader
-    batch_size = 32
     batch_size2 = 260
-    seed = 42
-    train_loader, _ = get_dataloader(
-        X,
-        [0] * (X.shape[0]),  # Y=0 JUST TO NOT LEAVE IT EMPTY, HERE IT ISN'T USED
-        batch_size,
-        batch_size2,
-        seed,
-        shuffle=True,
-    )
+    testing_set = EEGDataset(
+        X, [0] * (X.shape[0])
+    )  # Y=0 JUST TO NOT LEAVE IT EMPTY, HERE IT ISN'T USED
+    testing_loader = DataLoader(testing_set, batch_size=batch_size2, shuffle=False)
 
     n_T = 1000
     ddpm_dim = 128
@@ -62,7 +57,7 @@ def diffE_test(subject_id: int, X, dataset_info: dict, device: str = "cuda:0"):
 
     with torch.no_grad():
         Y_hat = []
-        for x, _ in train_loader:
+        for x, _ in testing_loader:
             x = x.to(device).float()
             encoder_out = diffe.encoder(x)
             y_hat = diffe.fc(encoder_out[1])
