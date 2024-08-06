@@ -2,6 +2,7 @@ import copy
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
 
+import joblib
 import numpy as np
 from BigProject.GRU_probs import GRU_test, GRU_train
 from BigProject.LSTM_probs import LSTM_test, LSTM_train
@@ -48,6 +49,23 @@ class ProcessingMethod:
         Returns the probabilities
         """
         raise Exception("Not implemented yet.")
+
+    def save(self, path):
+        for name, attribute in self.__dict__.items():
+            name = ".".join((name, "joblib"))
+            print("/".join((path, name)))
+            with open("/".join((path, name)), "wb") as f:
+                joblib.dump(attribute, f)
+
+    @classmethod
+    def load(cls, path):
+        my_model = {}
+        for name in cls.__annotations__:
+            file_name = ".".join((name, "joblib"))
+            print("/".join((path, file_name)))
+            with open("/".join((path, file_name)), "rb") as f:
+                my_model[name] = joblib.load(f)
+        return cls(**my_model)
 
 
 @dataclass

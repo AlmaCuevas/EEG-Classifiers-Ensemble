@@ -1,6 +1,6 @@
 from pathlib import Path
 
-ROOT_VOTING_SYSTEM_PATH: str = str(Path(__file__).parent.parent.resolve())
+ROOT_VOTING_SYSTEM_PATH: str = str(Path(__file__).parent.parent.parent.resolve())
 
 # DATASETS BASIC INFO
 # Edgar Aguilera Traditional
