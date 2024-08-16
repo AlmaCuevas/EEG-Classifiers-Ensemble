@@ -9,10 +9,10 @@ from classifiers_classes import (
     LSTM_function,
     ProcessingMethod,
     ShallowFBCSPNet_function,
-    customized_function,
     diffE_function,
     feature_extraction_function,
-    selected_transformers_function,
+    simplified_spatial_features_function,
+    spatial_features_function,
 )
 
 
@@ -62,12 +62,12 @@ class MethodInfo:
 
 @dataclass
 class ProcessingMethods:
-    selected_transformers: MethodInfo = field(
+    spatial_features: MethodInfo = field(
         init=False
     )  # Training is over-fitted. Training accuracy >90
-    customized: MethodInfo = field(
+    simplified_spatial_features: MethodInfo = field(
         init=False
-    )  # Simpler than selected_transformers, only one transformer and no frequency bands. No need to activate both at the same time
+    )  # Simpler than spatial_features, only one transformer and no frequency bands. No need to activate both at the same time
     ShallowFBCSPNet: MethodInfo = field(init=False)
     LSTM: MethodInfo = field(
         init=False
@@ -82,8 +82,8 @@ class ProcessingMethods:
 
     def activate_methods(
         self,
-        selected_transformers: bool,
-        customized: bool,
+        spatial_features: bool,
+        simplified_spatial_features: bool,
         ShallowFBCSPNet: bool,
         LSTM: bool,
         GRU: bool,
@@ -91,17 +91,17 @@ class ProcessingMethods:
         feature_extraction: bool,
         number_of_classes: int,
     ):
-        self.selected_transformers = MethodInfo(
-            activation=selected_transformers,
-            function=selected_transformers_function(),
+        self.spatial_features = MethodInfo(
+            activation=spatial_features,
+            function=spatial_features_function(),
             training=ModelPerformance(accuracy=np.nan, timing=np.nan),
             testing=SingleOutput(
                 probabilities=[[np.nan] * number_of_classes], timing=np.nan
             ),
         )  # note: I didn't use the Optional because the values inside where duplicating as if they were the same variable.
-        self.customized = MethodInfo(
-            activation=customized,
-            function=customized_function(),
+        self.simplified_spatial_features = MethodInfo(
+            activation=simplified_spatial_features,
+            function=simplified_spatial_features_function(),
             training=ModelPerformance(accuracy=np.nan, timing=np.nan),
             testing=SingleOutput(
                 probabilities=[[np.nan] * number_of_classes], timing=np.nan
@@ -168,7 +168,7 @@ class ProcessingMethods:
                     data=data,
                     labels=labels,
                     dataset_info=dataset_info,
-                )  # todo: Training accuracies are not reliable (its in reality a mini-testing inside the training), therefore it would be better to stop getting them and focus all the samples into pure training
+                )  # todo: Training accuracies are not always reliable (its in reality a mini-testing inside the training), therefore it would be better to stop getting them and focus all the samples into pure training
                 method.training.timing = time.time() - start_time
 
     def test(self, subject_id: int, data, dataset_info: dict):

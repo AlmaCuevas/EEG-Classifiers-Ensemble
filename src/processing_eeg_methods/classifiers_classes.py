@@ -13,23 +13,23 @@ from data_utils import (
 )
 from DiffE.diffE_probs import diffE_test
 from DiffE.diffE_training import diffE_train
-from features_extraction.get_features_probs import (
-    by_frequency_band,
-    extractions_test,
-    extractions_train,
-)
-from multiple_transforms_with_models.customized_probs import (
-    customized_test,
-    customized_train,
-)
-from multiple_transforms_with_models.transforms_selectKBest_probs import (
-    selected_transformers_test,
-    selected_transformers_train,
-    transform_data,
-)
 from NeuroTechX_dl_eeg.ShallowFBCSPNet_probs import (
     ShallowFBCSPNet_test,
     ShallowFBCSPNet_train,
+)
+from spatial_features.simplified_spatial_feature_probs import (
+    customized_test,
+    customized_train,
+)
+from spatial_features.spatial_features_probs import (
+    get_spatial_and_frequency_features_data,
+    spatial_features_test,
+    spatial_features_train,
+)
+from time_features.time_features_probs import (
+    by_frequency_band,
+    extractions_test,
+    extractions_train,
 )
 
 
@@ -69,34 +69,33 @@ class ProcessingMethod:
 
 
 @dataclass
-class selected_transformers_function(ProcessingMethod):
+class spatial_features_function(ProcessingMethod):
     clf: Optional[Any] = None
     columns_list: List[str] = field(default_factory=list)
     transform_methods: dict = field(default_factory=dict)
 
     def train(self, data, labels, dataset_info: dict, **kwargs):
-        features_train_df, self.transform_methods = transform_data(
-            data, dataset_info=dataset_info, labels=labels
+        features_train_df, self.transform_methods = (
+            get_spatial_and_frequency_features_data(
+                data, dataset_info=dataset_info, labels=labels
+            )
         )
         (
             self.clf,
             accuracy,
             self.columns_list,
-        ) = selected_transformers_train(features_train_df, labels)
+        ) = spatial_features_train(features_train_df, labels)
         return accuracy
 
     def test(self, data, dataset_info: dict, **kwargs):
-        transforms_test_df, _ = transform_data(
+        transforms_test_df, _ = get_spatial_and_frequency_features_data(
             data,
             dataset_info=dataset_info,
             labels=None,
             transform_methods=self.transform_methods,
         )
         return data_normalization(
-            selected_transformers_test(
-                self.clf,
-                transforms_test_df[self.columns_list],
-            )
+            spatial_features_test(self.clf, transforms_test_df[self.columns_list])
         )
 
 

@@ -12,7 +12,14 @@ Abdulghani, Walters, and Abed [2], Agarwal and Kumar [3], and Kumar and Scheme [
 classify speech imagery. An LSTM, a recurrent neural network, can learn long-term dependencies between the discrete
 steps in a time series data. The code used was obtained from GitHub by [5].
 
-# Transforms
+### GRU
+
+### DiffE
+
+### ShallowFBCSPNet
+
+
+### Spatial Features
 
 #### XDAWN+RG
 The XDAWN spatial filter and Riemannian Geometry classifier (RG) algorithm [7] achieved an accuracy of 0.836. Riemannian
@@ -23,7 +30,7 @@ and mental states have a degree of invariance that covariance matrices can captu
 distance is robust to noise. This method can potentially reduce or eliminate the calibration phase, especially when limited
 training data is available.
 
-# Features
+### Time Features
 
 #### EEGExtract
 EEGExtract is a feature extraction code designed to process EEG data, here the input is segmented into various frequency

@@ -1,11 +1,11 @@
 import time
 
 import antropy as ant
-import features_extraction.EEGExtract as eeg
 import mne
 import numpy
 import numpy as np
 import pandas as pd
+import time_features.EEGExtract as eeg
 from data_loaders import load_data_labels_based_on_dataset
 from data_utils import (
     ClfSwitcher,

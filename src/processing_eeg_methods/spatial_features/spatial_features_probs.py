@@ -26,7 +26,7 @@ from sklearn.pipeline import Pipeline
 threshold_for_bug = 0.00000001  # could be any value, ex numpy.min
 
 
-def transform_data(
+def get_spatial_and_frequency_features_data(
     data, dataset_info: dict, labels=None, transform_methods: dict = {}
 ) -> tuple[pd.DataFrame, dict]:
     features: dict = {
@@ -92,7 +92,7 @@ def transform_data(
     return features_df, transform_methods
 
 
-def selected_transformers_train(features_df, labels):
+def spatial_features_train(features_df, labels):
     X_SelectKBest = SelectKBest(f_classif, k=100)
     X_new = X_SelectKBest.fit_transform(features_df, labels)
     columns_list = X_SelectKBest.get_feature_names_out()
@@ -104,7 +104,7 @@ def selected_transformers_train(features_df, labels):
     return classifier, acc, columns_list
 
 
-def selected_transformers_test(clf, features_df):
+def spatial_features_test(clf, features_df):
     """
     This is what the real-time BCI will call.
     Parameters
@@ -164,11 +164,13 @@ if __name__ == "__main__":
                     "******************************** Training ********************************"
                 )
                 start = time.time()
-                features_train_df, transform_methods = transform_data(
-                    data[train], dataset_info=dataset_info, labels=labels[train]
+                features_train_df, transform_methods = (
+                    get_spatial_and_frequency_features_data(
+                        data[train], dataset_info=dataset_info, labels=labels[train]
+                    )
                 )
 
-                clf, accuracy, columns_list = selected_transformers_train(
+                clf, accuracy, columns_list = spatial_features_train(
                     features_train_df, labels[train]
                 )
                 training_time.append(time.time() - start)
@@ -184,15 +186,13 @@ if __name__ == "__main__":
                 testing_time = []
                 for epoch_number in test:
                     start = time.time()
-                    features_test_df, _ = transform_data(
+                    features_test_df, _ = get_spatial_and_frequency_features_data(
                         np.asarray([data[epoch_number]]),
                         dataset_info=dataset_info,
                         labels=None,
                         transform_methods=transform_methods,
                     )
-                    array = selected_transformers_test(
-                        clf, features_test_df[columns_list]
-                    )
+                    array = spatial_features_test(clf, features_test_df[columns_list])
                     end = time.time()
                     testing_time.append(end - start)
                     print(dataset_info["target_names"])
