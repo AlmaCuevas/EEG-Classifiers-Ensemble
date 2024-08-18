@@ -21,7 +21,7 @@ from sklearn.pipeline import Pipeline
 # todo: do the deap thing about the FFT: https://github.com/tongdaxu/EEG_Emotion_Classifier_DEAP/blob/master/Preprocess_Deap.ipynb
 
 
-def customized_train(data, labels):  # v1
+def simplified_spatial_features_train(data, labels):  # v1
 
     estimators = OrderedDict()
     # Do not use 'Vect' transform, most of the time is nan or 0.25 if anything.
@@ -48,7 +48,7 @@ def customized_train(data, labels):  # v1
     )
 
 
-def customized_test(clf, trial):
+def simplified_spatial_features_test(clf, trial):
     """
     This is what the real-time BCI will call.
     Parameters
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     # Manual Inputs
     datasets = ["ic_bci_2020"]
     for dataset_name in datasets:
-        version_name = "only_customized_two_classes_12_no_preprocess"
+        version_name = "only_simplified_spatial_features_two_classes_12_no_preprocess"
         processing_name: str = ""
 
         data_path: str = get_input_data_path(dataset_name)
@@ -108,7 +108,7 @@ if __name__ == "__main__":
                     "******************************** Training ********************************"
                 )
                 start = time.time()
-                clf, accuracy, processing_name = customized_train(
+                clf, accuracy, processing_name = simplified_spatial_features_train(
                     data[train], labels[train]
                 )
                 training_time.append(time.time() - start)
@@ -125,7 +125,9 @@ if __name__ == "__main__":
                 testing_time = []
                 for epoch_number in test:
                     start = time.time()
-                    array = customized_test(clf, np.asarray([data[epoch_number]]))
+                    array = simplified_spatial_features_test(
+                        clf, np.asarray([data[epoch_number]])
+                    )
                     end = time.time()
                     testing_time.append(end - start)
                     print(dataset_info["target_names"])

@@ -18,7 +18,6 @@ steps in a time series data. The code used was obtained from GitHub by [5].
 
 ### ShallowFBCSPNet
 
-
 ### Spatial Features
 
 #### XDAWN+RG
@@ -30,14 +29,32 @@ and mental states have a degree of invariance that covariance matrices can captu
 distance is robust to noise. This method can potentially reduce or eliminate the calibration phase, especially when limited
 training data is available.
 
+#### Common Spatial Patterns
+
+#### Covariances
+
 ### Time Features
+
+These features are organized into columns with descriptive names, facilitating feature selection. The
+resulting table of features serves as the input for classifiers, enabling the analysis of EEG signals.
 
 #### EEGExtract
 EEGExtract is a feature extraction code designed to process EEG data, here the input is segmented into various frequency
 bands before feeding it to the extraction process. For each frequency band, EEGExtract computes a set of features,
-including entropy, mobility, complexity, ratio, Lyapunov exponent, standard deviation, mean, kurtosis, skewness, and
-variance. These features are organized into columns with descriptive names, facilitating feature selection. The
-resulting table of features serves as the input for classifiers, enabling the analysis of EEG signals.
+including entropy, mobility, complexity, ratio, and Lyapunov exponent.
+
+#### Statistical variables
+
+##### Mean
+The average value of the signal.
+##### Skewness
+A measure of the asymmetry of the probability distribution of the signal values.
+##### Kurtosis
+A measure of the “tailedness” of the probability distribution of the signal values.
+##### Standard Deviation (Std)
+A measure of the amount of variation or dispersion of the signal values.
+##### Variance
+The square of the standard deviation, representing the spread of the signal values.
 
 ##  Datasets used:
 ### [Aguilera](https://data.mendeley.com/datasets/57g8z63tmy/1) [15]

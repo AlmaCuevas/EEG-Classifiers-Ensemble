@@ -289,7 +289,7 @@ def nguyen_2019_dataset_loader(folderpath: str):
 
 
 def braincommand_dataset_loader(
-    filepath: str, subject_id: int, game_mode: str = "calibration2"
+    filepath: str, subject_id: int, game_mode: str = "calibration3"
 ):
     complete_information = pd.read_csv(
         f"{filepath}/eeg_data_{game_mode}_sub{subject_id:02d}.csv"
@@ -382,9 +382,7 @@ def load_data_labels_based_on_dataset(
     if astype_value:
         data = data.astype(astype_value)
     if threshold_for_bug:
-        data[data < threshold_for_bug] = (
-            threshold_for_bug  # To avoid the error "SVD did not convergence"
-        )
+        data[data < threshold_for_bug] = threshold_for_bug
     if (
         channels_independent
     ):  # You can't do this and then split train and test because you'll mix them
@@ -422,8 +420,8 @@ def load_data_labels_based_on_dataset(
 
 if __name__ == "__main__":
     # Manual Inputs
-    subject_id = 1  # Only two things I should be able to change
-    dataset_name = "aguilera_gamified"  # Only two things I should be able to change
+    subject_id = 29  # Only two things I should be able to change
+    dataset_name = "braincommand"  # Only two things I should be able to change
 
     get_dataset_basic_info(datasets_basic_infos, dataset_name)
     dataset_info: dict = datasets_basic_infos[dataset_name]

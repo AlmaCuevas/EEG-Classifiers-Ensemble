@@ -17,9 +17,9 @@ from NeuroTechX_dl_eeg.ShallowFBCSPNet_probs import (
     ShallowFBCSPNet_test,
     ShallowFBCSPNet_train,
 )
-from spatial_features.simplified_spatial_feature_probs import (
-    customized_test,
-    customized_train,
+from spatial_features.simplified_spatial_features_probs import (
+    simplified_spatial_features_test,
+    simplified_spatial_features_train,
 )
 from spatial_features.spatial_features_probs import (
     get_spatial_and_frequency_features_data,
@@ -100,7 +100,7 @@ class spatial_features_function(ProcessingMethod):
 
 
 @dataclass
-class customized_function(ProcessingMethod):
+class simplified_spatial_features_function(ProcessingMethod):
     clf: Optional[Any] = None
 
     def train(self, data, labels, **kwargs):
@@ -108,11 +108,11 @@ class customized_function(ProcessingMethod):
             self.clf,
             accuracy,
             processing_name,
-        ) = customized_train(copy.deepcopy(data), labels)
+        ) = simplified_spatial_features_train(copy.deepcopy(data), labels)
         return accuracy
 
     def test(self, data, **kwargs):
-        return data_normalization(customized_test(self.clf, data))
+        return data_normalization(simplified_spatial_features_test(self.clf, data))
 
 
 @dataclass
