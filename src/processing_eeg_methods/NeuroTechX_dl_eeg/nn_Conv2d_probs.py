@@ -21,7 +21,6 @@ def adjust_learning_rate(optimizer, epoch):
 
 def nn_Conv2d_train(data, label, dataset_info, subject_id) -> tuple[str, float]:
     rng = RandomState(None)
-    # rng = RandomState((2017,6,30))
 
     nb_epoch = 160
     loss_rec = np.zeros((nb_epoch, 2))
