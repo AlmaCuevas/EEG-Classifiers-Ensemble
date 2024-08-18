@@ -11,8 +11,8 @@ from data_utils import (
     convert_into_independent_channels,
     data_normalization,
 )
-from DiffE.diffE_probs import diffE_test
-from DiffE.diffE_training import diffE_train
+from diffusion.diffE_probs import diffE_test
+from diffusion.diffE_training import diffE_train
 from NeuroTechX_dl_eeg.ShallowFBCSPNet_probs import (
     ShallowFBCSPNet_test,
     ShallowFBCSPNet_train,

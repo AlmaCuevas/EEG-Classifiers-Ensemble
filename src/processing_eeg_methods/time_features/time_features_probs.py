@@ -1,24 +1,12 @@
-import time
-
 import antropy as ant
 import mne
 import numpy
 import numpy as np
 import pandas as pd
 import time_features.EEGExtract as eeg
-from data_loaders import load_data_labels_based_on_dataset
-from data_utils import (
-    ClfSwitcher,
-    convert_into_independent_channels,
-    get_best_classificator_and_test_accuracy,
-    get_dataset_basic_info,
-    get_input_data_path,
-    standard_saving_path,
-)
+from data_utils import ClfSwitcher, get_best_classificator_and_test_accuracy
 from scipy import signal
 from scipy.stats import kurtosis, skew
-from share import datasets_basic_infos
-from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import Pipeline
 
 #  from sklearn.feature_selection import SelectKBest, f_classif
@@ -119,7 +107,7 @@ def by_frequency_band(data, dataset_info: dict):
     Parameters
     ----------
     data
-    Gets converted from [epochs, chans, ms] to [chans x ms x epochs] # Todo: it got like 1, 2, 0: but I think it should be 0, 2, 1
+    Gets converted from [epochs, chans, ms] to [chans x ms x epochs]
     dataset_info
 
     Returns
@@ -234,130 +222,3 @@ def extractions_test(clf, features_df):
     array = clf.predict_proba(features_df)
     array = np.asarray([np.nanmean(array, axis=0)])  # Mean over columns
     return array
-
-
-if __name__ == "__main__":
-    # Manual Inputs
-    datasets = [
-        "braincommand"
-    ]  # , 'aguilera_traditional', 'torres', 'aguilera_gamified'
-    for dataset_name in datasets:
-        version_name = (
-            "all"  # To keep track what the output processing alteration went through
-        )
-        processing_name = "get_features_by_channel_by_frequency"
-        data_path: str = get_input_data_path(dataset_name)
-        dataset_info: dict = get_dataset_basic_info(datasets_basic_infos, dataset_name)
-
-        saving_txt_path: str = standard_saving_path(
-            dataset_info, processing_name, version_name
-        )
-
-        mean_accuracy_per_subject: list = []
-        results_df = pd.DataFrame()
-
-        for subject_id in range(29, 30):
-            print(subject_id)
-            with open(
-                saving_txt_path,
-                "a",
-            ) as f:
-                f.write(f"Subject: {subject_id}\n\n")
-            epochs, data_original, labels_original = load_data_labels_based_on_dataset(
-                dataset_info, subject_id, data_path
-            )
-
-            # Do cross-validation
-            cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
-            acc_over_cv = []
-            testing_time_over_cv = []
-            training_time = []
-            accuracy = 0
-            for train, test in cv.split(data_original, labels_original):
-                print(
-                    "******************************** Training ********************************"
-                )
-                start = time.time()
-                data_train, labels_train = convert_into_independent_channels(
-                    data_original[train], labels_original[train]
-                )
-                features_train = by_frequency_band(data_train, dataset_info)
-                clf, accuracy = extractions_train(features_train, labels_train)
-                training_time.append(time.time() - start)
-                with open(
-                    saving_txt_path,
-                    "a",
-                ) as f:
-                    f.write(f"Accuracy of training: {accuracy}\n")
-                print(
-                    "******************************** Test ********************************"
-                )
-                pred_list = []
-                testing_time = []
-
-                for epoch_number in test:
-                    start = time.time()
-                    # Convert independent channels to pseudo-trials
-                    data_test, labels_test = convert_into_independent_channels(
-                        np.asarray([data_original[epoch_number]]),
-                        labels_original[epoch_number],
-                    )
-
-                    probs_by_channel = []
-                    for pseudo_trial in range(len(data_test)):
-                        features_test = by_frequency_band(
-                            np.asarray([data_test[pseudo_trial]]), dataset_info
-                        )
-                        array = extractions_test(clf, features_test)  # [columns_list])
-                        probs_by_channel.append(array)
-                    array = np.nanmean(probs_by_channel, axis=0)  # Mean over columns
-                    end = time.time()
-
-                    testing_time.append(end - start)
-                    print(dataset_info["target_names"])
-                    print("Probability voting system: ", array)
-
-                    voting_system_pred = np.argmax(array)
-                    pred_list.append(voting_system_pred)
-                    print("Prediction: ", voting_system_pred)
-                    print("Real: ", labels_original[epoch_number])
-
-                acc = np.mean(pred_list == labels_original[test])
-                testing_time_over_cv.append(np.mean(testing_time))
-                acc_over_cv.append(acc)
-                with open(
-                    saving_txt_path,
-                    "a",
-                ) as f:
-                    f.write(f"Prediction: {pred_list}\n")
-                    f.write(f"Real label:{labels_original[test]}\n")
-                    f.write(f"Mean accuracy in KFold: {acc}\n")
-                print("Mean accuracy in KFold: ", acc)
-            mean_acc_over_cv = np.mean(acc_over_cv)
-
-            with open(
-                saving_txt_path,
-                "a",
-            ) as f:
-                f.write(f"Final acc: {mean_acc_over_cv}\n\n\n\n")
-            print(f"Final acc: {mean_acc_over_cv}")
-
-            temp = pd.DataFrame(
-                {
-                    "Subject ID": [subject_id] * len(acc_over_cv),
-                    "Version": [version_name] * len(acc_over_cv),
-                    "Training Accuracy": [accuracy] * len(acc_over_cv),
-                    "Training Time": training_time,
-                    "Testing Accuracy": acc_over_cv,
-                    "Testing Time": testing_time_over_cv,
-                }
-            )  # The idea is that the most famous one is the one I use for this dataset
-            results_df = pd.concat([results_df, temp])
-
-        results_df.to_csv(
-            standard_saving_path(
-                dataset_info, processing_name, version_name, file_ending="csv"
-            )
-        )
-
-    print("Congrats! The processing methods are done processing.")
