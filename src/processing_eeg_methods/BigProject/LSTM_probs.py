@@ -122,7 +122,11 @@ def LSTM_train(dataset_info, data, labels, subject_id: int):
     )
 
     model_path: str = standard_saving_path(
-        dataset_info, "BigProject", "LSTM", file_ending="hdf5", subject_id=subject_id
+        dataset_info['dataset_name'], 
+        "BigProject", 
+        "LSTM", 
+        file_ending="hdf5", 
+        subject_id=subject_id
     )
 
     # saves the model weights after each epoch if the validation loss decreased

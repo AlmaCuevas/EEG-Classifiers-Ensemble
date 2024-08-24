@@ -14,7 +14,7 @@ threshold_for_bug = 0.00000001  # could be any value, ex numpy.min
 def diffE_test(subject_id: int, X, dataset_info: dict, device: str = "cuda:0"):
     # From diffe_evaluation
     model_path: str = standard_saving_path(
-        dataset_info, "DiffE", "", file_ending="pt", subject_id=subject_id
+        dataset_info['dataset_name'], "DiffE", "", file_ending="pt", subject_id=subject_id
     )
 
     X = X[

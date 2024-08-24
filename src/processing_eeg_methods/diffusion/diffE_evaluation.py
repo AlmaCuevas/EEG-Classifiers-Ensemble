@@ -26,7 +26,7 @@ def diffE_evaluation(subject_id: int, X, Y, dataset_info, device: str = "cuda:0"
     fc_dim = 512
     # Define model
     model_path: str = standard_saving_path(
-        dataset_info, "DiffE", "", file_ending="pt", subject_id=subject_id
+        dataset_info['dataset_name'], "DiffE", "", file_ending="pt", subject_id=subject_id
     )
     num_classes = dataset_info["#_class"]
     channels = dataset_info["#_channels"]

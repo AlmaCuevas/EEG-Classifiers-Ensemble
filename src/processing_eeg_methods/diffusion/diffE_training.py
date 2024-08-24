@@ -64,7 +64,7 @@ def evaluate(encoder, fc, generator, device, number_of_labels: int = 4):
 
 def diffE_train(subject_id: int, X, Y, dataset_info, device: str = "cuda:0"):
     model_path: str = standard_saving_path(
-        dataset_info, "DiffE", "", file_ending="pt", subject_id=subject_id
+        dataset_info['dataset_name'], "DiffE", "", file_ending="pt", subject_id=subject_id
     )
 
     # This saves the training in a file

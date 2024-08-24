@@ -229,7 +229,7 @@ if __name__ == "__main__":
 
         ce.to_df().to_csv(
             standard_saving_path(
-                dataset_info,
+                dataset_info['dataset_name'],
                 "_".join(activated_methods),
                 version_name + "_all_probabilities",
                 file_ending="csv",

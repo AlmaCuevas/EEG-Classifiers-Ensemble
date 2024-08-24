@@ -2,6 +2,7 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
+from data_utils import standard_saving_path
 from braindecode.datautil.iterators import get_balanced_batches
 from braindecode.datautil.signal_target import SignalAndTarget
 from braindecode.models.shallow_fbcsp import ShallowFBCSPNet
@@ -131,8 +132,8 @@ def nn_Conv2d_train(data, label, dataset_info, subject_id) -> tuple[str, float]:
             accuracy_rec[i_epoch, sets[setname]] = accuracy
 
     # save/load only the model parameters(preferred solution)
-    model_path: str = (
-        f'{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_info["dataset_name"]}/nn_Conv2d/nn_Conv2d_{dataset_info["dataset_name"]}_{subject_id}.pth'
+    model_path: str = standard_saving_path(
+        dataset_info['dataset_name'], "nn_Conv2d", "nn_Conv2d", file_ending="pth", subject_id=subject_id
     )
     torch.save(model.state_dict(), model_path)
 
@@ -141,8 +142,12 @@ def nn_Conv2d_train(data, label, dataset_info, subject_id) -> tuple[str, float]:
 
 
 def nn_Conv2d_test(subject_id: int, data, dataset_info: dict):
-    model_path: str = (
-        f'{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_info["dataset_name"]}/nn_Conv2d/nn_Conv2d_{dataset_info["dataset_name"]}_{subject_id}.pth'
+    model_path: str = standard_saving_path(
+        dataset_info['dataset_name'], 
+        "nn_Conv2d", 
+        "nn_Conv2d", 
+        file_ending="pth", 
+        subject_id=subject_id
     )
 
     test_set = SignalAndTarget(

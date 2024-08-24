@@ -97,14 +97,14 @@ def train_test_val_split(dataX, dataY, valid_flag: bool = False):
 
 
 def standard_saving_path(
-    dataset_info: dict,
+    dataset_name: str,
     processing_name: str,
     version_name: str,
     file_ending: str = "txt",
     subject_id: int = 0,
 ):
     saving_folder: str = (
-        f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_info['dataset_name']}/{processing_name}"
+        f"{ROOT_VOTING_SYSTEM_PATH}/Results/{dataset_name}/{processing_name}"
     )
     os.makedirs(saving_folder, exist_ok=True)
     if subject_id:

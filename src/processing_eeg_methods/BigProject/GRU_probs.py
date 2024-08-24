@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from data_utils import train_test_val_split
+from data_utils import train_test_val_split, standard_saving_path
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers import GRU, Activation, BatchNormalization, Dense, Dropout, Flatten
 from keras.models import Sequential, load_model
@@ -10,7 +10,8 @@ from share import ROOT_VOTING_SYSTEM_PATH
 from sklearn import preprocessing
 
 
-def GRU_train(dataset_name, data, labels, num_classes: int):
+def GRU_train(dataset_info, data, labels, num_classes: int):
+    dataset_name= dataset_info['dataset_name']
     # substract data from list
     X_train, X_test, _, y_train, y_test, _ = train_test_val_split(
         dataX=data, dataY=labels, valid_flag=False
