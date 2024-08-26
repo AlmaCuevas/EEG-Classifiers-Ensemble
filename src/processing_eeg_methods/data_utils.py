@@ -2,10 +2,11 @@ import os
 
 import numpy as np
 import pandas as pd
-from share import ROOT_VOTING_SYSTEM_PATH
 from sklearn.base import BaseEstimator
 from sklearn.linear_model import RidgeClassifier, SGDClassifier
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
+
+from processing_eeg_methods.share import ROOT_VOTING_SYSTEM_PATH
 
 # from sklearn.linear_model import LogisticRegression
 # from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -34,6 +35,40 @@ classifiers = [  # The Good, Medium and Bad is decided on Torres dataset. This t
     # LinearDiscriminantAnalysis(), # Bad
     # LogisticRegression(), # Good
 ]
+
+
+def write_model_info(
+    filepath: str,
+    model_name: str,
+    independent_channels: bool,
+    dataset_info: dict,
+    notes: str = "",
+):
+    """
+    Writes information about a model to a text file.
+
+    Parameters:
+    filename (str): The name of the file to write to.
+    model_name (str): The name of the model.
+    montage_style (str): independent channels or standard montage.
+    dataset_info (dict): Information about the dataset.
+    notes (str): Any additional notes about the model.
+
+    Returns:
+    None
+    """
+    montage_style = (
+        "independent channels" if independent_channels else "standard montage"
+    )
+
+    with open(filepath, "w") as file:
+        file.write(f"Model Name: {model_name}\n")
+        file.write(f"Montage Style: {montage_style}\n")
+        file.write("\nDataset Information:\n")
+        for key, value in dataset_info.items():
+            file.write(f"{key}: {value}\n")
+        if notes:
+            file.write(f"Notes: {notes}\n")
 
 
 def class_selection(dataX, dataY, event_dict: dict, selected_classes: list[int]):

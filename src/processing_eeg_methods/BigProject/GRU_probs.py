@@ -1,13 +1,14 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from data_utils import train_test_val_split
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers import GRU, Activation, BatchNormalization, Dense, Dropout, Flatten
 from keras.models import Sequential, load_model
 from scipy import signal
 from scipy.fftpack import dct, idct
-from share import ROOT_VOTING_SYSTEM_PATH
 from sklearn import preprocessing
+
+from src.processing_eeg_methods.data_utils import train_test_val_split
+from src.processing_eeg_methods.share import ROOT_VOTING_SYSTEM_PATH
 
 
 def GRU_train(dataset_name, data, labels, num_classes: int):

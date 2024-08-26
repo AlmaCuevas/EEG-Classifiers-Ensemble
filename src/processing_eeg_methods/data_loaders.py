@@ -4,12 +4,6 @@ import mne
 import numpy as np
 import pandas as pd
 from autoreject import AutoReject
-from data_utils import (
-    class_selection,
-    convert_into_independent_channels,
-    data_normalization,
-    get_dataset_basic_info,
-)
 
 # from Inner_Speech_Dataset.Python_Processing.Data_extractions import (
 #     Extract_data_from_subject,
@@ -21,10 +15,16 @@ from data_utils import (
 from mne import Epochs, EpochsArray, events_from_annotations, io
 from scipy import signal
 from scipy.io import loadmat
-from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
+
+from processing_eeg_methods.data_utils import (
+    class_selection,
+    convert_into_independent_channels,
+    data_normalization,
+    get_dataset_basic_info,
+)
+from processing_eeg_methods.share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
 
 # from mne.preprocessing import ICA, create_eog_epochs
-# from autoreject import AutoReject
 
 
 def aguilera_dataset_loader(data_path: str, gamified: bool):  # typed
@@ -427,7 +427,7 @@ def load_data_labels_based_on_dataset(
 
 if __name__ == "__main__":
     # Manual Inputs
-    subject_id = 29  # Only two things I should be able to change
+    subject_id = 24  # Only two things I should be able to change
     dataset_name = "braincommand"  # Only two things I should be able to change
 
     get_dataset_basic_info(datasets_basic_infos, dataset_name)

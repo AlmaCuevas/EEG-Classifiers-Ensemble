@@ -4,10 +4,14 @@ import numpy
 import numpy as np
 import pandas as pd
 import time_features.EEGExtract as eeg
-from data_utils import ClfSwitcher, get_best_classificator_and_test_accuracy
 from scipy import signal
 from scipy.stats import kurtosis, skew
 from sklearn.pipeline import Pipeline
+
+from src.processing_eeg_methods.data_utils import (
+    ClfSwitcher,
+    get_best_classificator_and_test_accuracy,
+)
 
 #  from sklearn.feature_selection import SelectKBest, f_classif
 
