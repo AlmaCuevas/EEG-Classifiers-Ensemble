@@ -134,11 +134,7 @@ def get_best_classificator_and_test_accuracy(data, labels, estimators):
     )  # https://stackoverflow.com/questions/52580023/how-to-get-the-best-estimator-parameters-out-from-pipelined-gridsearch-and-cro
     clf.fit(data, labels)
 
-    acc = clf.best_score_
-
-    if acc <= 0.25:
-        acc = np.nan
-    return clf.best_estimator_, acc
+    return clf.best_estimator_, clf.best_score_
 
 
 def convert_into_independent_channels(data, labels):
