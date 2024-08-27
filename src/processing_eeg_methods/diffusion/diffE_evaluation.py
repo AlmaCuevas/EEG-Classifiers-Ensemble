@@ -1,10 +1,16 @@
 import torch
 import torch.nn.functional as F
-from data_utils import get_dataset_basic_info, get_input_data_path, standard_saving_path
-from diffusion.diffE_models import Decoder, DiffE, Encoder, LinearClassifier
-from diffusion.diffE_utils import EEGDataset
-from share import datasets_basic_infos
 from torch.utils.data import DataLoader
+
+from processing_eeg_methods.data_utils import (
+    get_dataset_basic_info,
+    get_input_data_path,
+    standard_saving_path,
+)
+from processing_eeg_methods.share import datasets_basic_infos
+
+from .diffE_models import Decoder, DiffE, Encoder, LinearClassifier
+from .diffE_utils import EEGDataset
 
 dataset_name = "aguilera_traditional"  # Only two things I should be able to change
 

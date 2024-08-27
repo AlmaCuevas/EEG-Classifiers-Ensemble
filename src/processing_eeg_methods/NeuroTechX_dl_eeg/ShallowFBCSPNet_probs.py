@@ -9,7 +9,7 @@ from numpy.random import RandomState
 from sklearn.model_selection import train_test_split
 from torch import optim
 
-from src.processing_eeg_methods.data_utils import standard_saving_path
+from processing_eeg_methods.data_utils import standard_saving_path
 
 
 def ShallowFBCSPNet_train(

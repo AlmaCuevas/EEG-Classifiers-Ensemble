@@ -7,10 +7,7 @@ from scipy import signal
 from scipy.fftpack import dct, idct
 from sklearn import preprocessing
 
-from src.processing_eeg_methods.data_utils import (
-    standard_saving_path,
-    train_test_val_split,
-)
+from processing_eeg_methods.data_utils import standard_saving_path, train_test_val_split
 
 
 def LSTM_train(dataset_info, data, labels, subject_id: int):

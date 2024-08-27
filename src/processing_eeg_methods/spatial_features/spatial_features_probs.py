@@ -7,7 +7,7 @@ from scipy import signal
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.pipeline import Pipeline
 
-from src.processing_eeg_methods.data_utils import (
+from processing_eeg_methods.data_utils import (
     ClfSwitcher,
     get_best_classificator_and_test_accuracy,
 )

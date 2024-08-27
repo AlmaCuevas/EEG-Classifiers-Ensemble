@@ -5,16 +5,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from data_utils import standard_saving_path
-from diffusion.diffE_models import (
-    DDPM,
-    ConditionalUNet,
-    Decoder,
-    DiffE,
-    Encoder,
-    LinearClassifier,
-)
-from diffusion.diffE_utils import get_dataloader
 from ema_pytorch import EMA
 from sklearn.metrics import (
     f1_score,
@@ -24,6 +14,18 @@ from sklearn.metrics import (
     top_k_accuracy_score,
 )
 from tqdm import tqdm
+
+from processing_eeg_methods.data_utils import standard_saving_path
+
+from .diffE_models import (
+    DDPM,
+    ConditionalUNet,
+    Decoder,
+    DiffE,
+    Encoder,
+    LinearClassifier,
+)
+from .diffE_utils import get_dataloader
 
 
 # Evaluate function

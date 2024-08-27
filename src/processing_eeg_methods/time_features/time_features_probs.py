@@ -3,15 +3,16 @@ import mne
 import numpy
 import numpy as np
 import pandas as pd
-import time_features.EEGExtract as eeg
 from scipy import signal
 from scipy.stats import kurtosis, skew
 from sklearn.pipeline import Pipeline
 
-from src.processing_eeg_methods.data_utils import (
+from processing_eeg_methods.data_utils import (
     ClfSwitcher,
     get_best_classificator_and_test_accuracy,
 )
+
+from .EEGExtract import eegRatio, eegStd, lyapunov
 
 #  from sklearn.feature_selection import SelectKBest, f_classif
 
@@ -94,13 +95,13 @@ def get_hjorth(data):
 def get_ratio(data, Fs):
     ratio_trial = []
     for data_trial in data:
-        ratio_trial.append(eeg.eegRatio(data_trial, fs=Fs))
+        ratio_trial.append(eegRatio(data_trial, fs=Fs))
     return ratio_trial
 
 
 def get_lyapunov(data):
     lyapunov_values = []
-    lyapunov_values.append(eeg.lyapunov(data))
+    lyapunov_values.append(lyapunov(data))
     return lyapunov_values
 
 
@@ -157,7 +158,7 @@ def get_extractions(data, dataset_info: dict, frequency_bandwidth_name):
         0
     ]  # α/δ Ratio
     lyapunov_values = np.array(get_lyapunov(data)[0])
-    std_values = eeg.eegStd(data)
+    std_values = eegStd(data)
     mean_values = np.mean(data, axis=1)
     kurtosis_values = kurtosis(data, axis=1, bias=True)
     skew_values = skew(data, axis=1, bias=True)
