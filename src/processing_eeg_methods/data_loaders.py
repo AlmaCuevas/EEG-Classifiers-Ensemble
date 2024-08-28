@@ -120,7 +120,7 @@ def aguilera_dataset_loader(data_path: str, gamified: bool):  # typed
     if extra_label:
         label = label - 1
     label = label - 1  # So it goes from 0 to 3
-    event_dict = {"Avanzar": 0, "Retroceder": 1, "Derecha": 2, "Izquierda": 3}
+    dataset_info["event_dict"]
     return epochs, label, event_dict
 
 
@@ -189,13 +189,7 @@ def torres_dataset_loader(
     y = [0, 1, 2, 3, 4]
     y = np.repeat(y, 33, axis=0)
 
-    event_dict = {
-        "Arriba": 0,
-        "Abajo": 1,
-        "Izquierda": 2,
-        "Derecha": 3,
-        "Seleccionar": 4,
-    }
+    dataset_info["event_dict"]
     return x, y, event_dict
 
 
@@ -261,7 +255,7 @@ def coretto_dataset_loader(filepath: str):
     y[y == 10] = 2
     y[y == 11] = 3
     # N, C, H = x.shape # You can use something like this for unit test later.
-    event_dict = {"Arriba": 0, "Abajo": 1, "Derecha": 2, "Izquierda": 3}
+    dataset_info["event_dict"]
     return x, y, event_dict
 
 
@@ -272,7 +266,7 @@ def ic_bci_2020_dataset_loader(filepath: str):
     x = np.transpose(x, (2, 1, 0))  # Raw data (trials, channels, time)
     y = EEG_nested_dict["epo_train"]["y"]
     y = np.argmax(y.transpose(), axis=1)
-    event_dict = {"Hello": 0, "Help me": 1, "Stop": 2, "Thank you": 3, "Yes": 4}
+    dataset_info["event_dict"]
     return x, y, event_dict
 
 
@@ -284,7 +278,7 @@ def nguyen_2019_dataset_loader(folderpath: str):
         EEG[run_index] = loadmat(filepath, simplify_cells=True)
     x = 0
     y = 0
-    event_dict = {"left hand": 0, "concentrate": 1, "right hand": 2, "split": 3}
+    dataset_info["event_dict"]
     return x, y, event_dict
 
 
@@ -320,7 +314,7 @@ def braincommand_dataset_loader(
     # x_array, label = convert_to_epochs(x_array, label)
     x_array = data_normalization(x_array)
 
-    event_dict = {"Derecha": 0, "Izquierda": 1, "Arriba": 2, "Abajo": 3}
+    dataset_info["event_dict"]
     return x_array, label, event_dict
 
 
