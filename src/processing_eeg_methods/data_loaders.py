@@ -334,6 +334,7 @@ def load_data_labels_based_on_dataset(
     astype_value: str = "",
     channels_independent: bool = False,
     apply_autoreject: bool = False,
+    game_mode: str = "calibration3",
 ):
     dataset_name = dataset_info["dataset_name"]
 
@@ -369,7 +370,9 @@ def load_data_labels_based_on_dataset(
     elif dataset_name == "nguyen_2019":
         data, label, event_dict = nguyen_2019_dataset_loader(data_path, subject_id)
     elif dataset_name == "braincommand":
-        data, label, event_dict = braincommand_dataset_loader(data_path, subject_id)
+        data, label, event_dict = braincommand_dataset_loader(
+            data_path, subject_id, game_mode=game_mode
+        )
 
     if transpose:
         data = np.transpose(data, (0, 2, 1))

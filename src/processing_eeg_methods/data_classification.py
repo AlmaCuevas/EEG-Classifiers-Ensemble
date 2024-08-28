@@ -137,6 +137,7 @@ def trial_exhaustive_training_and_testing(
             subject_id,
             data_path,
             selected_classes=selected_classes,
+            normalize=True,
             apply_autoreject=True,
         )
 
@@ -193,14 +194,16 @@ def trial_exhaustive_training_and_testing(
 
 if __name__ == "__main__":
     combinations = [[0, 1, 2, 3]]
+    import time
 
+    start = time.time()
     for combo in combinations:
 
         # Manual Inputs
-        dataset_name = "braincommand"
+        dataset_name = "torres"
         selected_classes = combo  # [0, 1, 2, 3]
         subject_range = [24]
-        independent_channels = True
+        independent_channels = False
 
         ce = complete_experiment()
 
@@ -210,18 +213,18 @@ if __name__ == "__main__":
         dataset_info["#_class"] = len(selected_classes)
 
         pm.activate_methods(
-            spatial_features=True,  # Training is over-fitted. Training accuracy >90
-            simplified_spatial_features=True,  # Simpler than selected_transformers, only one transformer and no frequency bands. No need to activate both at the same time
+            spatial_features=False,  # Training is over-fitted. Training accuracy >90
+            simplified_spatial_features=False,  # Simpler than selected_transformers, only one transformer and no frequency bands. No need to activate both at the same time
             ShallowFBCSPNet=True,
-            LSTM=False,  # Training is over-fitted. Training accuracy >90
+            LSTM=True,  # Training is over-fitted. Training accuracy >90
             GRU=False,  # Training is over-fitted. Training accuracy >90
-            diffE=False,  # It doesn't work if you only use one channel in the data
+            diffE=True,  # It doesn't work if you only use one channel in the data
             feature_extraction=True,
             number_of_classes=dataset_info["#_class"],
         )
         activated_methods: list[str] = pm.get_activated_methods()
         combo_str = "_".join(map(str, combo))
-        version_name = f"autoreject_inside_24_trained_with_calibration3_all_channels_{combo_str}"  # To keep track what the output processing alteration went through
+        version_name = f"autoreject_inside_trained_with_calibration3_montage_all_channels_{combo_str}"  # To keep track what the output processing alteration went through
 
         data_path = get_input_data_path(dataset_name)
 
@@ -259,5 +262,7 @@ if __name__ == "__main__":
             dataset_info=dataset_info,
             notes="Info from pilot trials.",
         )
+    end = time.time() - start
+    print(f"In total it took {end} seconds, ")
 
     print("Congrats! The processing methods are done processing.")
