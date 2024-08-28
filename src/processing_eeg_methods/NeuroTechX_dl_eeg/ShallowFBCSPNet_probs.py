@@ -1,34 +1,21 @@
-import time
-from os import path
-
 import numpy as np
-import pandas as pd
 import torch
 import torch.nn.functional as F
 from braindecode.datautil.iterators import get_balanced_batches
 from braindecode.datautil.signal_target import SignalAndTarget
 from braindecode.models.shallow_fbcsp import ShallowFBCSPNet
 from braindecode.torch_ext.util import np_to_var, set_random_seeds, var_to_np
-from data_loaders import load_data_labels_based_on_dataset
-from data_utils import (
-    convert_into_binary,
-    get_dataset_basic_info,
-    get_input_data_path,
-    standard_saving_path,
-)
 from numpy.random import RandomState
-from share import datasets_basic_infos
-from sklearn.model_selection import StratifiedKFold, train_test_split
+from sklearn.model_selection import train_test_split
 from torch import optim
 
-threshold_for_bug = 0.00000001  # could be any value, ex numpy.min
-accelerator = "cu80" if path.exists("/opt/bin/nvidia-smi") else "cpu"
+from processing_eeg_methods.data_utils import standard_saving_path
 
 
 def ShallowFBCSPNet_train(
     data, label, chosen_numbered_label: int, dataset_info: dict, subject_id: int
 ) -> tuple[str, float]:
-    rng = RandomState(None)
+    rng = RandomState(42)
 
     nb_epoch = 160
     loss_rec = np.zeros((nb_epoch, 2))
@@ -38,7 +25,9 @@ def ShallowFBCSPNet_train(
     set_random_seeds(seed=20180505, cuda=cuda)
     n_classes = 2
 
-    x_train, x_test, y_train, y_test = train_test_split(data, label, test_size=0.2)
+    x_train, x_test, y_train, y_test = train_test_split(
+        data, label, test_size=0.2, random_state=42
+    )
 
     train_set = SignalAndTarget(x_train, y=y_train)
     test_set = SignalAndTarget(x_test, y=y_test)
@@ -203,138 +192,3 @@ def ShallowFBCSPNet_test(
         net_in = net_in.cuda()
     output = var_to_np(model(net_in))
     return output
-
-
-if __name__ == "__main__":
-    # Manual Inputs
-    datasets = [
-        "braincommand"
-    ]  # , 'aguilera_traditional', 'aguilera_gamified', 'torres']
-    for dataset_name in datasets:
-        chosen_numbered_label = 3
-        version_name: str = (
-            f"independent_channels_{chosen_numbered_label}"  # To keep track the output processing alteration
-        )
-        processing_name: str = "ShallowFBCSPNet"
-
-        data_path: str = get_input_data_path(dataset_name)
-        dataset_info: dict = get_dataset_basic_info(datasets_basic_infos, dataset_name)
-
-        saving_txt_path: str = standard_saving_path(
-            dataset_info, processing_name, version_name
-        )
-
-        mean_accuracy_per_subject: list = []
-        results_df = pd.DataFrame()
-
-        for subject_id in range(29, 30):
-            print(subject_id)
-            with open(
-                saving_txt_path,
-                "a",
-            ) as f:
-                f.write(f"Subject: {subject_id}\n\n")
-            epochs, _, _ = load_data_labels_based_on_dataset(
-                dataset_info, subject_id, data_path
-            )
-
-            data = (epochs.get_data() * 1e6).astype(np.float32)
-            labels = epochs.events[:, 2].astype(np.int64)
-            labels = convert_into_binary(
-                labels, chosen_numbered_label=chosen_numbered_label
-            )
-
-            data[data < threshold_for_bug] = (
-                threshold_for_bug  # Consider removing this, for label 3 for sub29 it was slightly better to keep it
-            )
-            # Do cross-validation
-            cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
-            acc_over_cv = []
-            testing_time_over_cv = []
-            training_time = []
-            accuracy = 0
-            for train, test in cv.split(epochs, labels):
-                print(
-                    "******************************** Training ********************************"
-                )
-                start = time.time()
-                accuracy = ShallowFBCSPNet_train(
-                    data[train],
-                    labels[train],
-                    chosen_numbered_label=chosen_numbered_label,
-                    dataset_info=dataset_info,
-                    subject_id=subject_id,
-                )
-                training_time.append(time.time() - start)
-                with open(
-                    saving_txt_path,
-                    "a",
-                ) as f:
-                    f.write(f"{processing_name}\n")
-                    f.write(f"Accuracy of training: {accuracy}\n")
-                print(
-                    "******************************** Test ********************************"
-                )
-                pred_list = []
-                testing_time = []
-                for epoch_number in test:
-                    start = time.time()
-                    array = ShallowFBCSPNet_test(
-                        subject_id,
-                        np.asarray([data[epoch_number]]),
-                        dataset_info,
-                        chosen_numbered_label=chosen_numbered_label,
-                    )
-                    end = time.time()
-                    testing_time.append(end - start)
-                    print(dataset_info["target_names"])
-                    print("Probability voting system: ", array)
-
-                    voting_system_pred = np.argmax(array)
-                    pred_list.append(voting_system_pred)
-                    print("Prediction: ", voting_system_pred)
-                    print("Real: ", labels[epoch_number])
-
-                acc = np.mean(pred_list == labels[test])
-                testing_time_over_cv.append(np.mean(testing_time))
-                acc_over_cv.append(acc)
-                with open(
-                    saving_txt_path,
-                    "a",
-                ) as f:
-                    f.write(f"Prediction: {pred_list}\n")
-                    f.write(f"Real label:{labels[test]}\n")
-                    f.write(f"Mean accuracy in KFold: {acc}\n")
-                print("Mean accuracy in KFold: ", acc)
-            mean_acc_over_cv = np.mean(acc_over_cv)
-
-            with open(
-                saving_txt_path,
-                "a",
-            ) as f:
-                f.write(f"Final acc: {mean_acc_over_cv}\n\n\n\n")
-            print(f"Final acc: {mean_acc_over_cv}")
-
-            temp = pd.DataFrame(
-                {
-                    "Methods": [processing_name] * len(acc_over_cv),
-                    "Subject ID": [subject_id] * len(acc_over_cv),
-                    "Version": [version_name] * len(acc_over_cv),
-                    "Training Accuracy": [accuracy] * len(acc_over_cv),
-                    "Training Time": training_time,
-                    "Testing Accuracy": acc_over_cv,
-                    "Testing Time": testing_time_over_cv,
-                }
-            )  # The idea is that the most famous one is the one I use for this dataset
-            results_df = pd.concat([results_df, temp])
-
-        results_df.to_csv(
-            standard_saving_path(
-                dataset_info,
-                processing_name,
-                version_name,
-                file_ending="csv",
-            )
-        )
-
-    print("Congrats! The processing methods are done processing.")

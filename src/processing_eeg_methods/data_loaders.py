@@ -3,12 +3,7 @@ import os
 import mne
 import numpy as np
 import pandas as pd
-from data_utils import (
-    class_selection,
-    convert_into_independent_channels,
-    data_normalization,
-    get_dataset_basic_info,
-)
+from autoreject import AutoReject
 
 # from Inner_Speech_Dataset.Python_Processing.Data_extractions import (
 #     Extract_data_from_subject,
@@ -20,10 +15,16 @@ from data_utils import (
 from mne import Epochs, EpochsArray, events_from_annotations, io
 from scipy import signal
 from scipy.io import loadmat
-from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
+
+from processing_eeg_methods.data_utils import (
+    class_selection,
+    convert_into_independent_channels,
+    data_normalization,
+    get_dataset_basic_info,
+)
+from processing_eeg_methods.share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
 
 # from mne.preprocessing import ICA, create_eog_epochs
-# from autoreject import AutoReject
 
 
 def aguilera_dataset_loader(data_path: str, gamified: bool):  # typed
@@ -311,8 +312,6 @@ def braincommand_dataset_loader(
     ]  # The last channels are accelerometer (x3), gyroscope (x3), validity, battery and counter
     x_array = np.transpose(x_array, (0, 2, 1))
     x_array = signal.detrend(x_array)
-    # x_array, label = convert_to_epochs(x_array, label)
-    x_array = data_normalization(x_array)
 
     dataset_info["event_dict"]
     return x_array, label, event_dict
@@ -328,6 +327,7 @@ def load_data_labels_based_on_dataset(
     threshold_for_bug: float = 0,
     astype_value: str = "",
     channels_independent: bool = False,
+    apply_autoreject: bool = False,
 ):
     dataset_name = dataset_info["dataset_name"]
 
@@ -367,8 +367,6 @@ def load_data_labels_based_on_dataset(
 
     if transpose:
         data = np.transpose(data, (0, 2, 1))
-    if normalize:
-        data = data_normalization(data)
     if selected_classes:
         data, label, event_dict = class_selection(
             data, label, event_dict, selected_classes=selected_classes
@@ -383,6 +381,8 @@ def load_data_labels_based_on_dataset(
         data, label = convert_into_independent_channels(data, label)
         data = np.transpose(np.array([data]), (1, 0, 2))
         dataset_info["#_channels"] = 1
+    if normalize:
+        data = data_normalization(data)
 
     # Convert to epochs
     events = np.column_stack(
@@ -400,21 +400,28 @@ def load_data_labels_based_on_dataset(
     epochs = EpochsArray(
         data,
         info=mne.create_info(
-            dataset_info["#_channels"],
             sfreq=dataset_info["sample_rate"],
             ch_types="eeg",
+            ch_names=dataset_info["channels_names"],
         ),
         events=events,
         event_id=event_dict,
         baseline=(None, None),
     )
-    label = epochs.events[:, 2].astype(np.int64)  # Repetition to keep the right format
+    if apply_autoreject:
+        montage = mne.channels.make_standard_montage(dataset_info["montage"])
+        epochs.set_montage(montage)
+        ar = AutoReject()
+        epochs = ar.fit_transform(epochs)
+        data = epochs.get_data()
+
+    label = epochs.events[:, 2].astype(np.int64)  # To always keep the right format
     return epochs, data, label
 
 
 if __name__ == "__main__":
     # Manual Inputs
-    subject_id = 29  # Only two things I should be able to change
+    subject_id = 24  # Only two things I should be able to change
     dataset_name = "braincommand"  # Only two things I should be able to change
 
     get_dataset_basic_info(datasets_basic_infos, dataset_name)

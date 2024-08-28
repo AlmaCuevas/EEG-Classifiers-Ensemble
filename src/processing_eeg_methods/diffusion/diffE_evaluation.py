@@ -1,13 +1,16 @@
-import numpy as np
 import torch
 import torch.nn.functional as F
-from data_loaders import load_data_labels_based_on_dataset
-from data_utils import get_dataset_basic_info, get_input_data_path, standard_saving_path
-from DiffE.diffE_models import Decoder, DiffE, Encoder, LinearClassifier
-from DiffE.diffE_utils import EEGDataset
-from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
-from sklearn.metrics import top_k_accuracy_score
 from torch.utils.data import DataLoader
+
+from processing_eeg_methods.data_utils import (
+    get_dataset_basic_info,
+    get_input_data_path,
+    standard_saving_path,
+)
+from processing_eeg_methods.share import datasets_basic_infos
+
+from .diffE_models import Decoder, DiffE, Encoder, LinearClassifier
+from .diffE_utils import EEGDataset
 
 dataset_name = "aguilera_traditional"  # Only two things I should be able to change
 
@@ -63,35 +66,3 @@ def diffE_evaluation(subject_id: int, X, Y, dataset_info, device: str = "cuda:0"
         Y_hat = torch.cat(Y_hat, dim=0).numpy()  # (N, 13): has to sum to 1 for each row
 
         return Y, Y_hat
-
-
-if __name__ == "__main__":
-    print(f"CUDA is available? {torch.cuda.is_available()}")
-
-    dataset_name = "aguilera_traditional"  # Only two things I should be able to change
-
-    # Folders and paths
-    dataset_foldername = dataset_name + "_dataset"
-    computer_root_path = ROOT_VOTING_SYSTEM_PATH + "/Datasets/"
-    data_path = computer_root_path + dataset_foldername
-    print(data_path)
-    dataset_info = datasets_basic_infos[dataset_name]
-    all_subjects_accuracy: list = []
-
-    for subject_id in range(1, dataset_info["subjects"] + 1):
-        print(f"\nSubject: {subject_id}")
-        _, X, Y = load_data_labels_based_on_dataset(dataset_info, subject_id, data_path)
-
-        # create an argument parser for the data loader path
-
-        Y_returned, Y_hat = diffE_evaluation(
-            subject_id=subject_id, X=X, Y=Y, dataset_info=dataset_info
-        )
-
-        # Accuracy and Confusion Matrix
-        accuracy = top_k_accuracy_score(
-            Y_returned, Y_hat, k=1, labels=np.arange(0, dataset_info["#_class"])
-        )
-        all_subjects_accuracy.append(accuracy)
-        print(f"Test accuracy: {accuracy:.2f}%")
-    print(f"Test accuracy: {all_subjects_accuracy}")

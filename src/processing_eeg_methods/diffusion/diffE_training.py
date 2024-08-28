@@ -5,19 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from data_loaders import load_data_labels_based_on_dataset
-from data_utils import get_dataset_basic_info, get_input_data_path, standard_saving_path
-from DiffE.diffE_models import (
-    DDPM,
-    ConditionalUNet,
-    Decoder,
-    DiffE,
-    Encoder,
-    LinearClassifier,
-)
-from DiffE.diffE_utils import get_dataloader
 from ema_pytorch import EMA
-from share import datasets_basic_infos
 from sklearn.metrics import (
     f1_score,
     precision_score,
@@ -26,6 +14,18 @@ from sklearn.metrics import (
     top_k_accuracy_score,
 )
 from tqdm import tqdm
+
+from processing_eeg_methods.data_utils import standard_saving_path
+
+from .diffE_models import (
+    DDPM,
+    ConditionalUNet,
+    Decoder,
+    DiffE,
+    Encoder,
+    LinearClassifier,
+)
+from .diffE_utils import get_dataloader
 
 
 # Evaluate function
@@ -281,32 +281,3 @@ def diffE_train(subject_id: int, X, Y, dataset_info, device: str = "cuda:0"):
                     )
             pbar.update(1)
     return best_acc
-
-
-if __name__ == "__main__":
-    # This is only an example of how the function works, do not use this for actual training.
-    # For proper training, first divide the dataset in folds or train & test.
-    print(f"CUDA is available? {torch.cuda.is_available()}")
-
-    dataset_name = "braincommand"  # Only two things I should be able to change
-    channels_independent = (
-        False  # todo: DiffE doesn't work with 1 channel, if more all good
-    )
-
-    data_path: str = get_input_data_path(dataset_name)
-    dataset_info: dict = get_dataset_basic_info(datasets_basic_infos, dataset_name)
-
-    if channels_independent:
-        dataset_info["total_trials"] = (
-            dataset_info["total_trials"] * dataset_info["#_channels"]
-        )
-        dataset_info["#_channels"] = 1
-
-    for subject_id in range(1, dataset_info["subjects"] + 1):
-        _, X, Y = load_data_labels_based_on_dataset(
-            dataset_info,
-            subject_id,
-            data_path,
-            channels_independent=channels_independent,
-        )
-        diffE_train(subject_id=subject_id, X=X, Y=Y, dataset_info=dataset_info)

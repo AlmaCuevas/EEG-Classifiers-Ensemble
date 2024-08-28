@@ -1,16 +1,22 @@
 from typing import Union
 
 import numpy as np
-from data_dataclass import ProcessingMethods, complete_experiment, probability_input
-from data_loaders import load_data_labels_based_on_dataset
-from data_utils import (
+from sklearn.model_selection import StratifiedKFold
+
+from processing_eeg_methods.data_dataclass import (
+    ProcessingMethods,
+    complete_experiment,
+    probability_input,
+)
+from processing_eeg_methods.data_loaders import load_data_labels_based_on_dataset
+from processing_eeg_methods.data_utils import (
     convert_into_independent_channels,
     get_dataset_basic_info,
     get_input_data_path,
     standard_saving_path,
+    write_model_info,
 )
-from share import datasets_basic_infos
-from sklearn.model_selection import StratifiedKFold
+from processing_eeg_methods.share import datasets_basic_infos
 
 
 def pseudo_trial_exhaustive_training_and_testing(
@@ -35,7 +41,8 @@ def pseudo_trial_exhaustive_training_and_testing(
             subject_id,
             data_path,
             selected_classes=selected_classes,
-            # threshold_for_bug=0.00000001, # todo: test all classes without this and check result
+            normalize=True,
+            apply_autoreject=True,
         )
 
         # Because we are using independent channels:
@@ -130,7 +137,7 @@ def trial_exhaustive_training_and_testing(
             subject_id,
             data_path,
             selected_classes=selected_classes,
-            threshold_for_bug=0.00000001,
+            apply_autoreject=True,
         )
 
         cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
@@ -185,7 +192,7 @@ def trial_exhaustive_training_and_testing(
 
 
 if __name__ == "__main__":
-    combinations = [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3], [0, 1, 2, 3]]
+    combinations = [[0, 1, 2, 3]]
 
     for combo in combinations:
 
@@ -193,6 +200,7 @@ if __name__ == "__main__":
         dataset_name = "braincommand"
         selected_classes = combo  # [0, 1, 2, 3]
         subject_range = [24]
+        independent_channels = True
 
         ce = complete_experiment()
 
@@ -213,27 +221,43 @@ if __name__ == "__main__":
         )
         activated_methods: list[str] = pm.get_activated_methods()
         combo_str = "_".join(map(str, combo))
-        version_name = f"all_channels_two_classes_{combo_str}"  # To keep track what the output processing alteration went through
+        version_name = f"autoreject_inside_24_trained_with_calibration3_all_channels_{combo_str}"  # To keep track what the output processing alteration went through
 
         data_path = get_input_data_path(dataset_name)
 
-        # ce = trial_exhaustive_training_and_testing(ce, pm, dataset_info, data_path, selected_classes)
-        ce = pseudo_trial_exhaustive_training_and_testing(
-            ce,
-            pm,
-            dataset_info,
-            data_path,
-            selected_classes,
-            subject_range=subject_range,
-        )
+        if independent_channels:
+            ce = pseudo_trial_exhaustive_training_and_testing(
+                ce,
+                pm,
+                dataset_info,
+                data_path,
+                selected_classes,
+                subject_range=subject_range,
+            )
+        else:
+            ce = trial_exhaustive_training_and_testing(
+                ce, pm, dataset_info, data_path, selected_classes, subject_range
+            )
 
         ce.to_df().to_csv(
             standard_saving_path(
                 dataset_info,
-                "_".join(activated_methods),
+                "methods_for_real_time",
                 version_name + "_all_probabilities",
                 file_ending="csv",
             )
+        )
+
+        write_model_info(
+            standard_saving_path(
+                dataset_info,
+                "methods_for_real_time",
+                version_name + "_all_probabilities",
+            ),
+            model_name="_".join(activated_methods),
+            independent_channels=independent_channels,
+            dataset_info=dataset_info,
+            notes="Info from pilot trials.",
         )
 
     print("Congrats! The processing methods are done processing.")
