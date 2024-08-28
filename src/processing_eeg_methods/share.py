@@ -1,7 +1,7 @@
 from pathlib import Path
 
 ROOT_VOTING_SYSTEM_PATH: str = str(Path(__file__).parent.parent.parent.resolve())
-
+GLOBAL_SEED = 42
 # DATASETS BASIC INFO
 # Edgar Aguilera Traditional
 aguilera_traditional_info = {

@@ -163,7 +163,7 @@ def get_best_classificator_and_test_accuracy(data, labels, estimators):
     for classificator in classifiers:
         param_grid.append({"clf__estimator": [classificator]})
 
-    cv = StratifiedKFold(n_splits=4, shuffle=True, random_state=42)
+    cv = StratifiedKFold(n_splits=4, shuffle=True, random_state=GLOBAL_SEED)
     clf = GridSearchCV(
         estimator=estimators, param_grid=param_grid, cv=cv
     )  # https://stackoverflow.com/questions/52580023/how-to-get-the-best-estimator-parameters-out-from-pipelined-gridsearch-and-cro

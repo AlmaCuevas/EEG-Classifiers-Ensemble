@@ -15,7 +15,7 @@ from processing_eeg_methods.data_utils import standard_saving_path
 def ShallowFBCSPNet_train(
     data, label, chosen_numbered_label: int, dataset_info: dict, subject_id: int
 ) -> tuple[str, float]:
-    rng = RandomState(42)
+    rng = RandomState(GLOBAL_SEED)
 
     nb_epoch = 160
     loss_rec = np.zeros((nb_epoch, 2))
@@ -26,7 +26,7 @@ def ShallowFBCSPNet_train(
     n_classes = 2
 
     x_train, x_test, y_train, y_test = train_test_split(
-        data, label, test_size=0.2, random_state=42
+        data, label, test_size=0.2, random_state=GLOBAL_SEED
     )
 
     train_set = SignalAndTarget(x_train, y=y_train)

@@ -50,7 +50,7 @@ def pseudo_trial_exhaustive_training_and_testing(
         dataset_info["#_channels"] = 1
 
         cv = StratifiedKFold(
-            n_splits=10, shuffle=True, random_state=42
+            n_splits=10, shuffle=True, random_state=GLOBAL_SEED
         )  # Do cross-validation
 
         count_Kfolds: int = 0
@@ -140,7 +140,7 @@ def trial_exhaustive_training_and_testing(
             apply_autoreject=True,
         )
 
-        cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
+        cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=GLOBAL_SEED)
 
         count_Kfolds: int = 0
         trial_index_count: int = 0
