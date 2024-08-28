@@ -53,16 +53,16 @@ class ProcessingMethod:
 
     def save(self, path, method_name: str):
         for name, attribute in self.__dict__.items():
-            name = ".".join((method_name, name, "joblib"))
-            print("/".join((path, name)))
-            with open("/".join((path, name)), "wb") as f:
+            file_name = f"{method_name}_{name}.joblib"
+            print("/".join((path, file_name)))
+            with open("/".join((path, file_name)), "wb") as f:
                 joblib.dump(attribute, f)
 
     @classmethod
     def load(cls, path, method_name: str):
         my_model = {}
         for name in cls.__annotations__:
-            file_name = ".".join((method_name, name, "joblib"))
+            file_name = f"{method_name}_{name}.joblib"
             print("/".join((path, file_name)))
             with open("/".join((path, file_name)), "rb") as f:
                 my_model[name] = joblib.load(f)
