@@ -139,7 +139,7 @@ def by_frequency_band(data, dataset_info: dict):
             h_freq=frequency_bandwidth[1],
             method="iir",
             iir_params=iir_params,
-            verbose=True,
+            verbose=False,
         )
         filtered = signal.sosfiltfilt(filt["sos"], data)
         filtered = filtered.astype("float64")

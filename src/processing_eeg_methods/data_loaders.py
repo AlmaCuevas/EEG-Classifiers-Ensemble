@@ -15,6 +15,7 @@ from autoreject import AutoReject
 from mne import Epochs, EpochsArray, events_from_annotations, io
 from scipy import signal
 from scipy.io import loadmat
+from scipy.signal import butter, filtfilt
 
 from processing_eeg_methods.data_utils import (
     class_selection,
@@ -289,6 +290,15 @@ def nguyen_2019_dataset_loader(folderpath: str):
     return x, y, event_dict
 
 
+def bandpass_filter(data, lowcut, highcut, fs, order=5):
+    nyquist = 0.5 * fs
+    low = lowcut / nyquist
+    high = highcut / nyquist
+    b, a = butter(order, [low, high], btype="band")
+    y = filtfilt(b, a, data)
+    return y
+
+
 def braincommand_dataset_loader(
     filepath: str, subject_id: int, game_mode: str = "calibration3"
 ):
@@ -319,8 +329,22 @@ def braincommand_dataset_loader(
     x_array = np.transpose(x_array, (0, 2, 1))
     x_array = signal.detrend(x_array)
 
+    frequency_bandwidth = [0.5, 40]
+    iir_params = dict(order=8, ftype="butter")
+    filt = mne.filter.create_filter(
+        x_array,
+        250,
+        l_freq=frequency_bandwidth[0],
+        h_freq=frequency_bandwidth[1],
+        method="iir",
+        iir_params=iir_params,
+        verbose=False,
+    )
+    filtered = signal.sosfiltfilt(filt["sos"], x_array)
+    filtered = filtered.astype("float64")
+
     event_dict = {"Derecha": 0, "Izquierda": 1, "Arriba": 2, "Abajo": 3}
-    return x_array, label, event_dict
+    return filtered, label, event_dict
 
 
 def load_data_labels_based_on_dataset(
@@ -358,7 +382,7 @@ def load_data_labels_based_on_dataset(
         filepath = os.path.join(*path)
         data, label, event_dict = coretto_dataset_loader(filepath)
     elif dataset_name == "torres":
-        filename = "Datasets/torres_dataset/IndividuosS1-S27(17columnas)-Epocas.mat"
+        filename = "IndividuosS1-S27(17columnas)-Epocas.mat"
         filepath = os.path.join(data_path, filename)
         data, label, event_dict = torres_dataset_loader(filepath, subject_id)
     elif dataset_name == "ic_bci_2020":

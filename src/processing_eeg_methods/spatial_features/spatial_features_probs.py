@@ -59,7 +59,7 @@ def get_spatial_and_frequency_features_data(
                 h_freq=frequency_bandwidth[1],
                 method="iir",
                 iir_params=iir_params,
-                verbose=True,
+                verbose=False,
             )
             filtered = signal.sosfiltfilt(filt["sos"], data)
 
