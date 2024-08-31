@@ -50,7 +50,6 @@ def get_spatial_and_frequency_features_data(
         if labels is not None:
             transform_methods[feature_name] = Pipeline([(feature_name, feature_method)])
         for frequency_bandwidth_name, frequency_bandwidth in frequency_ranges.items():
-            print(frequency_bandwidth)
             iir_params = dict(order=8, ftype="butter")
             filt = mne.filter.create_filter(
                 data,
@@ -69,7 +68,6 @@ def get_spatial_and_frequency_features_data(
                 )
             else:
                 X_features = transform_methods[feature_name].transform(filtered)
-            print("Combined space has", X_features.shape[1], "features")
             column_name = [
                 f"{frequency_bandwidth_name}_{feature_name}_{num}"
                 for num in range(0, X_features.shape[1])
