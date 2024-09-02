@@ -306,9 +306,7 @@ def braincommand_dataset_loader(
         f"{filepath}/eeg_data_{game_mode}_sub{subject_id:02d}.csv"
     )
     x_list = list(complete_information["time"].apply(eval))
-    label = list(
-        complete_information["class"][1:]
-    )  # I'm removing the first one because is not a real trial.
+    label = list(complete_information["class"])
 
     label_0 = label.count(0)
     print(f"label 0 is {label_0}")
@@ -322,7 +320,7 @@ def braincommand_dataset_loader(
     label_3 = label.count(3)
     print(f"label 3 is {label_3}")
 
-    x_array = np.array(x_list[1:])  # trials, time, channels
+    x_array = np.array(x_list)  # trials, time, channels
     x_array = x_array[
         :, :, :-9
     ]  # The last channels are accelerometer (x3), gyroscope (x3), validity, battery and counter

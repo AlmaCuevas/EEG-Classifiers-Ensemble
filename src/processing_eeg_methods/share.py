@@ -290,8 +290,8 @@ ic_bci_2020 = {  # 2020 International BCI Competition
     "sample_rate": 256,
     "montage": "standard_1020",
     "channels_names": [
-        "FP1",
-        "FP2",
+        "Fp1",
+        "Fp2",
         "F7",
         "F3",
         "Fz",
@@ -377,7 +377,7 @@ braincommand = {  # BrainCommand
     "#_class": 4,
     "target_names": ["Derecha", "Izquierda", "Arriba", "Abajo"],
     "#_channels": 8,
-    "samples": 350,  # 250*1.4
+    "samples": 325,  # 250*1.4
     "sample_rate": 250,
     "montage": "standard_1020",
     "channels_names": ["F3", "C3", "F5", "FC5", "C5", "F7", "FT7", "T7"],
