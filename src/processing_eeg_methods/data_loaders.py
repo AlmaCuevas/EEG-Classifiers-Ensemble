@@ -3,12 +3,7 @@ import os
 import mne
 import numpy as np
 import pandas as pd
-from data_utils import (
-    class_selection,
-    convert_into_independent_channels,
-    data_normalization,
-    get_dataset_basic_info,
-)
+from autoreject import AutoReject
 
 # from Inner_Speech_Dataset.Python_Processing.Data_extractions import (
 #     Extract_data_from_subject,
@@ -20,10 +15,17 @@ from data_utils import (
 from mne import Epochs, EpochsArray, events_from_annotations, io
 from scipy import signal
 from scipy.io import loadmat
-from share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
+from scipy.signal import butter, filtfilt
+
+from processing_eeg_methods.data_utils import (
+    class_selection,
+    convert_into_independent_channels,
+    data_normalization,
+    get_dataset_basic_info,
+)
+from processing_eeg_methods.share import ROOT_VOTING_SYSTEM_PATH, datasets_basic_infos
 
 # from mne.preprocessing import ICA, create_eog_epochs
-# from autoreject import AutoReject
 
 
 def aguilera_dataset_loader(data_path: str, gamified: bool):  # typed
@@ -288,6 +290,15 @@ def nguyen_2019_dataset_loader(folderpath: str):
     return x, y, event_dict
 
 
+def bandpass_filter(data, lowcut, highcut, fs, order=5):
+    nyquist = 0.5 * fs
+    low = lowcut / nyquist
+    high = highcut / nyquist
+    b, a = butter(order, [low, high], btype="band")
+    y = filtfilt(b, a, data)
+    return y
+
+
 def braincommand_dataset_loader(
     filepath: str, subject_id: int, game_mode: str = "calibration3"
 ):
@@ -295,9 +306,7 @@ def braincommand_dataset_loader(
         f"{filepath}/eeg_data_{game_mode}_sub{subject_id:02d}.csv"
     )
     x_list = list(complete_information["time"].apply(eval))
-    label = list(
-        complete_information["class"][1:]
-    )  # I'm removing the first one because is not a real trial.
+    label = list(complete_information["class"])
 
     label_0 = label.count(0)
     print(f"label 0 is {label_0}")
@@ -311,17 +320,29 @@ def braincommand_dataset_loader(
     label_3 = label.count(3)
     print(f"label 3 is {label_3}")
 
-    x_array = np.array(x_list[1:])  # trials, time, channels
+    x_array = np.array(x_list)  # trials, time, channels
     x_array = x_array[
         :, :, :-9
     ]  # The last channels are accelerometer (x3), gyroscope (x3), validity, battery and counter
     x_array = np.transpose(x_array, (0, 2, 1))
     x_array = signal.detrend(x_array)
-    # x_array, label = convert_to_epochs(x_array, label)
-    x_array = data_normalization(x_array)
+
+    frequency_bandwidth = [0.5, 40]
+    iir_params = dict(order=8, ftype="butter")
+    filt = mne.filter.create_filter(
+        x_array,
+        250,
+        l_freq=frequency_bandwidth[0],
+        h_freq=frequency_bandwidth[1],
+        method="iir",
+        iir_params=iir_params,
+        verbose=False,
+    )
+    filtered = signal.sosfiltfilt(filt["sos"], x_array)
+    filtered = filtered.astype("float64")
 
     event_dict = {"Derecha": 0, "Izquierda": 1, "Arriba": 2, "Abajo": 3}
-    return x_array, label, event_dict
+    return filtered, label, event_dict
 
 
 def load_data_labels_based_on_dataset(
@@ -334,6 +355,8 @@ def load_data_labels_based_on_dataset(
     threshold_for_bug: float = 0,
     astype_value: str = "",
     channels_independent: bool = False,
+    apply_autoreject: bool = False,
+    game_mode: str = "calibration3",
 ):
     dataset_name = dataset_info["dataset_name"]
 
@@ -357,7 +380,7 @@ def load_data_labels_based_on_dataset(
         filepath = os.path.join(*path)
         data, label, event_dict = coretto_dataset_loader(filepath)
     elif dataset_name == "torres":
-        filename = "Datasets/torres_dataset/IndividuosS1-S27(17columnas)-Epocas.mat"
+        filename = "IndividuosS1-S27(17columnas)-Epocas.mat"
         filepath = os.path.join(data_path, filename)
         data, label, event_dict = torres_dataset_loader(filepath, subject_id)
     elif dataset_name == "ic_bci_2020":
@@ -369,12 +392,12 @@ def load_data_labels_based_on_dataset(
     elif dataset_name == "nguyen_2019":
         data, label, event_dict = nguyen_2019_dataset_loader(data_path, subject_id)
     elif dataset_name == "braincommand":
-        data, label, event_dict = braincommand_dataset_loader(data_path, subject_id)
+        data, label, event_dict = braincommand_dataset_loader(
+            data_path, subject_id, game_mode=game_mode
+        )
 
     if transpose:
         data = np.transpose(data, (0, 2, 1))
-    if normalize:
-        data = data_normalization(data)
     if selected_classes:
         data, label, event_dict = class_selection(
             data, label, event_dict, selected_classes=selected_classes
@@ -389,6 +412,8 @@ def load_data_labels_based_on_dataset(
         data, label = convert_into_independent_channels(data, label)
         data = np.transpose(np.array([data]), (1, 0, 2))
         dataset_info["#_channels"] = 1
+    if normalize:
+        data = data_normalization(data)
 
     # Convert to epochs
     events = np.column_stack(
@@ -406,21 +431,28 @@ def load_data_labels_based_on_dataset(
     epochs = EpochsArray(
         data,
         info=mne.create_info(
-            dataset_info["#_channels"],
             sfreq=dataset_info["sample_rate"],
             ch_types="eeg",
+            ch_names=dataset_info["channels_names"],
         ),
         events=events,
         event_id=event_dict,
         baseline=(None, None),
     )
-    label = epochs.events[:, 2].astype(np.int64)  # Repetition to keep the right format
+    if apply_autoreject:
+        montage = mne.channels.make_standard_montage(dataset_info["montage"])
+        epochs.set_montage(montage)
+        ar = AutoReject()
+        epochs = ar.fit_transform(epochs)
+        data = epochs.get_data()
+
+    label = epochs.events[:, 2].astype(np.int64)  # To always keep the right format
     return epochs, data, label
 
 
 if __name__ == "__main__":
     # Manual Inputs
-    subject_id = 29  # Only two things I should be able to change
+    subject_id = 24  # Only two things I should be able to change
     dataset_name = "braincommand"  # Only two things I should be able to change
 
     get_dataset_basic_info(datasets_basic_infos, dataset_name)

@@ -4,29 +4,30 @@ from typing import Any, List, Optional
 
 import joblib
 import numpy as np
-from BigProject.GRU_probs import GRU_test, GRU_train
-from BigProject.LSTM_probs import LSTM_test, LSTM_train
-from data_utils import (
+
+from processing_eeg_methods.BigProject.GRU_probs import GRU_test, GRU_train
+from processing_eeg_methods.BigProject.LSTM_probs import LSTM_test, LSTM_train
+from processing_eeg_methods.data_utils import (
     convert_into_binary,
     convert_into_independent_channels,
     data_normalization,
 )
-from diffusion.diffE_probs import diffE_test
-from diffusion.diffE_training import diffE_train
-from NeuroTechX_dl_eeg.ShallowFBCSPNet_probs import (
+from processing_eeg_methods.diffusion.diffE_probs import diffE_test
+from processing_eeg_methods.diffusion.diffE_training import diffE_train
+from processing_eeg_methods.NeuroTechX_dl_eeg.ShallowFBCSPNet_probs import (
     ShallowFBCSPNet_test,
     ShallowFBCSPNet_train,
 )
-from spatial_features.simplified_spatial_features_probs import (
+from processing_eeg_methods.spatial_features.simplified_spatial_features_probs import (
     simplified_spatial_features_test,
     simplified_spatial_features_train,
 )
-from spatial_features.spatial_features_probs import (
+from processing_eeg_methods.spatial_features.spatial_features_probs import (
     get_spatial_and_frequency_features_data,
     spatial_features_test,
     spatial_features_train,
 )
-from time_features.time_features_probs import (
+from processing_eeg_methods.time_features.time_features_probs import (
     by_frequency_band,
     extractions_test,
     extractions_train,
@@ -50,18 +51,18 @@ class ProcessingMethod:
         """
         raise Exception("Not implemented yet.")
 
-    def save(self, path):
+    def save(self, path, method_name: str):
         for name, attribute in self.__dict__.items():
-            name = ".".join((name, "joblib"))
-            print("/".join((path, name)))
-            with open("/".join((path, name)), "wb") as f:
+            file_name = f"{method_name}_{name}.joblib"
+            print("/".join((path, file_name)))
+            with open("/".join((path, file_name)), "wb") as f:
                 joblib.dump(attribute, f)
 
     @classmethod
-    def load(cls, path):
+    def load(cls, path, method_name: str):
         my_model = {}
         for name in cls.__annotations__:
-            file_name = ".".join((name, "joblib"))
+            file_name = f"{method_name}_{name}.joblib"
             print("/".join((path, file_name)))
             with open("/".join((path, file_name)), "rb") as f:
                 my_model[name] = joblib.load(f)

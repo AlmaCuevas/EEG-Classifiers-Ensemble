@@ -6,8 +6,10 @@ from keras.layers import GRU, Activation, BatchNormalization, Dense, Dropout, Fl
 from keras.models import Sequential, load_model
 from scipy import signal
 from scipy.fftpack import dct, idct
-from share import ROOT_VOTING_SYSTEM_PATH
 from sklearn import preprocessing
+
+from processing_eeg_methods.data_utils import train_test_val_split
+from processing_eeg_methods.share import ROOT_VOTING_SYSTEM_PATH
 
 
 def GRU_train(dataset_info, data, labels, num_classes: int):

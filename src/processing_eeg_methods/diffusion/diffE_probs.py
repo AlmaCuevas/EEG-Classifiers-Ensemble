@@ -1,14 +1,13 @@
 import torch
 import torch.nn.functional as F
-from data_utils import standard_saving_path
-from diffusion.diffE_models import Decoder, DiffE, Encoder, LinearClassifier
-from diffusion.diffE_utils import EEGDataset
 from torch.utils.data import DataLoader
 
-# todo: add the test template
-# todo: do the deap thing about the FFT: https://github.com/tongdaxu/EEG_Emotion_Classifier_DEAP/blob/master/Preprocess_Deap.ipynb
+from processing_eeg_methods.data_utils import standard_saving_path
 
-threshold_for_bug = 0.00000001  # could be any value, ex numpy.min
+from .diffE_models import Decoder, DiffE, Encoder, LinearClassifier
+from .diffE_utils import EEGDataset
+
+# todo: do the deap thing about the FFT: https://github.com/tongdaxu/EEG_Emotion_Classifier_DEAP/blob/master/Preprocess_Deap.ipynb
 
 
 def diffE_test(subject_id: int, X, dataset_info: dict, device: str = "cuda:0"):

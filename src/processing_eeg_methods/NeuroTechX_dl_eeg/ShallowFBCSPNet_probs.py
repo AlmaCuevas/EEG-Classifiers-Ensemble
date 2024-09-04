@@ -5,16 +5,17 @@ from braindecode.datautil.iterators import get_balanced_batches
 from braindecode.datautil.signal_target import SignalAndTarget
 from braindecode.models.shallow_fbcsp import ShallowFBCSPNet
 from braindecode.torch_ext.util import np_to_var, set_random_seeds, var_to_np
-from data_utils import standard_saving_path
 from numpy.random import RandomState
 from sklearn.model_selection import train_test_split
 from torch import optim
+
+from processing_eeg_methods.data_utils import standard_saving_path
 
 
 def ShallowFBCSPNet_train(
     data, label, chosen_numbered_label: int, dataset_info: dict, subject_id: int
 ) -> tuple[str, float]:
-    rng = RandomState(None)
+    rng = RandomState(42)
 
     nb_epoch = 160
     loss_rec = np.zeros((nb_epoch, 2))
@@ -24,7 +25,9 @@ def ShallowFBCSPNet_train(
     set_random_seeds(seed=20180505, cuda=cuda)
     n_classes = 2
 
-    x_train, x_test, y_train, y_test = train_test_split(data, label, test_size=0.2)
+    x_train, x_test, y_train, y_test = train_test_split(
+        data, label, test_size=0.2, random_state=42
+    )
 
     train_set = SignalAndTarget(x_train, y=y_train)
     test_set = SignalAndTarget(x_test, y=y_test)

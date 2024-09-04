@@ -1,6 +1,5 @@
 import mne
 import pandas as pd
-from data_utils import ClfSwitcher, get_best_classificator_and_test_accuracy
 from mne.decoding import CSP
 from pyriemann.estimation import Covariances, ERPCovariances, XdawnCovariances
 from pyriemann.tangentspace import TangentSpace
@@ -8,7 +7,11 @@ from scipy import signal
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.pipeline import Pipeline
 
-# todo: add the test template
+from processing_eeg_methods.data_utils import (
+    ClfSwitcher,
+    get_best_classificator_and_test_accuracy,
+)
+
 # todo: do the deap thing about the FFT: https://github.com/tongdaxu/EEG_Emotion_Classifier_DEAP/blob/master/Preprocess_Deap.ipynb
 
 
@@ -47,7 +50,6 @@ def get_spatial_and_frequency_features_data(
         if labels is not None:
             transform_methods[feature_name] = Pipeline([(feature_name, feature_method)])
         for frequency_bandwidth_name, frequency_bandwidth in frequency_ranges.items():
-            print(frequency_bandwidth)
             iir_params = dict(order=8, ftype="butter")
             filt = mne.filter.create_filter(
                 data,
@@ -56,7 +58,7 @@ def get_spatial_and_frequency_features_data(
                 h_freq=frequency_bandwidth[1],
                 method="iir",
                 iir_params=iir_params,
-                verbose=True,
+                verbose=False,
             )
             filtered = signal.sosfiltfilt(filt["sos"], data)
 
@@ -66,7 +68,6 @@ def get_spatial_and_frequency_features_data(
                 )
             else:
                 X_features = transform_methods[feature_name].transform(filtered)
-            print("Combined space has", X_features.shape[1], "features")
             column_name = [
                 f"{frequency_bandwidth_name}_{feature_name}_{num}"
                 for num in range(0, X_features.shape[1])
