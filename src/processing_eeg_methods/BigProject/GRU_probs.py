@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
+
 from data_utils import train_test_val_split, standard_saving_path
+
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers import GRU, Activation, BatchNormalization, Dense, Dropout, Flatten
 from keras.models import Sequential, load_model
