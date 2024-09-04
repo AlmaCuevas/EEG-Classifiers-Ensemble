@@ -11,6 +11,7 @@ aguilera_traditional_info = {
     "#_channels": 24,
     "samples": 701,  # sample_rate * duration in seconds = 500*1.4=700
     "sample_rate": 500,
+    "montage": "standard_1020",
     "channels_names": [
         "FP1",
         "FP2",
@@ -54,6 +55,7 @@ aguilera_gamified_info = {
     "#_channels": 24,
     "samples": 701,  # sample_rate * duration in seconds = 500*1.4=700
     "sample_rate": 500,
+    "montage": "standard_1020",
     "channels_names": [
         "FP1",
         "FP2",
@@ -93,6 +95,7 @@ nieto_info = {
     "#_channels": 128,
     "samples": 512,
     "sample_rate": 256,  # in BDF: 1024, but 256 is what the Python extraction tutorial they provided says.
+    "montage": "PENDING",  # todo: pending
     "channels_names": [
         "A1",
         "A2",
@@ -242,6 +245,7 @@ coretto_info = {
     "#_channels": 6,
     "samples": 342,  # Originally 1365=(4096-1)/3 . Originally 4096, that would be 4s. But there were 3 trials inside that, so the first sample was removed and then divided in thirds. # noqa: E501
     "sample_rate": 256,  # Originally it was 1024 with 1365 samples = 1.3 seconds. But I downsampled to 256. # noqa: E501
+    "montage": "standard_1020",
     "channels_names": ["F3", "F4", "C3", "C4", "P3", "P4"],
     "subjects": 15,
     "total_trials": 606,
@@ -255,6 +259,7 @@ torres_info = {
     "#_channels": 14,
     "samples": 463,  # The maximum, epochs are irregular.
     "sample_rate": 128,
+    "montage": "standard_1020",
     "channels_names": [
         "AF3",
         "F7",
@@ -283,9 +288,10 @@ ic_bci_2020 = {  # 2020 International BCI Competition
     "#_channels": 64,
     "samples": 795,
     "sample_rate": 256,
+    "montage": "standard_1020",
     "channels_names": [
-        "FP1",
-        "FP2",
+        "Fp1",
+        "Fp2",
         "F7",
         "F3",
         "Fz",
@@ -360,6 +366,7 @@ nguyen_2019 = {
     "#_channels": 60,
     "samples": 0,  # PENDING
     "sample_rate": 0,  # PENDING
+    "montage": "PENDING",  # PENDING
     "channels_names": [],  # PENDING
     "subjects": 8,  # Each run has 8 subjects
     "total_trials": 0,  # PENDING
@@ -370,9 +377,10 @@ braincommand = {  # BrainCommand
     "#_class": 4,
     "target_names": ["Derecha", "Izquierda", "Arriba", "Abajo"],
     "#_channels": 8,
-    "samples": 350,  # 250*1.4
+    "samples": 325,  # 250*1.4
     "sample_rate": 250,
-    "channels_names": ["C4", "FC3", "F5", "C3", "F7", "Cz", "P3", "C5"],
+    "montage": "standard_1020",
+    "channels_names": ["F3", "C3", "F5", "FC5", "C5", "F7", "FT7", "T7"],
     "subjects": 1,  # PENDING
     "total_trials": 228,
 }

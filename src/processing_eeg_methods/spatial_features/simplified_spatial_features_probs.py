@@ -1,12 +1,15 @@
 from collections import OrderedDict
 
 import numpy as np
-from data_utils import ClfSwitcher, get_best_classificator_and_test_accuracy
 from pyriemann.estimation import Covariances
 from pyriemann.tangentspace import TangentSpace
 from sklearn.pipeline import Pipeline
 
-# todo: add the test template
+from processing_eeg_methods.data_utils import (
+    ClfSwitcher,
+    get_best_classificator_and_test_accuracy,
+)
+
 # todo: do the deap thing about the FFT: https://github.com/tongdaxu/EEG_Emotion_Classifier_DEAP/blob/master/Preprocess_Deap.ipynb
 
 
