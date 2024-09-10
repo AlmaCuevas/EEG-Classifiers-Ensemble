@@ -4,7 +4,8 @@ from typing import Any, List
 
 import numpy as np
 import pandas as pd
-from classifiers_classes import (
+
+from processing_eeg_methods.classifiers_classes import (
     GRU_function,
     LSTM_function,
     ProcessingMethod,
@@ -223,3 +224,19 @@ class ProcessingMethods:
             )  # Mean over columns
 
             return ensemble_probabilities_summary
+
+    def save_models(self, path):
+        for method_name in vars(self):
+            method = getattr(self, method_name)
+            if method.activation:
+                print(f"Saving {method_name}...")
+                method.function.save(path=path, method_name=method_name)
+
+    def load_models(self, path):
+        for method_name in vars(self):
+            method = getattr(self, method_name)
+            if method.activation:
+                print(f"Loading {method_name}...")
+                method.function = method.function.load(
+                    path=path, method_name=method_name
+                )
