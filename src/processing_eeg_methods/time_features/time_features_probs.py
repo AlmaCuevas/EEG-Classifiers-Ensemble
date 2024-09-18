@@ -130,7 +130,6 @@ def by_frequency_band(data, dataset_info: dict):
     }
     features_df = get_extractions(data, dataset_info, "complete")
     for frequency_bandwidth_name, frequency_bandwidth in frequency_ranges.items():
-        print(frequency_bandwidth)
         iir_params = dict(order=8, ftype="butter")
         filt = mne.filter.create_filter(
             data,
@@ -139,7 +138,7 @@ def by_frequency_band(data, dataset_info: dict):
             h_freq=frequency_bandwidth[1],
             method="iir",
             iir_params=iir_params,
-            verbose=True,
+            verbose=False,
         )
         filtered = signal.sosfiltfilt(filt["sos"], data)
         filtered = filtered.astype("float64")
