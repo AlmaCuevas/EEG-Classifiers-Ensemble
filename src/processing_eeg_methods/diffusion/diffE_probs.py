@@ -9,8 +9,6 @@ from .diffE_utils import EEGDataset
 
 # todo: do the deap thing about the FFT: https://github.com/tongdaxu/EEG_Emotion_Classifier_DEAP/blob/master/Preprocess_Deap.ipynb
 
-threshold_for_bug = 0.00000001  # could be any value, ex numpy.min
-
 
 def diffE_test(subject_id: int, X, dataset_info: dict, device: str = "cuda:0"):
     # From diffe_evaluation
