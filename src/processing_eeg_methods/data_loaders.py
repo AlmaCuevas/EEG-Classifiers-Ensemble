@@ -317,8 +317,7 @@ def braincommand_dataset_loader(
     filtered = signal.sosfiltfilt(filt["sos"], x_array)
     filtered = filtered.astype("float64")
 
-    event_dict = {"Derecha": 0, "Izquierda": 1, "Arriba": 2, "Abajo": 3}
-    return filtered, label, event_dict
+    return filtered, label
 
 
 def load_data_labels_based_on_dataset(
@@ -428,7 +427,7 @@ def load_data_labels_based_on_dataset(
 
 if __name__ == "__main__":
     # Manual Inputs
-    subject_id = 1  # Only two things I should be able to change
+    subject_id = 24  # Only two things I should be able to change
     dataset_name = "braincommand"  # Only two things I should be able to change
 
     get_dataset_basic_info(datasets_basic_infos, dataset_name)
