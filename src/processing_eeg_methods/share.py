@@ -40,6 +40,8 @@ aguilera_traditional_info = {
     ],  # in the channels order, 20 and 21 are  'M1', 'M2'
     "subjects": 16,
     "total_trials": 120,
+     "event_dict" : {"Avanzar": 0, "Retroceder": 1, "Derecha": 2, "Izquierda": 3}
+
 }  # 30 per class
 
 # Edgar Aguilera Gamified
@@ -84,6 +86,7 @@ aguilera_gamified_info = {
     ],  # in the channels order, 21 and 22 are  'M1', 'M2'
     "subjects": 15,
     "total_trials": 120,
+    "event_dict" : {"Avanzar": 0, "Retroceder": 1, "Derecha": 2, "Izquierda": 3}
 }  # 30 per class
 
 
@@ -249,6 +252,7 @@ coretto_info = {
     "channels_names": ["F3", "F4", "C3", "C4", "P3", "P4"],
     "subjects": 15,
     "total_trials": 606,
+    "event_dict" : {"Arriba": 0, "Abajo": 1, "Derecha": 2, "Izquierda": 3}
 }
 
 # Torres
@@ -278,6 +282,13 @@ torres_info = {
     ],
     "subjects": 27,
     "total_trials": 132,
+    "event_dict" : {
+        "Arriba": 0,
+        "Abajo": 1,
+        "Izquierda": 2,
+        "Derecha": 3,
+        "Seleccionar": 4,
+    }
 }
 
 
@@ -357,6 +368,7 @@ ic_bci_2020 = {  # 2020 International BCI Competition
     ],
     "subjects": 15,  # aged 20-30 years
     "total_trials": 350,
+    "event_dict" : {"Hello": 0, "Help me": 1, "Stop": 2, "Thank you": 3, "Yes": 4}
 }
 
 nguyen_2019 = {
@@ -370,6 +382,7 @@ nguyen_2019 = {
     "channels_names": [],  # PENDING
     "subjects": 8,  # Each run has 8 subjects
     "total_trials": 0,  # PENDING
+    "event_dict" : {"left hand": 0, "concentrate": 1, "right hand": 2, "split": 3}
 }
 
 braincommand = {  # BrainCommand
@@ -383,6 +396,8 @@ braincommand = {  # BrainCommand
     "channels_names": ["FC3", "C3", "F5", "FC5", "C5", "F7", "FT7", "T7"],
     "subjects": 1,  # PENDING
     "total_trials": 228,
+    "event_dict" : {"Derecha": 0, "Izquierda": 1, "Arriba": 2, "Abajo": 3}
+
 }
 
 datasets_basic_infos = {
