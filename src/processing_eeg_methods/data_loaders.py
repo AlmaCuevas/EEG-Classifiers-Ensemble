@@ -330,8 +330,7 @@ def braincommand_dataset_loader(
     filtered = signal.sosfiltfilt(filt["sos"], x_array)
     filtered = filtered.astype("float64")
 
-    event_dict = {"Derecha": 0, "Izquierda": 1, "Arriba": 2, "Abajo": 3}
-    return filtered, label, event_dict
+    return filtered, label
 
 
 def load_data_labels_based_on_dataset(
