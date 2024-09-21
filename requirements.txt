@@ -11,7 +11,7 @@ termcolor==2.3.0
 tqdm==4.66.1
 wget==3.2
 skorch==0.15.0
-braindecode==0.4.85
+braindecode==0.8.1
 ema-pytorch==0.3.0
 einops==0.7.0
 emd==0.4.0
