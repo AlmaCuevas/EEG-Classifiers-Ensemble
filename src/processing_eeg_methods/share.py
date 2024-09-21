@@ -380,7 +380,7 @@ braincommand = {  # BrainCommand
     "samples": 325,  # 250*1.4
     "sample_rate": 250,
     "montage": "standard_1020",
-    "channels_names": ["F3", "C3", "F5", "FC5", "C5", "F7", "FT7", "T7"],
+    "channels_names": ["FC3", "C3", "F5", "FC5", "C5", "F7", "FT7", "T7"],
     "subjects": 1,  # PENDING
     "total_trials": 228,
 }
