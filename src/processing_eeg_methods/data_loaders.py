@@ -313,22 +313,6 @@ def braincommand_dataset_loader(
     x_array = signal.detrend(x_array)
     return x_array, label
 
-    frequency_bandwidth = [0.5, 40]
-    iir_params = dict(order=8, ftype="butter")
-    filt = mne.filter.create_filter(
-        x_array,
-        250,
-        l_freq=frequency_bandwidth[0],
-        h_freq=frequency_bandwidth[1],
-        method="iir",
-        iir_params=iir_params,
-        verbose=False,
-    )
-    filtered = signal.sosfiltfilt(filt["sos"], x_array)
-    filtered = filtered.astype("float64")
-
-    return filtered, label
-
 
 def load_data_labels_based_on_dataset(
     dataset_info: dict,
