@@ -295,29 +295,12 @@ def braincommand_dataset_loader(
     X = epochs.get_data()
     y = epochs.events[:, 2].astype(np.int64)
     label = y - 1
-    dataset_info["#_channels"] = len(epochs.info["ch_names"])
 
     x_array = np.array(X)  # trials, time, channels
 
-    x_array = np.transpose(x_array, (0, 2, 1))
     x_array = signal.detrend(x_array)
-    return x_array, label
 
-    frequency_bandwidth = [0.5, 40]
-    iir_params = dict(order=8, ftype="butter")
-    filt = mne.filter.create_filter(
-        x_array,
-        250,
-        l_freq=frequency_bandwidth[0],
-        h_freq=frequency_bandwidth[1],
-        method="iir",
-        iir_params=iir_params,
-        verbose=False,
-    )
-    filtered = signal.sosfiltfilt(filt["sos"], x_array)
-    filtered = filtered.astype("float64")
-
-    return filtered, label
+    return x_array, label, epochs.info["ch_names"]
 
 
 def load_data_labels_based_on_dataset(
@@ -342,35 +325,35 @@ def load_data_labels_based_on_dataset(
         filename = f"S{subject_id}.edf"
         filepath = os.path.join(data_path, filename)
         if "gamified" in dataset_name:
-            epochs, label, event_dict = aguilera_dataset_loader(filepath, True)
+            epochs, label = aguilera_dataset_loader(filepath, True)
         else:
-            epochs, label, event_dict = aguilera_dataset_loader(filepath, False)
+            epochs, label = aguilera_dataset_loader(filepath, False)
         data = epochs.get_data()
     # elif dataset_name == "nieto":
-    #     data, label, event_dict = nieto_dataset_loader(data_path, subject_id)
+    #     data, label = nieto_dataset_loader(data_path, subject_id)
     elif dataset_name == "coretto":
         foldername = "S{:02d}".format(subject_id)
         filename = foldername + "_EEG.mat"
         path = [data_path, foldername, filename]
         filepath = os.path.join(*path)
-        data, label, event_dict = coretto_dataset_loader(filepath)
+        data, label = coretto_dataset_loader(filepath)
     elif dataset_name == "torres":
         filename = "IndividuosS1-S27(17columnas)-Epocas.mat"
         filepath = os.path.join(data_path, filename)
-        data, label, event_dict = torres_dataset_loader(filepath, subject_id)
+        data, label = torres_dataset_loader(filepath, subject_id)
     elif dataset_name == "ic_bci_2020":
         foldername = "Training set"
         filename = "Data_Sample{:02d}.mat".format(subject_id)
         path = [data_path, foldername, filename]
         filepath = os.path.join(*path)
-        data, label, event_dict = ic_bci_2020_dataset_loader(filepath)
+        data, label = ic_bci_2020_dataset_loader(filepath)
     elif dataset_name == "nguyen_2019":
-        data, label, event_dict = nguyen_2019_dataset_loader(data_path, subject_id)
+        data, label = nguyen_2019_dataset_loader(data_path, subject_id)
     elif dataset_name == "braincommand":
-        data, label, event_dict = braincommand_dataset_loader(
+        data, label, channels = braincommand_dataset_loader(
             data_path, subject_id, game_mode=game_mode
         )
-
+        dataset_info["channels_names"] = channels
     if transpose:
         data = np.transpose(data, (0, 2, 1))
     if selected_classes:
@@ -427,7 +410,7 @@ def load_data_labels_based_on_dataset(
 
 if __name__ == "__main__":
     # Manual Inputs
-    subject_id = 24  # Only two things I should be able to change
+    subject_id = 1  # Only two things I should be able to change
     dataset_name = "braincommand"  # Only two things I should be able to change
 
     get_dataset_basic_info(datasets_basic_infos, dataset_name)
