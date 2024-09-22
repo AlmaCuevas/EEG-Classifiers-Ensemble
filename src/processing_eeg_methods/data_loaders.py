@@ -154,13 +154,10 @@ def aguilera_dataset_loader(data_path: str, gamified: bool):  # typed
 #     # Transform data and keep only the trials of interest
 #     X, Y = Transform_for_classificator(X, Y, Classes, Conditions)
 #     Y = Y.astype(int)
-#     event_dict = {"Arriba": 0, "Abajo": 1, "Derecha": 2, "Izquierda": 3}
-#     return X, Y, event_dict
+#     return X, Y
 
 
-def torres_dataset_loader(
-    filepath: str, subject_id: int
-):  # TODO: Flag or something to return all subjects
+def torres_dataset_loader(filepath: str, subject_id: int):
     EEG_nested_dict = loadmat(filepath, simplify_cells=True)
     EEG_array = np.zeros(
         (27, 5, 33, 463, 17)
@@ -355,9 +352,9 @@ def load_data_labels_based_on_dataset(
         filename = f"S{subject_id}.edf"
         filepath = os.path.join(data_path, filename)
         if "gamified" in dataset_name:
-            epochs, label, event_dict = aguilera_dataset_loader(filepath, True)
+            epochs, label = aguilera_dataset_loader(filepath, True)
         else:
-            epochs, label, event_dict = aguilera_dataset_loader(filepath, False)
+            epochs, label = aguilera_dataset_loader(filepath, False)
         data = epochs.get_data()
     # elif dataset_name == "nieto":
     #     data, label, event_dict = nieto_dataset_loader(data_path, subject_id)
@@ -366,21 +363,21 @@ def load_data_labels_based_on_dataset(
         filename = foldername + "_EEG.mat"
         path = [data_path, foldername, filename]
         filepath = os.path.join(*path)
-        data, label, event_dict = coretto_dataset_loader(filepath)
+        data, label = coretto_dataset_loader(filepath)
     elif dataset_name == "torres":
         filename = "IndividuosS1-S27(17columnas)-Epocas.mat"
         filepath = os.path.join(data_path, filename)
-        data, label, event_dict = torres_dataset_loader(filepath, subject_id)
+        data, label = torres_dataset_loader(filepath, subject_id)
     elif dataset_name == "ic_bci_2020":
         foldername = "Training set"
         filename = "Data_Sample{:02d}.mat".format(subject_id)
         path = [data_path, foldername, filename]
         filepath = os.path.join(*path)
-        data, label, event_dict = ic_bci_2020_dataset_loader(filepath)
+        data, label = ic_bci_2020_dataset_loader(filepath)
     elif dataset_name == "nguyen_2019":
-        data, label, event_dict = nguyen_2019_dataset_loader(data_path, subject_id)
+        data, label = nguyen_2019_dataset_loader(data_path, subject_id)
     elif dataset_name == "braincommand":
-        data, label, event_dict = braincommand_dataset_loader(
+        data, label = braincommand_dataset_loader(
             data_path, subject_id, game_mode=game_mode
         )
 
