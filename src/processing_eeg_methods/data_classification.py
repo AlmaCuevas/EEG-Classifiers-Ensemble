@@ -204,7 +204,6 @@ if __name__ == "__main__":
         selected_classes = combo  # [0, 1, 2, 3]
         subject_range = [24]
         independent_channels = True
-        independent_channels = False
 
         ce = complete_experiment()
 
@@ -225,7 +224,6 @@ if __name__ == "__main__":
         )
         activated_methods: list[str] = pm.get_activated_methods()
         combo_str = "_".join(map(str, combo))
-        version_name = f"autoreject_inside_24_trained_with_calibration3_all_channels_{combo_str}"  # To keep track what the output processing alteration went through
         version_name = f"autoreject_inside_trained_with_calibration3_montage_all_channels_{combo_str}"  # To keep track what the output processing alteration went through
 
         data_path = get_input_data_path(dataset_name)

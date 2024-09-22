@@ -440,8 +440,7 @@ if __name__ == "__main__":
     subject_id = 24  # Only two things I should be able to change
     dataset_name = "braincommand"  # Only two things I should be able to change
 
-    get_dataset_basic_info(datasets_basic_infos, dataset_name)
-    dataset_info: dict = datasets_basic_infos[dataset_name]
+    dataset_info = get_dataset_basic_info(datasets_basic_infos, dataset_name)
 
     print(ROOT_VOTING_SYSTEM_PATH)
     # Folders and paths
