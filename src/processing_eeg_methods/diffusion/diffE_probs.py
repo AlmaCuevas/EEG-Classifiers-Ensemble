@@ -13,7 +13,7 @@ from .diffE_utils import EEGDataset
 def diffE_test(subject_id: int, X, dataset_info: dict, device: str = "cuda:0"):
     # From diffe_evaluation
     model_path: str = standard_saving_path(
-        dataset_info['dataset_name'], "DiffE", "", file_ending="pt", subject_id=subject_id
+        dataset_info.dataset_name, "DiffE", "", file_ending="pt", subject_id=subject_id
     )
 
     X = X[
@@ -31,8 +31,8 @@ def diffE_test(subject_id: int, X, dataset_info: dict, device: str = "cuda:0"):
     encoder_dim = 256
     fc_dim = 512
     # Define model
-    num_classes = dataset_info["#_class"]
-    channels = dataset_info["#_channels"]
+    num_classes = dataset_info.num_classes  # Changed to access the dataclass attribute
+    channels = dataset_info.num_channels  # Changed to access the dataclass attribute
 
     encoder = Encoder(in_channels=channels, dim=encoder_dim).to(device)
     decoder = Decoder(

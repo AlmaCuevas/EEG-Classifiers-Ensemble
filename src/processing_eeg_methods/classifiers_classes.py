@@ -75,7 +75,7 @@ class spatial_features_function(ProcessingMethod):
     columns_list: List[str] = field(default_factory=list)
     transform_methods: dict = field(default_factory=dict)
 
-    def train(self, data, labels, dataset_info: dict, **kwargs):
+    def train(self, data, labels, dataset_info, **kwargs):
         features_train_df, self.transform_methods = (
             get_spatial_and_frequency_features_data(
                 data, dataset_info=dataset_info, labels=labels
@@ -119,10 +119,10 @@ class simplified_spatial_features_function(ProcessingMethod):
 @dataclass
 class ShallowFBCSPNet_function(ProcessingMethod):
 
-    def train(self, data, labels, dataset_info: dict, subject_id: int, **kwargs):
+    def train(self, data, labels, dataset_info, subject_id: int, **kwargs):
         temp_data = (data * 1e6).astype(np.float32)
         model_ShallowFBCSPNet_accuracies = []
-        for chosen_numbered_label in range(0, dataset_info["#_class"] + 1):
+        for chosen_numbered_label in range(0, dataset_info.num_classes + 1):
             temp_labels = convert_into_binary(
                 labels.copy(), chosen_numbered_label=chosen_numbered_label
             )
@@ -137,10 +137,10 @@ class ShallowFBCSPNet_function(ProcessingMethod):
             )
         return np.mean(model_ShallowFBCSPNet_accuracies)
 
-    def test(self, data, dataset_info: dict, subject_id: int, **kwargs):
+    def test(self, data, dataset_info, subject_id: int, **kwargs):
         temp_data_array = (data * 1e6).astype(np.float32)
         ShallowFBCSPNet_arrays = []
-        for chosen_numbered_label in range(0, dataset_info["#_class"]):
+        for chosen_numbered_label in range(0, dataset_info.num_classes):
             ShallowFBCSPNet_arrays.append(
                 ShallowFBCSPNet_test(
                     subject_id,
@@ -160,7 +160,7 @@ class ShallowFBCSPNet_function(ProcessingMethod):
 class LSTM_function(ProcessingMethod):
     clf: Optional[Any] = None
 
-    def train(self, data, labels, dataset_info: dict, subject_id: int, **kwargs):
+    def train(self, data, labels, dataset_info, subject_id: int, **kwargs):
         self.clf, accuracy = LSTM_train(dataset_info, data, labels, subject_id)
         return accuracy
 
@@ -172,9 +172,9 @@ class LSTM_function(ProcessingMethod):
 class GRU_function(ProcessingMethod):
     clf: Optional[Any] = None
 
-    def train(self, data, labels, dataset_info: dict, subject_id: int, **kwargs):
+    def train(self, data, labels, dataset_info, subject_id: int, **kwargs):
         self.clf, accuracy = GRU_train(
-            dataset_info["dataset_name"], data, labels, dataset_info["#_class"]
+            dataset_info.dataset_name, data, labels, dataset_info.num_classes
         )
         return accuracy
 
@@ -185,12 +185,12 @@ class GRU_function(ProcessingMethod):
 @dataclass
 class diffE_function(ProcessingMethod):
 
-    def train(self, data, labels, dataset_info: dict, subject_id: int, **kwargs):
+    def train(self, data, labels, dataset_info, subject_id: int, **kwargs):
         return diffE_train(
             subject_id=subject_id, X=data, Y=labels, dataset_info=dataset_info
         )  # The trained clf is saved in a file
 
-    def test(self, data, dataset_info: dict, subject_id: int, **kwargs):
+    def test(self, data, dataset_info, subject_id: int, **kwargs):
         return data_normalization(
             diffE_test(subject_id=subject_id, X=data, dataset_info=dataset_info)
         )
@@ -200,7 +200,7 @@ class diffE_function(ProcessingMethod):
 class feature_extraction_function(ProcessingMethod):
     clf: Optional[Any] = None
 
-    def train(self, data, labels, dataset_info: dict, subject_id: int, **kwargs):
+    def train(self, data, labels, dataset_info, subject_id: int, **kwargs):
         data_simplified, labels_simplified = convert_into_independent_channels(
             data, labels
         )
@@ -211,7 +211,7 @@ class feature_extraction_function(ProcessingMethod):
         ) = extractions_train(features_df, labels_simplified)
         return accuracy
 
-    def test(self, data, dataset_info: dict, subject_id: int, **kwargs):
+    def test(self, data, dataset_info, subject_id: int, **kwargs):
         data_array_simplified, _ = convert_into_independent_channels(data, [1])
         features_df = by_frequency_band(data_array_simplified, dataset_info)
         return data_normalization(extractions_test(self.clf, features_df))

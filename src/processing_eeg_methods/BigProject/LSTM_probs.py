@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from dataclasses import dataclass
 import numpy as np
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers import LSTM, Activation, BatchNormalization, Dense, Dropout, Flatten
@@ -11,7 +12,7 @@ from processing_eeg_methods.data_utils import standard_saving_path, train_test_v
 
 
 def LSTM_train(dataset_info, data, labels, subject_id: int):
-    num_classes = dataset_info["#_class"]
+    num_classes = dataset_info.num_classes
 
     # substract data from list
     X_train, X_test, _, y_train, y_test, _ = train_test_val_split(
@@ -123,7 +124,7 @@ def LSTM_train(dataset_info, data, labels, subject_id: int):
     )
 
     model_path: str = standard_saving_path(
-        dataset_info['dataset_name'], 
+        dataset_info.dataset_name, 
         "BigProject", 
         "LSTM", 
         file_ending="hdf5", 

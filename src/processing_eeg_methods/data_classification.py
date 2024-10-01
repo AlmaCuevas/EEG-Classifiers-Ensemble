@@ -22,19 +22,19 @@ from processing_eeg_methods.share import datasets_basic_infos
 def pseudo_trial_exhaustive_training_and_testing(
     ce: complete_experiment,
     pm: ProcessingMethods,
-    dataset_info: dict,
+    dataset_info,
     data_path: str,
     selected_classes: list[int],
     subject_range: Union[range, list],
 ):
-    save_original_channels = dataset_info["#_channels"]
-    save_original_trials = dataset_info["total_trials"]
+    save_original_channels = dataset_info.num_classes
+    save_original_trials = dataset_info.total_trials
 
     for subject_id in subject_range:
         print(subject_id)
 
-        dataset_info["#_channels"] = save_original_channels
-        dataset_info["total_trials"] = save_original_trials
+        dataset_info.num_classes = save_original_channels
+        dataset_info.total_trials = save_original_trials
 
         epochs, data, labels = load_data_labels_based_on_dataset(
             dataset_info,
@@ -46,8 +46,8 @@ def pseudo_trial_exhaustive_training_and_testing(
         )
 
         # Because we are using independent channels:
-        dataset_info["total_trials"] = len(labels)
-        dataset_info["#_channels"] = 1
+        dataset_info.total_trials = len(labels)
+        dataset_info.num_classes = 1
 
         cv = StratifiedKFold(
             n_splits=10, shuffle=True, random_state=42
@@ -114,17 +114,17 @@ def pseudo_trial_exhaustive_training_and_testing(
                                 )
                             )
 
-    dataset_info["#_channels"] = (
+    dataset_info.num_classes = (
         save_original_channels  # todo: is there a better way to do this? maybe dataclass?
     )
-    dataset_info["total_trials"] = save_original_trials
+    dataset_info.total_trials = save_original_trials
     return ce
 
 
 def trial_exhaustive_training_and_testing(
     ce: complete_experiment,
     pm: ProcessingMethods,
-    dataset_info: dict,
+    dataset_info,
     data_path: str,
     selected_classes: list[int],
     subject_range: Union[range, list],
@@ -210,7 +210,7 @@ if __name__ == "__main__":
         pm = ProcessingMethods()
 
         dataset_info = get_dataset_basic_info(datasets_basic_infos, dataset_name)
-        dataset_info["#_class"] = len(selected_classes)
+        dataset_info.num_classes = len(selected_classes)
 
         pm.activate_methods(
             spatial_features=False,  # Training is over-fitted. Training accuracy >90
@@ -220,7 +220,7 @@ if __name__ == "__main__":
             GRU=False,  # Training is over-fitted. Training accuracy >90
             diffE=True,  # It doesn't work if you only use one channel in the data
             feature_extraction=True,
-            number_of_classes=dataset_info["#_class"],
+            number_of_classes=dataset_info.num_classes,
         )
         activated_methods: list[str] = pm.get_activated_methods()
         combo_str = "_".join(map(str, combo))
@@ -244,7 +244,7 @@ if __name__ == "__main__":
 
         ce.to_df().to_csv(
             standard_saving_path(
-                dataset_info['dataset_name'],
+                dataset_info.dataset_name,
                 "methods_for_real_time",
                 version_name + "_all_probabilities",
                 file_ending="csv",

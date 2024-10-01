@@ -16,7 +16,7 @@ from processing_eeg_methods.data_utils import (
 
 
 def get_spatial_and_frequency_features_data(
-    data, dataset_info: dict, labels=None, transform_methods: dict = {}
+    data, dataset_info, labels=None, transform_methods: dict = {}
 ) -> tuple[pd.DataFrame, dict]:
     features: dict = {
         # Do not use 'Vect' transform, most of the time is nan or 0.25 if anything.
@@ -34,14 +34,14 @@ def get_spatial_and_frequency_features_data(
         ),  # Add TangentSpace, otherwise the dimensions are not 2D.
     }
     frequency_ranges: dict = {
-        "complete": [0, int(dataset_info["sample_rate"] / 2) - 1],
+        "complete": [0, int(dataset_info.sample_rate / 2) - 1],
         "delta": [0, 3],
         "theta": [3, 7],
         "alpha": [7, 13],
         "beta 1": [13, 16],
         "beta 2": [16, 20],
         "beta 3": [20, 35],
-        "gamma": [35, int(dataset_info["sample_rate"] / 2) - 1],
+        "gamma": [35, int(dataset_info.sample_rate / 2) - 1],
     }
 
     features_df = pd.DataFrame()
@@ -53,7 +53,7 @@ def get_spatial_and_frequency_features_data(
             iir_params = dict(order=8, ftype="butter")
             filt = mne.filter.create_filter(
                 data,
-                dataset_info["sample_rate"],
+                dataset_info.sample_rate,
                 l_freq=frequency_bandwidth[0],
                 h_freq=frequency_bandwidth[1],
                 method="iir",

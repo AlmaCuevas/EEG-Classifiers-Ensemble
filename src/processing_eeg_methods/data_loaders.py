@@ -346,7 +346,7 @@ def braincommand_dataset_loader(
 
 
 def load_data_labels_based_on_dataset(
-    dataset_info: dict,
+    dataset_info,
     subject_id: int,
     data_path: str,
     selected_classes: list[int] = [],
@@ -358,7 +358,7 @@ def load_data_labels_based_on_dataset(
     apply_autoreject: bool = False,
     game_mode: str = "calibration3",
 ):
-    dataset_name = dataset_info["dataset_name"]
+    dataset_name = dataset_info.dataset_name
 
     event_dict: dict = {}
     label: list = []
@@ -411,7 +411,7 @@ def load_data_labels_based_on_dataset(
     ):  # You can't do this and then split train and test because you'll mix them
         data, label = convert_into_independent_channels(data, label)
         data = np.transpose(np.array([data]), (1, 0, 2))
-        dataset_info["#_channels"] = 1
+        dataset_info.num_channels = 1
     if normalize:
         data = data_normalization(data)
 
@@ -420,8 +420,8 @@ def load_data_labels_based_on_dataset(
         (
             np.arange(
                 0,
-                dataset_info["sample_rate"] * data.shape[0],
-                dataset_info["sample_rate"],
+                dataset_info.sample_rate * data.shape[0],
+                dataset_info.sample_rate,
             ),
             np.zeros(len(label), dtype=int),
             np.array(label),
@@ -431,16 +431,16 @@ def load_data_labels_based_on_dataset(
     epochs = EpochsArray(
         data,
         info=mne.create_info(
-            sfreq=dataset_info["sample_rate"],
+            sfreq=dataset_info.sample_rate,
             ch_types="eeg",
-            ch_names=dataset_info["channels_names"],
+            ch_names=dataset_info.channels_names,
         ),
         events=events,
         event_id=event_dict,
         baseline=(None, None),
     )
     if apply_autoreject:
-        montage = mne.channels.make_standard_montage(dataset_info["montage"])
+        montage = mne.channels.make_standard_montage(dataset_info.montage)
         epochs.set_montage(montage)
         ar = AutoReject()
         epochs = ar.fit_transform(epochs)
@@ -456,7 +456,7 @@ if __name__ == "__main__":
     dataset_name = "braincommand"  # Only two things I should be able to change
 
     get_dataset_basic_info(datasets_basic_infos, dataset_name)
-    dataset_info: dict = datasets_basic_infos[dataset_name]
+    dataset_info = datasets_basic_infos[dataset_name]
 
     print(ROOT_VOTING_SYSTEM_PATH)
     # Folders and paths

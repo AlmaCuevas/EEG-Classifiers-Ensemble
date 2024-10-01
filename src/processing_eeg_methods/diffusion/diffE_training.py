@@ -66,7 +66,7 @@ def evaluate(encoder, fc, generator, device, number_of_labels: int = 4):
 
 def diffE_train(subject_id: int, X, Y, dataset_info, device: str = "cuda:0"):
     model_path: str = standard_saving_path(
-        dataset_info['dataset_name'], "DiffE", "", file_ending="pt", subject_id=subject_id
+        dataset_info.dataset_name, "DiffE", "", file_ending="pt", subject_id=subject_id
     )
 
     # This saves the training in a file
@@ -87,7 +87,7 @@ def diffE_train(subject_id: int, X, Y, dataset_info, device: str = "cuda:0"):
     )
 
     # Define model
-    num_classes = dataset_info["#_class"]
+    num_classes = dataset_info.num_classes
     channels = X.shape[1]
     print(channels)
 
@@ -157,7 +157,7 @@ def diffE_train(subject_id: int, X, Y, dataset_info, device: str = "cuda:0"):
         gamma=0.9998,
     )
     # Train & Evaluate
-    num_epochs = dataset_info["total_trials"]
+    num_epochs = dataset_info.total_trials
     test_period = 1
     start_test = test_period
     alpha = 0.1

@@ -133,7 +133,7 @@ def nn_Conv2d_train(data, label, dataset_info, subject_id) -> tuple[str, float]:
 
     # save/load only the model parameters(preferred solution)
     model_path: str = standard_saving_path(
-        dataset_info['dataset_name'], "nn_Conv2d", "nn_Conv2d", file_ending="pth", subject_id=subject_id
+        dataset_info.dataset_name, "nn_Conv2d", "nn_Conv2d", file_ending="pth", subject_id=subject_id
     )
     torch.save(model.state_dict(), model_path)
 
@@ -143,7 +143,7 @@ def nn_Conv2d_train(data, label, dataset_info, subject_id) -> tuple[str, float]:
 
 def nn_Conv2d_test(subject_id: int, data, dataset_info: dict):
     model_path: str = standard_saving_path(
-        dataset_info['dataset_name'], 
+        dataset_info.dataset_name, 
         "nn_Conv2d", 
         "nn_Conv2d", 
         file_ending="pth", 

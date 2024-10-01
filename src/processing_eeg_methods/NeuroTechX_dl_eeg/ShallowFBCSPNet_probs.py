@@ -125,7 +125,7 @@ def ShallowFBCSPNet_train(
 
     # save/load only the model parameters(prefered solution)
     model_path: str = standard_saving_path(
-        dataset_info['dataset_name'],
+        dataset_info.dataset_name,
         processing_name="ShallowFBCSPNet",
         version_name=str(chosen_numbered_label),
         file_ending="pth",
@@ -141,7 +141,7 @@ def ShallowFBCSPNet_test(
     subject_id: int, data, dataset_info: dict, chosen_numbered_label: int
 ):
     model_path: str = standard_saving_path(
-        dataset_info['dataset_name'],
+        dataset_info.dataset_name,
         processing_name="ShallowFBCSPNet",
         version_name=str(chosen_numbered_label),
         file_ending="pth",

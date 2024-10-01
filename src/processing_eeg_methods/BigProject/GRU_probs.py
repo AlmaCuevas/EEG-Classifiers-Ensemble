@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from dataclasses import dataclass
 
 from data_utils import train_test_val_split, standard_saving_path
 
@@ -15,7 +16,7 @@ from processing_eeg_methods.share import ROOT_VOTING_SYSTEM_PATH
 
 
 def GRU_train(dataset_info, data, labels, num_classes: int):
-    dataset_name= dataset_info['dataset_name']
+    dataset_name = dataset_info.dataset_name
     # substract data from list
     X_train, X_test, _, y_train, y_test, _ = train_test_val_split(
         dataX=data, dataY=labels, valid_flag=False
@@ -128,7 +129,7 @@ def GRU_train(dataset_info, data, labels, num_classes: int):
     # saves the model weights after each epoch if the validation loss decreased
     checkpointer = ModelCheckpoint(
         filepath = standard_saving_path(
-        dataset_info['dataset_name'], 
+        dataset_info.dataset_name, 
         "BigProject", 
         "GRU_model", 
         file_ending="hdf5"),
@@ -152,7 +153,7 @@ def GRU_train(dataset_info, data, labels, num_classes: int):
     # evaluate model on entire training set
     model = load_model(
         standard_saving_path(
-        dataset_info['dataset_name'], 
+        dataset_info.dataset_name, 
         "BigProject", 
         "GRU_model", 
         file_ending="hdf5")

@@ -41,7 +41,7 @@ def write_model_info(
     filepath: str,
     model_name: str,
     independent_channels: bool,
-    dataset_info: dict,
+    dataset_info,
     notes: str = "",
 ):
     """
