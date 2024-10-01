@@ -1,5 +1,8 @@
 # EEG-Classifiers-Ensemble: Real-Time Data Classification System
 
+DISCLAIMER: This project is still under development. Code and citations are not finished.
+
+
 ## Table of Contents
 1. [Processing Methods](https://github.com/AlmaCuevas/voting_system_platform/tree/main#processing-methods)
 2. [Datasets used](https://github.com/AlmaCuevas/voting_system_platform/tree/main#datasets-used)

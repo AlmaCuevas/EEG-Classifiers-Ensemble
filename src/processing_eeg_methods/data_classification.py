@@ -203,7 +203,7 @@ if __name__ == "__main__":
         dataset_name = "torres"
         selected_classes = combo  # [0, 1, 2, 3]
         subject_range = [24]
-        independent_channels = False
+        independent_channels = True
 
         ce = complete_experiment()
 
@@ -262,6 +262,7 @@ if __name__ == "__main__":
             dataset_info=dataset_info,
             notes="Info from pilot trials.",
         )
+
     end = time.time() - start
     print(f"In total it took {end} seconds, ")
 

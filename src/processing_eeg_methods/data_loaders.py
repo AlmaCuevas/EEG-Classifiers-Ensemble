@@ -122,8 +122,7 @@ def aguilera_dataset_loader(data_path: str, gamified: bool):  # typed
     if extra_label:
         label = label - 1
     label = label - 1  # So it goes from 0 to 3
-    event_dict = {"Avanzar": 0, "Retroceder": 1, "Derecha": 2, "Izquierda": 3}
-    return epochs, label, event_dict
+    return epochs, label
 
 
 # def nieto_dataset_loader(root_dir: str, N_S: int):
@@ -155,13 +154,10 @@ def aguilera_dataset_loader(data_path: str, gamified: bool):  # typed
 #     # Transform data and keep only the trials of interest
 #     X, Y = Transform_for_classificator(X, Y, Classes, Conditions)
 #     Y = Y.astype(int)
-#     event_dict = {"Arriba": 0, "Abajo": 1, "Derecha": 2, "Izquierda": 3}
-#     return X, Y, event_dict
+#     return X, Y
 
 
-def torres_dataset_loader(
-    filepath: str, subject_id: int
-):  # TODO: Flag or something to return all subjects
+def torres_dataset_loader(filepath: str, subject_id: int):
     EEG_nested_dict = loadmat(filepath, simplify_cells=True)
     EEG_array = np.zeros(
         (27, 5, 33, 463, 17)
@@ -190,15 +186,7 @@ def torres_dataset_loader(
     x = x.reshape(5 * 33, 14, 463)
     y = [0, 1, 2, 3, 4]
     y = np.repeat(y, 33, axis=0)
-
-    event_dict = {
-        "Arriba": 0,
-        "Abajo": 1,
-        "Izquierda": 2,
-        "Derecha": 3,
-        "Seleccionar": 4,
-    }
-    return x, y, event_dict
+    return x, y
 
 
 def coretto_dataset_loader(filepath: str):
@@ -263,8 +251,7 @@ def coretto_dataset_loader(filepath: str):
     y[y == 10] = 2
     y[y == 11] = 3
     # N, C, H = x.shape # You can use something like this for unit test later.
-    event_dict = {"Arriba": 0, "Abajo": 1, "Derecha": 2, "Izquierda": 3}
-    return x, y, event_dict
+    return x, y
 
 
 def ic_bci_2020_dataset_loader(filepath: str):
@@ -274,8 +261,7 @@ def ic_bci_2020_dataset_loader(filepath: str):
     x = np.transpose(x, (2, 1, 0))  # Raw data (trials, channels, time)
     y = EEG_nested_dict["epo_train"]["y"]
     y = np.argmax(y.transpose(), axis=1)
-    event_dict = {"Hello": 0, "Help me": 1, "Stop": 2, "Thank you": 3, "Yes": 4}
-    return x, y, event_dict
+    return x, y
 
 
 def nguyen_2019_dataset_loader(folderpath: str):
@@ -286,8 +272,7 @@ def nguyen_2019_dataset_loader(folderpath: str):
         EEG[run_index] = loadmat(filepath, simplify_cells=True)
     x = 0
     y = 0
-    event_dict = {"left hand": 0, "concentrate": 1, "right hand": 2, "split": 3}
-    return x, y, event_dict
+    return x, y
 
 
 def bandpass_filter(data, lowcut, highcut, fs, order=5):
@@ -326,23 +311,7 @@ def braincommand_dataset_loader(
     ]  # The last channels are accelerometer (x3), gyroscope (x3), validity, battery and counter
     x_array = np.transpose(x_array, (0, 2, 1))
     x_array = signal.detrend(x_array)
-
-    frequency_bandwidth = [0.5, 40]
-    iir_params = dict(order=8, ftype="butter")
-    filt = mne.filter.create_filter(
-        x_array,
-        250,
-        l_freq=frequency_bandwidth[0],
-        h_freq=frequency_bandwidth[1],
-        method="iir",
-        iir_params=iir_params,
-        verbose=False,
-    )
-    filtered = signal.sosfiltfilt(filt["sos"], x_array)
-    filtered = filtered.astype("float64")
-
-    event_dict = {"Derecha": 0, "Izquierda": 1, "Arriba": 2, "Abajo": 3}
-    return filtered, label, event_dict
+    return x_array, label
 
 
 def load_data_labels_based_on_dataset(
@@ -360,16 +329,16 @@ def load_data_labels_based_on_dataset(
 ):
     dataset_name = dataset_info.dataset_name
 
-    event_dict: dict = {}
+    event_dict = dataset_info["event_dict"]
     label: list = []
 
     if "aguilera" in dataset_name:
         filename = f"S{subject_id}.edf"
         filepath = os.path.join(data_path, filename)
         if "gamified" in dataset_name:
-            epochs, label, event_dict = aguilera_dataset_loader(filepath, True)
+            epochs, label = aguilera_dataset_loader(filepath, True)
         else:
-            epochs, label, event_dict = aguilera_dataset_loader(filepath, False)
+            epochs, label = aguilera_dataset_loader(filepath, False)
         data = epochs.get_data()
     # elif dataset_name == "nieto":
     #     data, label, event_dict = nieto_dataset_loader(data_path, subject_id)
@@ -378,21 +347,21 @@ def load_data_labels_based_on_dataset(
         filename = foldername + "_EEG.mat"
         path = [data_path, foldername, filename]
         filepath = os.path.join(*path)
-        data, label, event_dict = coretto_dataset_loader(filepath)
+        data, label = coretto_dataset_loader(filepath)
     elif dataset_name == "torres":
         filename = "IndividuosS1-S27(17columnas)-Epocas.mat"
         filepath = os.path.join(data_path, filename)
-        data, label, event_dict = torres_dataset_loader(filepath, subject_id)
+        data, label = torres_dataset_loader(filepath, subject_id)
     elif dataset_name == "ic_bci_2020":
         foldername = "Training set"
         filename = "Data_Sample{:02d}.mat".format(subject_id)
         path = [data_path, foldername, filename]
         filepath = os.path.join(*path)
-        data, label, event_dict = ic_bci_2020_dataset_loader(filepath)
+        data, label = ic_bci_2020_dataset_loader(filepath)
     elif dataset_name == "nguyen_2019":
-        data, label, event_dict = nguyen_2019_dataset_loader(data_path, subject_id)
+        data, label = nguyen_2019_dataset_loader(data_path, subject_id)
     elif dataset_name == "braincommand":
-        data, label, event_dict = braincommand_dataset_loader(
+        data, label = braincommand_dataset_loader(
             data_path, subject_id, game_mode=game_mode
         )
 
@@ -455,8 +424,7 @@ if __name__ == "__main__":
     subject_id = 24  # Only two things I should be able to change
     dataset_name = "braincommand"  # Only two things I should be able to change
 
-    get_dataset_basic_info(datasets_basic_infos, dataset_name)
-    dataset_info = datasets_basic_infos[dataset_name]
+    dataset_info = get_dataset_basic_info(datasets_basic_infos, dataset_name)
 
     print(ROOT_VOTING_SYSTEM_PATH)
     # Folders and paths
