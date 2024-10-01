@@ -93,7 +93,7 @@ aguilera_gamified_info = DatasetInfo(
     subjects=15,
     total_trials=120,
     montage="standard_1020",
-    event_dict={"Avanzar": 0, "Derecha": 1, "Izquierda": 2, "Retroceder": 3}
+    event_dict={"Avanzar": 0, "Retroceder": 1, "Derecha": 2, "Izquierda": 3}
 )
 
 # Dataset Nieto
