@@ -14,6 +14,7 @@ class DatasetInfo:
     subjects: int
     total_trials: int
     montage: str
+    event_dict: Dict[str, int]
 
 ROOT_VOTING_SYSTEM_PATH: str = str(Path(__file__).parent.parent.parent.resolve())
 
@@ -52,7 +53,8 @@ aguilera_traditional_info = DatasetInfo(
     ],
     subjects=16,
     total_trials=120,
-    montage="standard_1020"
+    montage="standard_1020",
+    event_dict={"Avanzar": 0, "Retroceder": 1, "Derecha": 2, "Izquierda": 3}
 )
 
 aguilera_gamified_info = DatasetInfo(
@@ -90,7 +92,8 @@ aguilera_gamified_info = DatasetInfo(
     ],
     subjects=15,
     total_trials=120,
-    montage="standard_1020"
+    montage="standard_1020",
+    event_dict={"Avanzar": 0, "Derecha": 1, "Izquierda": 2, "Retroceder": 3}
 )
 
 # Dataset Nieto
@@ -233,7 +236,8 @@ nieto_info = DatasetInfo(
     ],
     subjects=10,
     total_trials=200,
-    montage="PENDING"
+    montage="PENDING",
+    event_dict={"Arriba": 0, "Abajo": 1, "Derecha": 2, "Izquierda": 3}
 )
 
 # Dataset Coretto
@@ -247,7 +251,8 @@ coretto_info = DatasetInfo(
     channels_names=["F3", "F4", "C3", "C4", "P3", "P4"],
     subjects=15,
     total_trials=606,
-    montage="standard_1020"
+    montage="standard_1020",
+    event_dict={"Arriba": 0, "Abajo": 1, "Derecha": 2, "Izquierda": 3}
 )
 
 # Dataset Torres
@@ -276,7 +281,8 @@ torres_info = DatasetInfo(
     ],
     subjects=27,
     total_trials=132,
-    montage="standard_1020"
+    montage="standard_1020",
+    event_dict={"Arriba": 0, "Abajo": 1, "Izquierda": 2, "Derecha": 3, "Seleccionar":4 }
 )
 
 # Dataset IC BCI 2020
@@ -355,7 +361,8 @@ ic_bci_2020_info = DatasetInfo(
     ],
     subjects=15,
     total_trials=350,
-    montage="standard_1020"
+    montage="standard_1020",
+    event_dict={"Hello": 0, "Help me": 1, "Stop": 2, "Thank you": 3, "Yes": 4 }
 )
 
 # Dataset Nguyen 2019
@@ -369,7 +376,8 @@ nguyen_2019_info = DatasetInfo(
     channels_names=[],  # PENDIENTE
     subjects=8,
     total_trials=0,  # PENDIENTE
-    montage="PENDING"
+    montage="PENDING",
+    event_dict={"left hand": 0, "concentrate": 1, "right hand": 2, "split": 3}
 )
 
 # Dataset BrainCommand
@@ -383,7 +391,8 @@ braincommand_info = DatasetInfo(
     channels_names=["C4", "FC3", "F5", "C3", "F7", "Cz", "P3", "C5"],
     subjects=1,  # PENDIENTE
     total_trials=228,
-    montage="standard_1020"
+    montage="standard_1020",
+    event_dict={"Derecha": 0, "Izquierda": 1, "Arriba": 2, "Abajo": 3}
 )
 
 # Colección de todos los datasets
