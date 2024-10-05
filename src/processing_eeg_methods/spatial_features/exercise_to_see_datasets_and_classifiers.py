@@ -41,15 +41,15 @@ names = [
 
 classifiers = [
     KNeighborsClassifier(3),
-    SVC(kernel="linear", C=0.025, random_state=42),
-    SVC(gamma=2, C=1, random_state=42),
-    GaussianProcessClassifier(1.0 * RBF(1.0), random_state=42),
-    DecisionTreeClassifier(max_depth=5, random_state=42),
+    SVC(kernel="linear", C=0.025, random_state=GLOBAL_SEED),
+    SVC(gamma=2, C=1, random_state=GLOBAL_SEED),
+    GaussianProcessClassifier(1.0 * RBF(1.0), random_state=GLOBAL_SEED),
+    DecisionTreeClassifier(max_depth=5, random_state=GLOBAL_SEED),
     RandomForestClassifier(
-        max_depth=5, n_estimators=10, max_features=1, random_state=42
+        max_depth=5, n_estimators=10, max_features=1, random_state=GLOBAL_SEED
     ),
-    MLPClassifier(alpha=1, max_iter=1000, random_state=42),
-    AdaBoostClassifier(algorithm="SAMME", random_state=42),
+    MLPClassifier(alpha=1, max_iter=1000, random_state=GLOBAL_SEED),
+    AdaBoostClassifier(algorithm="SAMME", random_state=GLOBAL_SEED),
     GaussianNB(),
     QuadraticDiscriminantAnalysis(),
     LinearDiscriminantAnalysis(),

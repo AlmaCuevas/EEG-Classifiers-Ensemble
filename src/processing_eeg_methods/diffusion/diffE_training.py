@@ -78,7 +78,7 @@ def diffE_train(subject_id: int, X, Y, dataset_info, device: str = "cuda:0"):
     device = torch.device(device)
     batch_size = 32
     batch_size2 = 260
-    seed = 42
+    seed = GLOBAL_SEED
     random.seed(seed)
     torch.manual_seed(seed)
     print("Random Seed: ", seed)
