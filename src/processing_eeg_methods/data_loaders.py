@@ -330,23 +330,8 @@ def braincommand_dataset_loader(
         :, :, :-9
     ]  # The last channels are accelerometer (x3), gyroscope (x3), validity, battery and counter
     x_array = np.transpose(x_array, (0, 2, 1))
-    x_array = signal.detrend(x_array)
 
-    frequency_bandwidth = [0.5, 40]
-    iir_params = dict(order=8, ftype="butter")
-    filt = mne.filter.create_filter(
-        x_array,
-        250,
-        l_freq=frequency_bandwidth[0],
-        h_freq=frequency_bandwidth[1],
-        method="iir",
-        iir_params=iir_params,
-        verbose=False,
-    )
-    filtered = signal.sosfiltfilt(filt["sos"], x_array)
-    filtered = filtered.astype("float64")
-
-    return filtered, label
+    return x_array, label
 
 
 def load_data_labels_based_on_dataset(
