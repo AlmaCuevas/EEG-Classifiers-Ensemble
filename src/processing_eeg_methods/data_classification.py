@@ -200,10 +200,37 @@ if __name__ == "__main__":
     for combo in combinations:
 
         # Manual Inputs
-        dataset_name = "torres"
+        dataset_name = "braincommand"
         selected_classes = combo  # [0, 1, 2, 3]
-        subject_range = [24]
-        independent_channels = True
+        subject_range = [
+            1,
+            8,
+            10,
+            11,
+            12,
+            15,
+            16,
+            19,
+            20,
+            21,
+            22,
+            23,
+            25,
+            26,
+            27,
+            30,
+            31,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            40,
+            41,
+        ]
+        independent_channels = False
 
         ce = complete_experiment()
 
@@ -213,18 +240,18 @@ if __name__ == "__main__":
         dataset_info["#_class"] = len(selected_classes)
 
         pm.activate_methods(
-            spatial_features=False,  # Training is over-fitted. Training accuracy >90
+            spatial_features=True,  # Training is over-fitted. Training accuracy >90
             simplified_spatial_features=False,  # Simpler than selected_transformers, only one transformer and no frequency bands. No need to activate both at the same time
-            ShallowFBCSPNet=True,
-            LSTM=True,  # Training is over-fitted. Training accuracy >90
+            ShallowFBCSPNet=False,
+            LSTM=False,  # Training is over-fitted. Training accuracy >90
             GRU=False,  # Training is over-fitted. Training accuracy >90
-            diffE=True,  # It doesn't work if you only use one channel in the data
-            feature_extraction=True,
+            diffE=False,  # It doesn't work if you only use one channel in the data
+            feature_extraction=False,
             number_of_classes=dataset_info["#_class"],
         )
         activated_methods: list[str] = pm.get_activated_methods()
         combo_str = "_".join(map(str, combo))
-        version_name = f"autoreject_inside_trained_with_calibration3_montage_all_channels_{combo_str}"  # To keep track what the output processing alteration went through
+        version_name = f"autoreject_calibration3_montage_all_channels_{combo_str}"  # To keep track what the output processing alteration went through
 
         data_path = get_input_data_path(dataset_name)
 
@@ -260,7 +287,7 @@ if __name__ == "__main__":
             model_name="_".join(activated_methods),
             independent_channels=independent_channels,
             dataset_info=dataset_info,
-            notes="Info from pilot trials.",
+            notes="Ral subjects.",
         )
 
     end = time.time() - start
