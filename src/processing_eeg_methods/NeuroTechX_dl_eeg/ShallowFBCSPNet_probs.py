@@ -6,6 +6,7 @@ from braindecode.datautil.signal_target import SignalAndTarget
 from braindecode.models.shallow_fbcsp import ShallowFBCSPNet
 from braindecode.torch_ext.util import np_to_var, set_random_seeds, var_to_np
 from numpy.random import RandomState
+from share import GLOBAL_SEED
 from sklearn.model_selection import train_test_split
 from torch import optim
 

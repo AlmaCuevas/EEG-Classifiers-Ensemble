@@ -6,7 +6,7 @@ from sklearn.base import BaseEstimator
 from sklearn.linear_model import RidgeClassifier, SGDClassifier
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
 
-from processing_eeg_methods.share import ROOT_VOTING_SYSTEM_PATH
+from processing_eeg_methods.share import GLOBAL_SEED, ROOT_VOTING_SYSTEM_PATH
 
 # from sklearn.linear_model import LogisticRegression
 # from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
