@@ -2,7 +2,6 @@ import os
 
 import mne
 import numpy as np
-import pandas as pd
 from autoreject import AutoReject
 
 # from Inner_Speech_Dataset.Python_Processing.Data_extractions import (
@@ -13,7 +12,6 @@ from autoreject import AutoReject
 #     Transform_for_classificator,
 # )
 from mne import Epochs, EpochsArray, events_from_annotations, io
-from scipy import signal
 from scipy.io import loadmat
 from scipy.signal import butter, filtfilt
 
@@ -287,31 +285,12 @@ def bandpass_filter(data, lowcut, highcut, fs, order=5):
 def braincommand_dataset_loader(
     filepath: str, subject_id: int, game_mode: str = "calibration3"
 ):
-    complete_information = pd.read_csv(
-        f"{filepath}/eeg_data_{game_mode}_sub{subject_id:02d}.csv"
-    )
-    x_list = list(complete_information["time"].apply(eval))
-    label = list(complete_information["class"])
-
-    label_0 = label.count(0)
-    print(f"label 0 is {label_0}")
-
-    label_1 = label.count(1)
-    print(f"label 1 is {label_1}")
-
-    label_2 = label.count(2)
-    print(f"label 2 is {label_2}")
-
-    label_3 = label.count(3)
-    print(f"label 3 is {label_3}")
-
-    x_array = np.array(x_list)  # trials, time, channels
-    x_array = x_array[
-        :, :, :-9
-    ]  # The last channels are accelerometer (x3), gyroscope (x3), validity, battery and counter
-    x_array = np.transpose(x_array, (0, 2, 1))
-    x_array = signal.detrend(x_array)
-    return x_array, label
+    file_name = f"/{subject_id}_{game_mode}.mat"
+    data = loadmat(filepath + file_name)
+    labels = data["labels"][0]
+    array = data["array"]
+    array = np.transpose(array, (2, 0, 1))
+    return array, labels
 
 
 def load_data_labels_based_on_dataset(
@@ -421,7 +400,7 @@ def load_data_labels_based_on_dataset(
 
 if __name__ == "__main__":
     # Manual Inputs
-    subject_id = 24  # Only two things I should be able to change
+    subject_id = 1  # Only two things I should be able to change
     dataset_name = "braincommand"  # Only two things I should be able to change
 
     dataset_info = get_dataset_basic_info(datasets_basic_infos, dataset_name)
@@ -436,7 +415,7 @@ if __name__ == "__main__":
         dataset_info,
         subject_id,
         data_path,
-        selected_classes=[2, 3],
+        game_mode="calibration3",
     )
 
     print("Before class selection")

@@ -390,11 +390,11 @@ braincommand = {  # BrainCommand
     "#_class": 4,
     "target_names": ["Derecha", "Izquierda", "Arriba", "Abajo"],
     "#_channels": 8,
-    "samples": 325,  # 250*1.4
+    "samples": 325,  # 250*1.3
     "sample_rate": 250,
     "montage": "standard_1020",
     "channels_names": ["FC3", "C3", "F5", "FC5", "C5", "F7", "FT7", "T7"],
-    "subjects": 1,  # PENDING
+    "subjects": 26,  # PENDING
     "total_trials": 228,
     "event_dict": {"Derecha": 0, "Izquierda": 1, "Arriba": 2, "Abajo": 3},
 }
