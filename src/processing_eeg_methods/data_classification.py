@@ -202,8 +202,8 @@ if __name__ == "__main__":
         # Manual Inputs
         dataset_name = "braincommand"
         selected_classes = combo  # [0, 1, 2, 3]
-        subject_range = [1, 8]
-        independent_channels = True
+        subject_range = [12, 19]
+        independent_channels = False
 
         ce = complete_experiment()
 
@@ -213,8 +213,8 @@ if __name__ == "__main__":
         dataset_info["#_class"] = len(selected_classes)
 
         pm.activate_methods(
-            spatial_features=True,  # Training is over-fitted. Training accuracy >90
-            simplified_spatial_features=True,  # Simpler than selected_transformers, only one transformer and no frequency bands. No need to activate both at the same time
+            spatial_features=False,  # Training is over-fitted. Training accuracy >90
+            simplified_spatial_features=False,  # Simpler than selected_transformers, only one transformer and no frequency bands. No need to activate both at the same time
             ShallowFBCSPNet=False,
             LSTM=False,  # Training is over-fitted. Training accuracy >90
             GRU=False,  # Training is over-fitted. Training accuracy >90
@@ -224,7 +224,7 @@ if __name__ == "__main__":
         )
         activated_methods: list[str] = pm.get_activated_methods()
         combo_str = "_".join(map(str, combo))
-        version_name = f"calibration3_{combo_str}"  # To keep track what the output processing alteration went through
+        version_name = f"12_19_calibration3_{combo_str}"  # To keep track what the output processing alteration went through
 
         data_path = get_input_data_path(dataset_name)
 
