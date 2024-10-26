@@ -16,7 +16,7 @@ from processing_eeg_methods.data_utils import (
     standard_saving_path,
     write_model_info,
 )
-from processing_eeg_methods.share import datasets_basic_infos
+from processing_eeg_methods.share import GLOBAL_SEED, datasets_basic_infos
 
 
 def pseudo_trial_exhaustive_training_and_testing(
@@ -202,35 +202,8 @@ if __name__ == "__main__":
         # Manual Inputs
         dataset_name = "braincommand"
         selected_classes = combo  # [0, 1, 2, 3]
-        subject_range = [
-            1,
-            8,
-            10,
-            11,
-            12,
-            15,
-            16,
-            19,
-            20,
-            21,
-            22,
-            23,
-            25,
-            26,
-            27,
-            30,
-            31,
-            33,
-            34,
-            35,
-            36,
-            37,
-            38,
-            39,
-            40,
-            41,
-        ]
-        independent_channels = False
+        subject_range = range(1, 27)
+        independent_channels = True
 
         ce = complete_experiment()
 
@@ -241,17 +214,17 @@ if __name__ == "__main__":
 
         pm.activate_methods(
             spatial_features=True,  # Training is over-fitted. Training accuracy >90
-            simplified_spatial_features=False,  # Simpler than selected_transformers, only one transformer and no frequency bands. No need to activate both at the same time
-            ShallowFBCSPNet=False,
+            simplified_spatial_features=True,  # Simpler than selected_transformers, only one transformer and no frequency bands. No need to activate both at the same time
+            ShallowFBCSPNet=True,
             LSTM=False,  # Training is over-fitted. Training accuracy >90
             GRU=False,  # Training is over-fitted. Training accuracy >90
             diffE=False,  # It doesn't work if you only use one channel in the data
-            feature_extraction=False,
+            feature_extraction=True,
             number_of_classes=dataset_info["#_class"],
         )
         activated_methods: list[str] = pm.get_activated_methods()
         combo_str = "_".join(map(str, combo))
-        version_name = f"autoreject_calibration3_montage_all_channels_{combo_str}"  # To keep track what the output processing alteration went through
+        version_name = f"formal_calibration3_all_channels_{combo_str}"  # To keep track what the output processing alteration went through
 
         data_path = get_input_data_path(dataset_name)
 
@@ -287,7 +260,7 @@ if __name__ == "__main__":
             model_name="_".join(activated_methods),
             independent_channels=independent_channels,
             dataset_info=dataset_info,
-            notes="Ral subjects.",
+            notes="Real subjects.",
         )
 
     end = time.time() - start
