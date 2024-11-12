@@ -224,7 +224,7 @@ if __name__ == "__main__":
         )
         activated_methods: list[str] = pm.get_activated_methods()
         combo_str = "_".join(map(str, combo))
-        version_name = f"formal_calibration3_all_channels_{combo_str}"  # To keep track what the output processing alteration went through
+        version_name = f"all_channels_{combo_str}"  # To keep track what the output processing alteration went through
 
         data_path = get_input_data_path(dataset_name)
 

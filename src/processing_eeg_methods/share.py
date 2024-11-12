@@ -390,7 +390,7 @@ braincommand = {  # BrainCommand
     "#_class": 4,
     "target_names": ["Derecha", "Izquierda", "Arriba", "Abajo"],
     "#_channels": 8,
-    "samples": 325,  # 250*1.3
+    "samples": 325,  # 250*1.3=325
     "sample_rate": 250,
     "montage": "standard_1020",
     "channels_names": ["FC3", "C3", "F5", "FC5", "C5", "F7", "FT7", "T7"],
