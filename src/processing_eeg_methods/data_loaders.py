@@ -283,7 +283,7 @@ def bandpass_filter(data, lowcut, highcut, fs, order=5):
 
 
 def braincommand_dataset_loader(
-    filepath: str, subject_id: int, game_mode: str = "calibration3"
+    filepath: str, subject_id: int, game_mode: str = "singleplayer"
 ):
     file_name = f"/{subject_id}_{game_mode}.mat"
     data = loadmat(filepath + file_name)
@@ -304,7 +304,7 @@ def load_data_labels_based_on_dataset(
     astype_value: str = "",
     channels_independent: bool = False,
     apply_autoreject: bool = False,
-    game_mode: str = "calibration3",
+    game_mode: str = "singleplayer",
 ):
     dataset_name = dataset_info["dataset_name"]
 
@@ -356,7 +356,7 @@ def load_data_labels_based_on_dataset(
         data[data < threshold_for_bug] = threshold_for_bug
     if (
         channels_independent
-    ):  # You can't do this and then split train and test because you'll mix them
+    ):  # You can't do this and then split train and test because you'll mix train and test, this is for debug only
         data, label = convert_into_independent_channels(data, label)
         data = np.transpose(np.array([data]), (1, 0, 2))
         dataset_info["#_channels"] = 1
@@ -394,6 +394,9 @@ def load_data_labels_based_on_dataset(
         epochs = ar.fit_transform(epochs)
         data = epochs.get_data()
 
+    channels_to_remove = ["T7", "FT7"]
+    epochs.drop_channels(channels_to_remove)
+
     label = epochs.events[:, 2].astype(np.int64)  # To always keep the right format
     return epochs, data, label
 
@@ -415,12 +418,12 @@ if __name__ == "__main__":
         dataset_info,
         subject_id,
         data_path,
-        game_mode="calibration3",
+        game_mode="calibration",
     )
 
     print("Before class selection")
     print(data.shape)  # trials, channels, time
-    print(labels.shape)
+    print(labels)
     print(
         "Congrats! You were able to load data. You can now use this in a processing method."
     )

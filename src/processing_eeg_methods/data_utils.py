@@ -1,4 +1,5 @@
 import os
+from collections import Counter
 
 import numpy as np
 import pandas as pd
@@ -40,7 +41,7 @@ classifiers = [  # The Good, Medium and Bad is decided on Torres dataset. This t
 def write_model_info(
     filepath: str,
     model_name: str,
-    independent_channels: bool,
+    channel_config: str,
     dataset_info: dict,
     notes: str = "",
 ):
@@ -57,13 +58,10 @@ def write_model_info(
     Returns:
     None
     """
-    montage_style = (
-        "independent channels" if independent_channels else "standard montage"
-    )
 
     with open(filepath, "w") as file:
         file.write(f"Model Name: {model_name}\n")
-        file.write(f"Montage Style: {montage_style}\n")
+        file.write(f"Channel Configuration: {channel_config}\n")
         file.write("\nDataset Information:\n")
         for key, value in dataset_info.items():
             file.write(f"{key}: {value}\n")
@@ -234,3 +232,54 @@ def probabilities_to_answer(probs_by_channels: list, voting_by_mode: bool = Fals
     else:  # voting_by_array_probabilities
         by_channel_decision = np.nanmean(probs_by_channels, axis=0)  # Mean over columns
         return np.argmax(by_channel_decision)
+
+
+def balance_samples(data, labels, augment=True):
+    """
+    Process data by either augmenting and balancing or only balancing.
+
+    Parameters:
+    data (numpy.ndarray): The input data with shape (num_samples, num_channels, num_timepoints).
+    labels (numpy.ndarray): The corresponding labels.
+    augment (bool): If True, augment and balance the data;
+                    if False, only balance the data.
+
+    Returns:
+    processed_data (numpy.ndarray): The processed data.
+    processed_labels (numpy.ndarray): The updated labels for the processed data.
+    """
+    if augment:
+        even_samples = data[:, :, ::2]  # Take even index samples
+        odd_samples = data[:, :, 1::2]  # Take odd index samples
+
+        # Check if the last dimension lengths match, pad if necessary
+        if even_samples.shape[2] != odd_samples.shape[2]:
+            min_length = min(even_samples.shape[2], odd_samples.shape[2])
+            even_samples = even_samples[:, :, :min_length]
+            odd_samples = odd_samples[:, :, :min_length]
+
+        # Concatenate the augmented data
+        augmented_data = np.concatenate((even_samples, odd_samples), axis=0)
+        augmented_labels = np.concatenate((labels, labels), axis=0)
+
+        # Use augmented data for balancing
+        data, labels = augmented_data, augmented_labels
+
+    # Balance the data
+    label_counts = Counter(labels)
+    min_count = min(label_counts.values())
+
+    balanced_data = []
+    balanced_labels = []
+
+    for label in label_counts.keys():
+        label_indices = np.where(labels == label)[0]
+        np.random.shuffle(label_indices)
+        selected_indices = label_indices[:min_count]
+        balanced_data.append(data[selected_indices])
+        balanced_labels.append(labels[selected_indices])
+
+    balanced_data = np.concatenate(balanced_data, axis=0)
+    balanced_labels = np.concatenate(balanced_labels, axis=0)
+
+    return balanced_data, balanced_labels
