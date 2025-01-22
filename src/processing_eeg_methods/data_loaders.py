@@ -305,6 +305,7 @@ def load_data_labels_based_on_dataset(
     channels_independent: bool = False,
     apply_autoreject: bool = False,
     game_mode: str = "singleplayer",
+    channels_to_remove: list[str] = [],
 ):
     dataset_name = dataset_info["dataset_name"]
 
@@ -394,8 +395,9 @@ def load_data_labels_based_on_dataset(
         epochs = ar.fit_transform(epochs)
         data = epochs.get_data()
 
-    channels_to_remove = ["T7", "FT7"]
-    epochs.drop_channels(channels_to_remove)
+    if channels_to_remove:
+        epochs.drop_channels(channels_to_remove)
+        data = epochs.get_data()
 
     label = epochs.events[:, 2].astype(np.int64)  # To always keep the right format
     return epochs, data, label
