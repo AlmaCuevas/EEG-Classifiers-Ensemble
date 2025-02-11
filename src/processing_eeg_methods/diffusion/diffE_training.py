@@ -16,6 +16,7 @@ from sklearn.metrics import (
 from tqdm import tqdm
 
 from processing_eeg_methods.data_utils import standard_saving_path
+from processing_eeg_methods.share import GLOBAL_SEED
 
 from .diffE_models import (
     DDPM,

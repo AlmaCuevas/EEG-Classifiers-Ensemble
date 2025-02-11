@@ -4,37 +4,39 @@ from collections import Counter
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
-from sklearn.linear_model import RidgeClassifier, SGDClassifier
+from sklearn.discriminant_analysis import (
+    LinearDiscriminantAnalysis,
+    QuadraticDiscriminantAnalysis,
+)
+from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
+from sklearn.linear_model import LogisticRegression, RidgeClassifier, SGDClassifier
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
 
 from processing_eeg_methods.share import GLOBAL_SEED, ROOT_VOTING_SYSTEM_PATH
 
-# from sklearn.linear_model import LogisticRegression
-# from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-# from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
-# from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
 # from sklearn.gaussian_process import GaussianProcessClassifier
 # from sklearn.gaussian_process.kernels import RBF
-# from sklearn.naive_bayes import GaussianNB
-# from sklearn.neighbors import KNeighborsClassifier
-# from sklearn.neural_network import MLPClassifier
-# from sklearn.svm import SVC
-# from sklearn.tree import DecisionTreeClassifier
 
-# MDM() Always nan at the end
-classifiers = [  # The Good, Medium and Bad is decided on Torres dataset. This to avoid most of the processings.
-    # KNeighborsClassifier(3), # Good
-    # SVC(kernel='linear', probability=True), # Good
-    RidgeClassifier()
-    # GaussianProcessClassifier(1.0 * RBF(1.0), random_state=42), # Good # It doesn't have .coef
-    # DecisionTreeClassifier(max_depth=5, random_state=42), # Good # It doesn't have .coef
-    # RandomForestClassifier(max_depth=5, n_estimators=100, max_features=1, random_state=42), # Good It doesn't have .coef
-    # MLPClassifier(alpha=1, max_iter=1000, random_state=42), # Good
-    # AdaBoostClassifier(algorithm="SAMME", random_state=42), # Medium
-    # GaussianNB(), # Medium
-    # QuadraticDiscriminantAnalysis(), # Bad
-    # LinearDiscriminantAnalysis(), # Bad
-    # LogisticRegression(), # Good
+classifiers = [
+    KNeighborsClassifier(3),
+    SVC(kernel="linear", probability=True),
+    RidgeClassifier(),
+    # GaussianProcessClassifier(1.0 * RBF(1.0), random_state=GLOBAL_SEED),  It takes a lot of time
+    DecisionTreeClassifier(max_depth=5, random_state=GLOBAL_SEED),
+    RandomForestClassifier(
+        max_depth=5, n_estimators=100, max_features=1, random_state=GLOBAL_SEED
+    ),
+    MLPClassifier(alpha=1, max_iter=1000, random_state=GLOBAL_SEED),
+    AdaBoostClassifier(algorithm="SAMME", random_state=GLOBAL_SEED),
+    GaussianNB(),
+    QuadraticDiscriminantAnalysis(),
+    LinearDiscriminantAnalysis(),
+    LogisticRegression(),
 ]
 
 
@@ -161,13 +163,17 @@ def get_best_classificator_and_test_accuracy(data, labels, estimators):
     for classificator in classifiers:
         param_grid.append({"clf__estimator": [classificator]})
 
-    cv = StratifiedKFold(n_splits=4, shuffle=True, random_state=GLOBAL_SEED)
-    clf = GridSearchCV(
+    cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=GLOBAL_SEED)
+    gridsearch_clf = GridSearchCV(
         estimator=estimators, param_grid=param_grid, cv=cv
     )  # https://stackoverflow.com/questions/52580023/how-to-get-the-best-estimator-parameters-out-from-pipelined-gridsearch-and-cro
-    clf.fit(data, labels)
 
-    return clf.best_estimator_, clf.best_score_
+    gridsearch_clf.fit(data, labels)
+
+    best_estimator = gridsearch_clf.best_estimator_
+    best_estimator.fit(data, labels)  # Fit the best estimator on the entire dataset
+
+    return best_estimator, gridsearch_clf.best_score_
 
 
 def convert_into_independent_channels(data, labels):
@@ -204,7 +210,10 @@ class ClfSwitcher(BaseEstimator):
         return self.estimator.predict(X)
 
     def predict_proba(self, X):
-        return self.estimator._predict_proba_lr(X)
+        try:
+            return self.estimator._predict_proba_lr(X)
+        except AttributeError:
+            return self.estimator.predict_proba(X)
 
     def score(self, X, y):
         return self.estimator.score(X, y)
@@ -234,7 +243,7 @@ def probabilities_to_answer(probs_by_channels: list, voting_by_mode: bool = Fals
         return np.argmax(by_channel_decision)
 
 
-def balance_samples(data, labels, augment=True):
+def balance_samples(data, labels, augment=True, super_augmentation: int = 0):
     """
     Process data by either augmenting and balancing or only balancing.
 
@@ -243,11 +252,13 @@ def balance_samples(data, labels, augment=True):
     labels (numpy.ndarray): The corresponding labels.
     augment (bool): If True, augment and balance the data;
                     if False, only balance the data.
+    super_augmentation (int): The number of times to apply super augmentation.
 
     Returns:
     processed_data (numpy.ndarray): The processed data.
     processed_labels (numpy.ndarray): The updated labels for the processed data.
     """
+
     if augment:
         even_samples = data[:, :, ::2]  # Take even index samples
         odd_samples = data[:, :, 1::2]  # Take odd index samples
@@ -264,6 +275,28 @@ def balance_samples(data, labels, augment=True):
 
         # Use augmented data for balancing
         data, labels = augmented_data, augmented_labels
+
+    original_data, original_labels = np.copy(data), np.copy(labels)
+
+    if super_augmentation != 0:
+        for i in range(super_augmentation):
+            augmented_data = augment_data_with_time_shuffling_by_trial(
+                original_data, original_labels, i
+            )
+            augmented_labels = np.copy(original_labels)
+
+            # Concatenate both augmentations with original data
+            data = np.concatenate((data, augmented_data), axis=0)
+            labels = np.concatenate((labels, augmented_labels), axis=0)
+
+            # Print progress every 10 iterations
+            if (i + 1) % 10 == 0:
+                progress = (i + 1) * 100 // super_augmentation
+                print(f"Augmentation Progress: {progress}%")
+
+        # Ensuring final progress display if total iterations is not a multiple of 10
+        if super_augmentation % 10 != 0:
+            print("Augmentation Progress: 100%")
 
     # Balance the data
     label_counts = Counter(labels)
@@ -283,3 +316,37 @@ def balance_samples(data, labels, augment=True):
     balanced_labels = np.concatenate(balanced_labels, axis=0)
 
     return balanced_data, balanced_labels
+
+
+def augment_data_with_time_shuffling_by_trial(data, labels, random_seed=GLOBAL_SEED):
+    """
+    Augments data by shuffling time points within each trial, using a specified random seed.
+
+    Parameters:
+    data (numpy.ndarray): The input data with shape (num_samples, num_channels, num_timepoints).
+    labels (numpy.ndarray): The corresponding labels.
+    random_seed (int): The seed for the random number generator (optional).
+
+    Returns:
+    augmented_data (numpy.ndarray): The augmented data with shuffled time points.
+    """
+    augmented_data = np.copy(data)
+    unique_labels = np.unique(labels)
+
+    np.random.seed(random_seed)
+
+    for label in unique_labels:
+        label_indices = np.where(labels == label)[0]
+
+        for channel in range(data.shape[1]):
+            channel_data = data[label_indices, channel, :]
+            num_timepoints = channel_data.shape[1]
+
+            for timepoint in range(num_timepoints):
+                timepoint_values = channel_data[:, timepoint]
+                np.random.shuffle(timepoint_values)
+
+                for i, idx in enumerate(label_indices):
+                    augmented_data[idx, channel, timepoint] = timepoint_values[i]
+
+    return augmented_data

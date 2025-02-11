@@ -4,7 +4,7 @@ matplotlib==3.8.0
 matplotlib-inline==0.1.6
 mne==1.5.1
 numpy==1.26.0
-pandas==2.1.1
+pandas==2.2.3
 scikit-learn==1.6.1
 scipy==1.11.3
 termcolor==2.3.0
@@ -31,4 +31,3 @@ torch==2.1.0 # +cu121 or whichever cuda is compatible with your computer
 torchsummary==1.5.1
 torchvision==0.16.0 # tensorflow-io-gcs-filesystem==0.31.0
 tensorflow==2.14.0
-moabb==1.0.0 # todo: Poetry message: moabb (1.0.0) depends on pandas (>=1.5.2,<2.0.0)

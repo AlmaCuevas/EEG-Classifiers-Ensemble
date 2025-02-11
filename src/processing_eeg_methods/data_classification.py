@@ -2,7 +2,7 @@ from collections import Counter
 from typing import Union
 
 import numpy as np
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold, train_test_split
 
 from processing_eeg_methods.data_dataclass import (
     ProcessingMethods,
@@ -148,6 +148,7 @@ def trial_exhaustive_training_and_testing(
     selected_classes: list[int],
     subject_range: Union[range, list],
     game_mode: str,
+    super_augmentation: int = 0,
 ):
     for subject_id in subject_range:
         print(subject_id)
@@ -162,7 +163,7 @@ def trial_exhaustive_training_and_testing(
             game_mode=game_mode,
         )
 
-        cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=GLOBAL_SEED)
+        cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=GLOBAL_SEED)
 
         count_Kfolds: int = 0
         trial_index_count: int = 0
@@ -171,7 +172,10 @@ def trial_exhaustive_training_and_testing(
                 "******************************** Training ********************************"
             )
             augmented_data, augmented_labels = balance_samples(
-                data[train_index], labels[train_index]
+                data[train_index],
+                labels[train_index],
+                augment=False,
+                super_augmentation=super_augmentation,
             )
 
             X_train, X_test = augmented_data, data[test_index]
@@ -226,8 +230,95 @@ def trial_exhaustive_training_and_testing(
     return ce
 
 
+def trial_exhaustive_training_and_testing_train_test(
+    ce: complete_experiment,
+    pm: ProcessingMethods,
+    dataset_info: dict,
+    data_path: str,
+    selected_classes: list[int],
+    subject_range: Union[range, list],
+    game_mode: str,
+    super_augmentation: int = 0,
+):
+    for subject_id in subject_range:
+        print(subject_id)
+
+        epochs, data, labels = load_data_labels_based_on_dataset(
+            dataset_info,
+            subject_id,
+            data_path,
+            selected_classes=selected_classes,
+            normalize=False,
+            apply_autoreject=False,
+            game_mode=game_mode,
+        )
+
+        train_index, test_index = train_test_split(
+            range(len(epochs)), test_size=0.2, stratify=labels, random_state=GLOBAL_SEED
+        )
+
+        print(
+            "******************************** Training ********************************"
+        )
+        augmented_data, augmented_labels = balance_samples(
+            data[train_index],
+            labels[train_index],
+            augment=False,
+            super_augmentation=super_augmentation,
+        )
+
+        X_train, X_test = augmented_data, data[test_index]
+        y_train, y_test = augmented_labels, labels[test_index]
+
+        original_label_counts = Counter(labels[train_index])
+        print(f"Original label counts: {original_label_counts}")
+
+        augmented_label_counts = Counter(augmented_labels)
+        print(f"Augmented label counts: {augmented_label_counts}")
+
+        pm.train(
+            subject_id=subject_id,
+            data=X_train,
+            labels=y_train,
+            dataset_info=dataset_info,
+        )
+
+        print("******************************** Test ********************************")
+
+        trial_index_count: int = 0
+        for epoch_number in test_index:
+            trial_index_count += 1
+
+            pm.test(
+                subject_id=subject_id,
+                data=np.asarray([data[epoch_number]]),
+                dataset_info=dataset_info,
+            )
+
+            for method_name in vars(pm):
+                method = getattr(pm, method_name)
+                if method.activation:
+                    ce.data_point.append(
+                        probability_input(
+                            trial_group_index=trial_index_count,
+                            group_index=99,
+                            dataset_name=dataset_name,
+                            methods=method_name,
+                            probabilities=method.testing.probabilities,
+                            subject_id=subject_id,
+                            channel=99,
+                            kfold=99,
+                            label=labels[epoch_number],
+                            training_accuracy=method.training.accuracy,
+                            training_timing=method.training.timing,
+                            testing_timing=method.testing.timing,
+                        )
+                    )
+    return ce
+
+
 if __name__ == "__main__":
-    combinations = [[0, 1], [2, 3]]
+    combinations = [[0, 1, 2, 3]]
     import time
 
     start = time.time()
@@ -236,9 +327,10 @@ if __name__ == "__main__":
         # Manual Inputs
         dataset_name = "braincommand"
         selected_classes = combo  # [0, 1, 2, 3]
-        subject_range = range(1, 27)
+        subject_range = [23]  # range(1, 27)
         channel_config = "channel_grid"  # "independent_channels"
         game_mode = "singleplayer"
+        super_augmentation = 1000
 
         ce = complete_experiment()
 
@@ -249,8 +341,8 @@ if __name__ == "__main__":
 
         pm.activate_methods(
             spatial_features=False,  # Training is over-fitted. Training accuracy >90
-            simplified_spatial_features=True,  # Simpler than selected_transformers, only one transformer and no frequency bands. No need to activate both at the same time
-            ShallowFBCSPNet=False,
+            simplified_spatial_features=False,  # Simpler than selected_transformers, only one transformer and no frequency bands. No need to activate both at the same time
+            ShallowFBCSPNet=True,
             LSTM=False,  # Training is over-fitted. Training accuracy >90
             GRU=False,  # Training is over-fitted. Training accuracy >90
             diffE=False,  # It doesn't work if you only use one channel in the data
@@ -260,7 +352,7 @@ if __name__ == "__main__":
         activated_methods: list[str] = pm.get_activated_methods()
         combo_str = "_".join(map(str, combo))
 
-        version_name = f"{game_mode}_{channel_config}_{combo_str}"  # To keep track what the output processing alteration went through
+        version_name = f"50_23id_augmented_all_classifiers_{game_mode}_{channel_config}_{combo_str}"  # To keep track what the output processing alteration went through
 
         data_path = get_input_data_path(dataset_name)
 
@@ -275,7 +367,7 @@ if __name__ == "__main__":
                 game_mode=game_mode,
             )
         else:
-            ce = trial_exhaustive_training_and_testing(
+            ce = trial_exhaustive_training_and_testing_train_test(
                 ce,
                 pm,
                 dataset_info,
@@ -283,6 +375,7 @@ if __name__ == "__main__":
                 selected_classes,
                 subject_range,
                 game_mode=game_mode,
+                super_augmentation=super_augmentation,
             )
 
         ce.to_df().to_csv(

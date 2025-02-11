@@ -5,15 +5,15 @@ import numpy as np
 import pandas as pd
 from scipy import signal
 from scipy.stats import kurtosis, skew
-from sklearn.pipeline import Pipeline
-
-from processing_eeg_methods.data_utils import (
-    ClfSwitcher,
-    get_best_classificator_and_test_accuracy,
-)
+from sklearn.svm import SVC
 
 from .EEGExtract import eegRatio, eegStd, lyapunov
 
+# from sklearn.pipeline import Pipeline
+# from processing_eeg_methods.data_utils import (
+#     ClfSwitcher,
+#     get_best_classificator_and_test_accuracy,
+# )
 #  from sklearn.feature_selection import SelectKBest, f_classif
 
 
@@ -197,17 +197,23 @@ def get_extractions(data, dataset_info: dict, frequency_bandwidth_name):
     return feature_df
 
 
-def extractions_train(features_df, labels):
-    # So far, it works slightly better if all features are given
-    # X_SelectKBest = SelectKBest(f_classif, k=50)
-    # X_new = X_SelectKBest.fit_transform(features_df, labels)
-    # columns_list = X_SelectKBest.get_feature_names_out()
-    # features_df = pd.DataFrame(X_new, columns=columns_list)
+# def extractions_train(features_df, labels):
+#     # So far, it works slightly better if all features are given
+#     # X_SelectKBest = SelectKBest(f_classif, k=50)
+#     # X_new = X_SelectKBest.fit_transform(features_df, labels)
+#     # columns_list = X_SelectKBest.get_feature_names_out()
+#     # features_df = pd.DataFrame(X_new, columns=columns_list)
+#
+#     classifier, acc = get_best_classificator_and_test_accuracy(
+#         features_df, labels, Pipeline([("clf", ClfSwitcher())])
+#     )
+#     return classifier, acc  # , columns_list
 
-    classifier, acc = get_best_classificator_and_test_accuracy(
-        features_df, labels, Pipeline([("clf", ClfSwitcher())])
-    )
-    return classifier, acc  # , columns_list
+
+def extractions_train(features_df, labels):
+    classifier = SVC(kernel="linear", probability=True)
+    classifier.fit(features_df, labels)
+    return classifier, 0.5  # Just to not leave it empty
 
 
 def extractions_test(clf, features_df):

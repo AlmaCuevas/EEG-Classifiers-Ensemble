@@ -2,6 +2,8 @@ import torch
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
 
+from processing_eeg_methods.share import GLOBAL_SEED
+
 
 # Define a function to perform z-score normalization on the data
 def zscore_norm(data):
