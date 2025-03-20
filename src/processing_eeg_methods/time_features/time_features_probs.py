@@ -3,9 +3,14 @@ import mne
 import numpy
 import numpy as np
 import pandas as pd
+from imblearn.over_sampling import SMOTE
 from scipy import signal
 from scipy.stats import kurtosis, skew
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
+
+from processing_eeg_methods.share import GLOBAL_SEED
 
 from .EEGExtract import eegRatio, eegStd, lyapunov
 
@@ -210,10 +215,31 @@ def get_extractions(data, dataset_info: dict, frequency_bandwidth_name):
 #     return classifier, acc  # , columns_list
 
 
+# def extractions_train(features_df, labels):
+#     classifier = SVC(kernel="linear", probability=True)
+#     classifier.fit(features_df, labels)
+#     return classifier, 0.5  # Just to not leave it empty
+
+
 def extractions_train(features_df, labels):
+    # Split the dataset into train and test sets
+    X_train, X_test, y_train, y_test = train_test_split(
+        features_df, labels, test_size=0.2, random_state=GLOBAL_SEED
+    )
+
+    # Apply SMOTE to balance the classes in the training set
+    smote = SMOTE(random_state=GLOBAL_SEED)
+    X_resampled, y_resampled = smote.fit_resample(X_train, y_train)
+
+    # Create and train the classifier
     classifier = SVC(kernel="linear", probability=True)
-    classifier.fit(features_df, labels)
-    return classifier, 0.5  # Just to not leave it empty
+    classifier.fit(X_resampled, y_resampled)
+
+    # Predict the labels for the test set and calculate accuracy
+    y_pred = classifier.predict(X_test)
+    accuracy = accuracy_score(y_test, y_pred)
+
+    return classifier, accuracy
 
 
 def extractions_test(clf, features_df):
