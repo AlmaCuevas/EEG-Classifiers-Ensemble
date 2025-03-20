@@ -340,7 +340,7 @@ def load_data_labels_based_on_dataset(
         data, label = ic_bci_2020_dataset_loader(filepath)
     elif dataset_name == "nguyen_2019":
         data, label = nguyen_2019_dataset_loader(data_path, subject_id)
-    elif dataset_name == "braincommand":
+    elif "braincommand" in dataset_name:
         data, label = braincommand_dataset_loader(
             data_path, subject_id, game_mode=game_mode
         )

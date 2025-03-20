@@ -394,7 +394,21 @@ braincommand = {  # BrainCommand
     "sample_rate": 250,
     "montage": "standard_1020",
     "channels_names": ["FC3", "C3", "F5", "FC5", "C5", "F7", "FT7", "T7"],
-    "subjects": 26,  # PENDING
+    "subjects": 26,
+    "total_trials": 228,
+    "event_dict": {"Derecha": 0, "Izquierda": 1, "Arriba": 2, "Abajo": 3},
+}
+
+eog_braincommand = {  # EOG BrainCommand
+    "dataset_name": "eog_braincommand",
+    "#_class": 4,
+    "target_names": ["Derecha", "Izquierda", "Arriba", "Abajo"],
+    "#_channels": 8,
+    "samples": 325,  # 250*1.3=325
+    "sample_rate": 250,
+    "montage": "standard_1020",
+    "channels_names": ["AF9", "AF7", "N3*", "Fp1", "Fp2", "N4*", "AF8", "AF10"],
+    "subjects": 26,
     "total_trials": 228,
     "event_dict": {"Derecha": 0, "Izquierda": 1, "Arriba": 2, "Abajo": 3},
 }
@@ -408,4 +422,5 @@ datasets_basic_infos = {
     "ic_bci_2020": ic_bci_2020,
     "nguyen_2019": nguyen_2019,
     "braincommand": braincommand,
+    "eog_braincommand": eog_braincommand,
 }
