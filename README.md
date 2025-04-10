@@ -1,11 +1,8 @@
 # EEG-Classifiers-Ensemble: Real-Time Data Classification System
 
-DISCLAIMER: This project is still under development. Code and citations are not finished.
-
-
 ## Table of Contents
 1. [Processing Methods](https://github.com/AlmaCuevas/voting_system_platform/tree/main#processing-methods)
-2. [Datasets used](https://github.com/AlmaCuevas/voting_system_platform/tree/main#datasets-used)
+2. [Datasets described](https://github.com/AlmaCuevas/voting_system_platform/tree/main#datasets-used)
 3. [References](https://github.com/AlmaCuevas/voting_system_platform/tree/main#references)
 
 ## Processing Methods
@@ -15,11 +12,16 @@ Abdulghani, Walters, and Abed [2], Agarwal and Kumar [3], and Kumar and Scheme [
 classify speech imagery. An LSTM, a recurrent neural network, can learn long-term dependencies between the discrete
 steps in a time series data. The code used was obtained from GitHub by [5].
 
-### GRU
-
 ### DiffE
+This repository provides an implementation of an EEG classification model using Denoising Diffusion Probabilistic Model (DDPM)
+and Diffusion-based Encoder (Diff-E). The model is designed for 13-class classification of EEG signals for imagined speech [9].
 
 ### ShallowFBCSPNet
+ShallowFBCSPNet (Shallow Filter Bank Common Spatial Patterns Network) is a neural network architecture specifically
+designed for processing electroencephalogram (EEG) data [20]. The model integrates concepts from the Common Spatial Patterns (CSP)
+algorithm and filter bank analysis to extract discriminative features from EEG signals. By focusing on shallow feature
+representations, the architecture emphasizes computational efficiency and low-latency processing, making it suitable
+for real-time applications.
 
 ### Spatial Features
 
@@ -31,10 +33,6 @@ XDAWN spatial filters are used alongside it. The approach is based on the idea t
 and mental states have a degree of invariance that covariance matrices can capture. Due to its logarithmic nature, the Riemann
 distance is robust to noise. This method can potentially reduce or eliminate the calibration phase, especially when limited
 training data is available.
-
-#### Common Spatial Patterns
-
-#### Covariances
 
 ### Time Features
 
@@ -59,7 +57,7 @@ A measure of the amount of variation or dispersion of the signal values.
 ##### Variance
 The square of the standard deviation, representing the spread of the signal values.
 
-##  Datasets used:
+##  Datasets described:
 ### [Aguilera](https://data.mendeley.com/datasets/57g8z63tmy/1) [15]
 ### [Nieto](https://openneuro.org/datasets/ds003626/versions/2.1.2) [16]
 
@@ -84,7 +82,7 @@ the recognition of five Spanish words corresponding to the English words “up,�
 3. Agarwal, P. & Kumar, S. Electroencephalography-based imagined speech recognition using deep long short-term memory network. ETRI J. 44, 672–685, 10.4218/etrij.2021-0118 (2022).
 4. Kumar, P. & Scheme, E. A deep spatio-temporal model for eeg-based imagined speech recognition. ICASSP 2021 - 2021 IEEE Int. Conf. on Acoust. Speech Signal Process. (ICASSP) 10.1109/icassp39728.2021.9413989 (2021).
 5. C. Brunner, G. R. M.-P. A. S. G. P., R. Leeb. Bigproject.
-6. Nouri, M., Moradi, F., Ghaemi, H. & Motie Nasrabadi, A. Towards real-world bci: Ccspnet, a compact subject-independent motor imagery framework. Digit. Signal Process. 133, 103816, 10.1016/j.dsp.2022.103816 (2023).
+6. Nouri, M., Moradi, F., Ghaemi, H. & Motie Nasrabadi, A. Towards real-world bci: Cspnet, a compact subject-independent motor imagery framework. Digit. Signal Process. 133, 103816, 10.1016/j.dsp.2022.103816 (2023).
 7. Barachant, A. et al. pyriemann/pyriemann: v0.5, 10.5281/zenodo.8059038 (2023).
 8. Saba-Sadiya, S., Chantland, E., Alhanai, T., Liu, T. & Ghassemi, M. M. Unsupervised eeg artifact detection and correction.
 Front. Digit. Heal. 2, 57 (2020).
@@ -100,3 +98,5 @@ bci. Inf. Process. amp; Manag. 59, 103001, 10.1016/j.ipm.2022.103001 (2022).
 17. Coretto, G. A. P., Gareis, I. E. & Rufiner, H. L. Open access database of eeg signals recorded during imagined speech. In Symposium on Medical Information Processing and Analysis (2017)
 18. A. A. Torres-García, C. A. Reyes-García, L. Villaseñor-Pineda, and J. M. Ramírez-Cortes, “Análisis de Señales Electroencefalográficas para la Clasificación de Habla Imaginada,” Revista Mexicana de Ingeniería Biomédica, vol. 34, no. 1, pp. 23–39, 2013. ISSN: 0188-9532.
 19. Committee, B. 2020 international bci competition. Open Sci. Framew. 10.17605/OSF.IO/PQ7VB (2022)
+20. Schirrmeister, R. T. et al. Deep learning with convolutional neural networks for eeg decoding and visualization, 10.1002/337
+hbm.23730 (2017).338
