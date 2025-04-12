@@ -1,4 +1,5 @@
 import os
+from collections import Counter
 
 import numpy as np
 import pandas as pd
@@ -6,7 +7,7 @@ from sklearn.base import BaseEstimator
 from sklearn.linear_model import RidgeClassifier, SGDClassifier
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
 
-from processing_eeg_methods.share import ROOT_VOTING_SYSTEM_PATH
+from processing_eeg_methods.share import GLOBAL_SEED, ROOT_VOTING_SYSTEM_PATH
 
 # from sklearn.linear_model import LogisticRegression
 # from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -234,3 +235,112 @@ def probabilities_to_answer(probs_by_channels: list, voting_by_mode: bool = Fals
     else:  # voting_by_array_probabilities
         by_channel_decision = np.nanmean(probs_by_channels, axis=0)  # Mean over columns
         return np.argmax(by_channel_decision)
+
+
+def balance_samples(data, labels, augment=True, super_augmentation: int = 0):
+    """
+    Process data by either augmenting and balancing or only balancing.
+
+    Parameters:
+    data (numpy.ndarray): The input data with shape (num_samples, num_channels, num_timepoints).
+    labels (numpy.ndarray): The corresponding labels.
+    augment (bool): If True, augment and balance the data;
+                    if False, only balance the data.
+    super_augmentation (int): The number of times to apply super augmentation.
+
+    Returns:
+    processed_data (numpy.ndarray): The processed data.
+    processed_labels (numpy.ndarray): The updated labels for the processed data.
+    """
+
+    if augment:
+        even_samples = data[:, :, ::2]  # Take even index samples
+        odd_samples = data[:, :, 1::2]  # Take odd index samples
+
+        # Check if the last dimension lengths match, pad if necessary
+        if even_samples.shape[2] != odd_samples.shape[2]:
+            min_length = min(even_samples.shape[2], odd_samples.shape[2])
+            even_samples = even_samples[:, :, :min_length]
+            odd_samples = odd_samples[:, :, :min_length]
+
+        # Concatenate the augmented data
+        augmented_data = np.concatenate((even_samples, odd_samples), axis=0)
+        augmented_labels = np.concatenate((labels, labels), axis=0)
+
+        # Use augmented data for balancing
+        data, labels = augmented_data, augmented_labels
+
+    original_data, original_labels = np.copy(data), np.copy(labels)
+
+    if super_augmentation != 0:
+        for i in range(super_augmentation):
+            augmented_data = augment_data_with_time_shuffling_by_trial(
+                original_data, original_labels, i
+            )
+            augmented_labels = np.copy(original_labels)
+
+            # Concatenate both augmentations with original data
+            data = np.concatenate((data, augmented_data), axis=0)
+            labels = np.concatenate((labels, augmented_labels), axis=0)
+
+            # Print progress every 10 iterations
+            if (i + 1) % 10 == 0:
+                progress = (i + 1) * 100 // super_augmentation
+                print(f"Augmentation Progress: {progress}%")
+
+        # Ensuring final progress display if total iterations is not a multiple of 10
+        if super_augmentation % 10 != 0:
+            print("Augmentation Progress: 100%")
+
+    # Balance the data
+    label_counts = Counter(labels)
+    min_count = min(label_counts.values())
+
+    balanced_data = []
+    balanced_labels = []
+
+    for label in label_counts.keys():
+        label_indices = np.where(labels == label)[0]
+        np.random.shuffle(label_indices)
+        selected_indices = label_indices[:min_count]
+        balanced_data.append(data[selected_indices])
+        balanced_labels.append(labels[selected_indices])
+
+    balanced_data = np.concatenate(balanced_data, axis=0)
+    balanced_labels = np.concatenate(balanced_labels, axis=0)
+
+    return balanced_data, balanced_labels
+
+
+def augment_data_with_time_shuffling_by_trial(data, labels, random_seed=GLOBAL_SEED):
+    """
+    Augments data by shuffling time points within each trial, using a specified random seed.
+
+    Parameters:
+    data (numpy.ndarray): The input data with shape (num_samples, num_channels, num_timepoints).
+    labels (numpy.ndarray): The corresponding labels.
+    random_seed (int): The seed for the random number generator (optional).
+
+    Returns:
+    augmented_data (numpy.ndarray): The augmented data with shuffled time points.
+    """
+    augmented_data = np.copy(data)
+    unique_labels = np.unique(labels)
+
+    np.random.seed(random_seed)
+
+    for label in unique_labels:
+        label_indices = np.where(labels == label)[0]
+
+        for channel in range(data.shape[1]):
+            channel_data = data[label_indices, channel, :]
+            num_timepoints = channel_data.shape[1]
+
+            for timepoint in range(num_timepoints):
+                timepoint_values = channel_data[:, timepoint]
+                np.random.shuffle(timepoint_values)
+
+                for i, idx in enumerate(label_indices):
+                    augmented_data[idx, channel, timepoint] = timepoint_values[i]
+
+    return augmented_data

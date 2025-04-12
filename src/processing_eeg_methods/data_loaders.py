@@ -305,6 +305,17 @@ def braincommand_dataset_loader_eeglab_set(
 
 
 def braincommand_dataset_loader(
+    filepath: str, subject_id: int, game_mode: str = "singleplayer"
+):
+    file_name = f"/{subject_id}_{game_mode}.mat"
+    data = loadmat(filepath + file_name)
+    labels = data["labels"][0]
+    array = data["array"]
+    array = np.transpose(array, (2, 0, 1))
+    return array, labels
+
+
+def braincommand_dataset_loader_file_from_game(
     filepath: str, subject_id: int, game_mode: str = "calibration3"
 ):
     complete_information = pd.read_csv(
@@ -396,6 +407,10 @@ def load_data_labels_based_on_dataset(
         data, label = nguyen_2019_dataset_loader(data_path, subject_id)
     elif dataset_name == "braincommand":
         data, label = braincommand_dataset_loader(
+            data_path, subject_id, game_mode=game_mode
+        )
+    elif dataset_name == "braincommand":
+        data, label = braincommand_dataset_loader_file_from_game(
             data_path, subject_id, game_mode=game_mode
         )
     elif dataset_name == "braincommand_eeglab_set":
