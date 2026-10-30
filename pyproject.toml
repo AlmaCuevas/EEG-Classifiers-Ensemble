@@ -29,7 +29,8 @@ dependencies = [
   "pandas>=2.0",
   "scikit-learn>=1.5",
   "joblib>=1.3",
-  "pyriemann>=0.7",
+  # <0.14: the frozen features.py imports pyriemann.utils.*, deprecated in 0.12 and removed in 0.14
+  "pyriemann>=0.7,<0.14",
   "mne>=1.8",
 ]
 
@@ -37,7 +38,8 @@ dependencies = [
 # complexity_boosting and minirocket voters
 features = ["antropy>=0.2", "sktime>=0.30"]
 # network voters: EEGNet, ShallowNet, ATCNet, FBCNet, EEGInception (braindecode) and GREEN
-deep = ["torch>=2.5", "braindecode>=1.2", "geotorch>=0.3", "lightning>=2.4"]
+# braindecode <1.6: the frozen voters.py uses EEGNetv4, removed in 1.6
+deep = ["torch>=2.5", "braindecode>=1.2,<1.6", "geotorch>=0.3", "lightning>=2.4"]
 # public datasets for the benchmark
 benchmark = ["moabb>=1.2"]
 all = ["EEG-Classifiers-Ensemble[features,deep,benchmark]"]

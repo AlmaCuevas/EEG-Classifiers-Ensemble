@@ -115,9 +115,27 @@ ensemble_env\Scripts\python -m pip install -r requirements-ensemble.lock.txt --e
 ensemble_env\Scripts\python -m pip install -e . --no-deps
 ```
 
-Newer versions run the same protocol. The network voters are not bit-for-bit deterministic on
-a GPU, so expect the same conclusions with small differences in individual accuracies.
-`reproduce check` lists every package that differs from the paper's.
+The lock file is an archival record of the paper's environment, and it is part of the
+pre-registered fingerprint. Several of its pinned packages have published security advisories:
+Pillow, urllib3, filelock, Lightning and PyTorch 2.5.1. Use it only in an isolated environment
+to replicate the paper. For anything else, install with `pip install -e ".[...]"` as above;
+that installation passed `pip-audit`.
+
+**Verified on 2026-10-30.** Each environment was checked from a fresh clone on Kalunga2016,
+12 subjects:
+- **The paper's exact environment** reproduced every voter and every combination rule
+  bit-for-bit, neural networks included.
+- **Python 3.14 with the newest libraries** (numpy 2.5, pandas 3.0, scikit-learn 1.9, PyTorch
+  2.14):
+  - all 16 tests pass;
+  - the 13 classical voters were bit-identical;
+  - the network voters and the SVM voter differed subject by subject, because the random number
+    streams changed. On this small dataset the ensemble's mean moved by 0.7 points.
+- **Newer versions are therefore not exact replication.** We have not re-verified the paper's
+  conclusions under them; use the exact environment to replicate. `reproduce check` lists every
+  package that differs from the paper's.
+- **Version caps.** `pyproject.toml` caps braindecode below 1.6 and pyRiemann below 0.14,
+  because later releases remove names the frozen code uses.
 
 **Integrity.**
 - [PROTOCOL.md](src/processing_eeg_methods/ensemble/PROTOCOL.md) holds the pre-registration:
