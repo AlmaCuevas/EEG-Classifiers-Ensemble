@@ -1,2 +1,2 @@
-__name__: str = "EEG-Classifiers-Ensemble"
-__description__: str = "Tools for processing and classifying EEG tasks in real-time."
+__version__: str = "1.0.0"
+__description__: str = "Leakage-safe voting ensembles of diverse EEG classifiers."

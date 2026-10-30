@@ -1,3 +1,11 @@
+# The pre-registered code must stay byte-identical to its fingerprints in PROTOCOL.md,
+# so no hook may reformat it.
+exclude: |
+  (?x)^(
+    src/processing_eeg_methods/ensemble/(__init__|features|voters|voting_ensemble|benchmark_moabb|
+      analyze_voters|extra_voters|benchmark_extra|select_voters|voter_cost_benefit)\.py
+    |requirements-ensemble\.lock\.txt
+  )$
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0

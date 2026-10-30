@@ -1,58 +1,56 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "EEG-Classifiers-Ensemble"
-version = "0.1.9"
-requires-python = ">=3.10, <4"
-authors = [
-  {name = "Alma Cuevas", email = "almarosa.arcr@gmail.com"}
-]
-description = "Tools for processing and classifying EEG tasks in real-time."
+version = "1.0.0"
+description = "Leakage-safe voting ensembles of diverse EEG classifiers, with a pre-registered cross-session benchmark."
 readme = "README.md"
 license = {file = "LICENSE"}
-keywords = ["EEG", "classification", "ERP", "feature extraction", "transforms"]
+requires-python = ">=3.10"
+authors = [
+  {name = "Alma Rosa Cuevas Romero", email = "almarosa.arcr@gmail.com"},
+  {name = "Luz María Alonso-Valerdi"},
+  {name = "Luis Alberto Muñoz-Ubando"},
+  {name = "Alejandro A. Torres-García"},
+]
+keywords = ["EEG", "brain-computer interface", "ensemble", "voting", "classification", "MOABB"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Medical Science Apps.",
+]
+# Lower bounds are the versions the paper ran with (requirements-ensemble.lock.txt).
+dependencies = [
+  "numpy>=1.26",
+  "scipy>=1.11",
+  "pandas>=2.0",
+  "scikit-learn>=1.5",
+  "joblib>=1.3",
+  "pyriemann>=0.7",
+  "mne>=1.8",
+]
 
-[tool.poetry]
-name = "EEG-Classifiers-Ensemble"
-version = "0.1.9"
-description = "Tools for processing and classifying EEG tasks in real-time."
-authors = ["AlmaCuevas <almarosa.arcr@gmail.com>"]
-license = "MIT"
-readme = "README.md"
+[project.optional-dependencies]
+# complexity_boosting and minirocket voters
+features = ["antropy>=0.2", "sktime>=0.30"]
+# network voters: EEGNet, ShallowNet, ATCNet, FBCNet, EEGInception (braindecode) and GREEN
+deep = ["torch>=2.5", "braindecode>=1.2", "geotorch>=0.3", "lightning>=2.4"]
+# public datasets for the benchmark
+benchmark = ["moabb>=1.2"]
+all = ["EEG-Classifiers-Ensemble[features,deep,benchmark]"]
+dev = ["EEG-Classifiers-Ensemble[features]", "pytest>=8"]
 
-[tool.poetry.dependencies]
-python = ">=3.10, <4"
-pyriemann = "0.5"
-keras = "2.14.0"
-matplotlib = "3.8.0"
-matplotlib-inline = "0.1.6"
-mne = "1.5.1"
-numpy = "1.26.0"
-pandas = "2.1.1"
-scikit-learn = "1.3.1"
-scipy = "1.11.3"
-termcolor = "2.3.0"
-torch = "2.1.0"
-torchsummary = "1.5.1"
-torchvision = "0.16.0"
-tqdm = "4.66.1"
-wget = "3.2"
-skorch = "0.15.0"
-braindecode = "0.4.85"
-ema-pytorch = "0.3.0"
-einops = "0.7.0"
-emd = "0.4.0"
-brainflow = "2.4.0"
-keras-preprocessing = "1.1.2"
-autoreject = "0.4.3"
-pywavelets = "1.6.0"
-dit = "1.5"
-statsmodels = "0.14.2"
-librosa = "0.10.2.post1"
-pyinform = "0.2.0"
-antropy = "0.1.6"
-pre-commit = "3.7.1"
-poetry = "1.8.3"
+[project.urls]
+Repository = "https://github.com/AlmaCuevas/EEG-Classifiers-Ensemble"
 
+[tool.setuptools.packages.find]
+where = ["src"]
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.setuptools.package-data]
+"processing_eeg_methods.ensemble" = ["PROTOCOL.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

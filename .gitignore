@@ -1,9 +1,23 @@
+# Your data and results stay on your machine
 /Datasets/
 /Results/
+
+# Third-party code fetched by tools/install_green.py
+/neuro_green/
+
+# Environments
+/ensemble_env/
+/processing_env/
+/processing310_env/
+/.venv*/
+/venv*/
+
+# Build and tool output
 **/__pycache__
-.DS_Store
-.idea/
+*.egg-info/
 /build/
 /dist/
-*.egg-info/
-/src/processing_eeg_methods/Standalone Notebooks/
+.pytest_cache/
+.DS_Store
+.idea/
+.vscode/

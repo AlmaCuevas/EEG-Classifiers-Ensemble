@@ -1,102 +1,207 @@
-# EEG-Classifiers-Ensemble: Real-Time Data Classification System
+# EEG-Classifiers-Ensemble
 
-## Table of Contents
-1. [Processing Methods](https://github.com/AlmaCuevas/voting_system_platform/tree/main#processing-methods)
-2. [Datasets described](https://github.com/AlmaCuevas/voting_system_platform/tree/main#datasets-used)
-3. [References](https://github.com/AlmaCuevas/voting_system_platform/tree/main#references)
+Leakage-safe voting ensembles of diverse EEG classifiers ("voters"), plus the pre-registered
+cross-session benchmark that tests whether they help.
 
-## Processing Methods
+A voting ensemble beats its members only when each voter is better than chance and the voters
+make *different* mistakes (Condorcet's jury theorem). This package is built around that idea:
+- **Diverse voters,** each reading a different aspect of the signal: Riemannian covariance,
+  ERP time course, spectrum, coherence, complexity, random kernels and neural networks.
+- **Out-of-fold weights.** Each voter is weighted by its accuracy on training trials it did
+  not see, with folds grouped by run so that neighbouring trials cannot leak into the estimate.
+- **An honest baseline.** The ensemble is compared with the single voter you would have
+  picked from the same training data.
 
-### LSTM
-Abdulghani, Walters, and Abed [2], Agarwal and Kumar [3], and Kumar and Scheme [4] use Long-Short Term Memory (LSTM) to
-classify speech imagery. An LSTM, a recurrent neural network, can learn long-term dependencies between the discrete
-steps in a time series data. The code used was obtained from GitHub by [5].
+## Install
 
-### DiffE
-This repository provides an implementation of an EEG classification model using Denoising Diffusion Probabilistic Model (DDPM)
-and Diffusion-based Encoder (Diff-E). The model is designed for 13-class classification of EEG signals for imagined speech [9].
+Python 3.10 or newer.
 
-### ShallowFBCSPNet
-ShallowFBCSPNet (Shallow Filter Bank Common Spatial Patterns Network) is a neural network architecture specifically
-designed for processing electroencephalogram (EEG) data [20]. The model integrates concepts from the Common Spatial Patterns (CSP)
-algorithm and filter bank analysis to extract discriminative features from EEG signals. By focusing on shallow feature
-representations, the architecture emphasizes computational efficiency and low-latency processing, making it suitable
-for real-time applications.
+```bash
+git clone https://github.com/AlmaCuevas/EEG-Classifiers-Ensemble.git
+cd EEG-Classifiers-Ensemble
+python -m venv .venv
+# activate it: .venv\Scripts\activate (Windows) or source .venv/bin/activate
+pip install -e ".[features]"        # classical voters (no GPU needed)
+pip install -e ".[all]"             # + network voters and the MOABB benchmark datasets
+python tools/install_green.py       # + the GREEN network voter (fetched from Roche/neuro-green)
+```
 
-### Spatial Features
+For GPU training, install the CUDA build of PyTorch first ([pytorch.org](https://pytorch.org)).
 
-#### XDAWN+RG
-The XDAWN spatial filter and Riemannian Geometry classifier (RG) algorithm [7] achieved an accuracy of 0.836. Riemannian
-Geometry represents data as symmetric positive definite covariance matrices and maps them onto a specific geometric space.
-It can be computationally intensive when dealing with high-dimensional data, so dimensionality reduction techniques like
-XDAWN spatial filters are used alongside it. The approach is based on the idea that tasks like the P300-speller, EEG signals,
-and mental states have a degree of invariance that covariance matrices can capture. Due to its logarithmic nature, the Riemann
-distance is robust to noise. This method can potentially reduce or eliminate the calibration phase, especially when limited
-training data is available.
+## Use it on your data
 
-### Time Features
+### From Python
 
-These features are organized into columns with descriptive names, facilitating feature selection. The
-resulting table of features serves as the input for classifiers, enabling the analysis of EEG signals.
+`X` holds the epoched trials as `(trials, channels, samples)`. `y` holds the labels. Pass the run
+(or block, or session) of every trial as `groups`, so that the out-of-fold weights are not
+inflated by neighbouring, correlated trials.
 
-#### EEGExtract
-EEGExtract is a feature extraction code designed to process EEG data, here the input is segmented into various frequency
-bands before feeding it to the extraction process. For each frequency band, EEGExtract computes a set of features,
-including entropy, mobility, complexity, ratio, and Lyapunov exponent.
+```python
+from processing_eeg_methods.ensemble import VotingEnsemble
+from processing_eeg_methods.ensemble.voter_sets import get_voters
 
-#### Statistical variables
+ens = VotingEnsemble(get_voters("fast", sfreq=128.0))   # or "v1", "v2", or a list of names
+ens.fit(X_train, y_train, groups=run_of_each_trial)
+proba = ens.predict_proba(X_new)
+print(ens.diversity_report())     # out-of-fold accuracy, weight and error correlation per voter
+```
 
-##### Mean
-The average value of the signal.
-##### Skewness
-A measure of the asymmetry of the probability distribution of the signal values.
-##### Kurtosis
-A measure of the “tailedness” of the probability distribution of the signal values.
-##### Standard Deviation (Std)
-A measure of the amount of variation or dispersion of the signal values.
-##### Variance
-The square of the standard deviation, representing the spread of the signal values.
+| Voter set | Voters | What it is |
+|---|---|---|
+| `fast` | 10 | The classical voters of v2. No GPU; calibrates in seconds to minutes. |
+| `v1` | 12 | The pre-registered set, including EEGNet, ShallowNet and GREEN. |
+| `v2` | 15 | Chosen from 20 voters on the development data (see the results below). |
 
-##  Datasets described:
-### [Aguilera](https://data.mendeley.com/datasets/57g8z63tmy/1) [15]
-### [Nieto](https://openneuro.org/datasets/ds003626/versions/2.1.2) [16]
+You can also pass your own scikit-learn classifiers:
+`VotingEnsemble({"name": classifier, ...})`.
 
-Their code is embedded in this repository to load their dataset. The original is [Inner_Speech_Dataset](https://github.com/N-Nieto/Inner_Speech_Dataset)
+How the votes are combined (`combination=`):
+- **`"auto"` (default):** stacking when there are at least 40 training trials per class,
+  weighted voting otherwise.
+- **`"weighted"`, `"stacking"`, `"soft"`, `"majority"`:** fixed rules. Simple averaging
+  (`soft`, `majority`) fell below the best single voter in the benchmark.
 
-Ten Argentinian participants were involved in this experimental setup, and data from 136 channels were recorded, with 128 dedicated to EEG readings and 8 to muscle activity. The experiment focused on eliciting four specific commands from the subjects, namely ”arriba,” ”abajo,” ”derecha,” and ”izquierda,” corresponding to ”up,” ”down,” ”right,” and ”left.” To explore inner speech processes, each participant was instructed to engage in a mental exercise involving repeatedly imagining their voice and uttering the respective word.
+`predict_accumulated()` combines several repetitions of the same intended command into one
+decision.
 
-### [Coretto](https://drive.google.com/file/d/0By7apHbIp8ENZVBLRFVlSFhzbHc/view?resourcekey=0-JVHv2UiRsxim41Wioro0EA) [17]
-The Coretto dataset consists of 15 Argentinian subjects who are native Spanish speakers, with an average age of 25 years old. These subjects repeated words, including vowels and directional words, 50 times each at a sample frequency of 1024Hz. The words were visually presented, and the recordings were single takes. The dataset used the Geschwind-Wernicke model, focusing on specific electrode locations to minimize myoelectric noise interference during speech.
+### From saved files, with the paper's protocol
 
-### Torres (Data available on request from the original authors) [18]
-This dataset comprises the EEG signals of 27 right-handed subjects performing internal pronunciation of words without emitting sounds or doing facial movements. It is focused on
-the recognition of five Spanish words corresponding to the English words “up,” “down,” “left,” “right,” and “select,” with which a computer cursor could be controlled. Unlike the other datasets, this one is not open-access and was kindly made available by interinstitutional agreement.
+Save one file per subject in `Datasets/<name>/`:
 
-### [2020 International BCI Competition](https://osf.io/pq7vb/) [19]
+| File | Contents |
+|---|---|
+| `subject_<id>.npz` | `X` (trials, channels, samples), `y` (labels), `sfreq`; optional `session` and `run` per trial |
+| `subject_<id>-epo.fif` | MNE Epochs. Labels come from the event names; `session` and `run` from `epochs.metadata` if present. |
 
+Trials must be in recording order. Then run:
 
-# References
+```bash
+python -m processing_eeg_methods.ensemble.run_own_data <name> --voters fast
+```
 
-1. Miao, Z., Zhang, X., Zhao, M. & Ming, D. Lmda-net: a lightweight multi-dimensional attention network for general eeg-based brain-computer interface paradigms and interpretability. 10.48550/ARXIV.2303.16407 (2023).
-2. Abdulghani, M. M., Walters, W. L. & Abed, K. H. Imagined speech classification using eeg and deep learning. Bioengineering 10, 649, 10.3390/bioengineering10060649 (2023).
-3. Agarwal, P. & Kumar, S. Electroencephalography-based imagined speech recognition using deep long short-term memory network. ETRI J. 44, 672–685, 10.4218/etrij.2021-0118 (2022).
-4. Kumar, P. & Scheme, E. A deep spatio-temporal model for eeg-based imagined speech recognition. ICASSP 2021 - 2021 IEEE Int. Conf. on Acoust. Speech Signal Process. (ICASSP) 10.1109/icassp39728.2021.9413989 (2021).
-5. C. Brunner, G. R. M.-P. A. S. G. P., R. Leeb. Bigproject.
-6. Nouri, M., Moradi, F., Ghaemi, H. & Motie Nasrabadi, A. Towards real-world bci: Cspnet, a compact subject-independent motor imagery framework. Digit. Signal Process. 133, 103816, 10.1016/j.dsp.2022.103816 (2023).
-7. Barachant, A. et al. pyriemann/pyriemann: v0.5, 10.5281/zenodo.8059038 (2023).
-8. Saba-Sadiya, S., Chantland, E., Alhanai, T., Liu, T. & Ghassemi, M. M. Unsupervised eeg artifact detection and correction.
-Front. Digit. Heal. 2, 57 (2020).
-9. Kim, S., Lee, Y.-E., Lee, S.-H. & Lee, S.-W. Diff-e: Diffusion-based learning for decoding imagined speech eeg. (2023). 2307.14389.
-10. Liu, X. et al. Tcacnet.
-11. Liu, X. et al. Tcacnet: Temporal and channel attention convolutional network for motor imagery classification of eeg-based
-bci. Inf. Process. amp; Manag. 59, 103001, 10.1016/j.ipm.2022.103001 (2022).
-12. Lawhern, V. J. et al. Eegnet: a compact convolutional neural network for eeg-based brain–computer interfaces. J. Neural Eng. 15, 056013 (2018).
-13. Tibor, S. R. et al. Deep learning with convolutional neural networks for eeg decoding and visualization. Hum. Brain Mapp. 38, 5391–5420, 10.1002/hbm.23730.
-14. project, A. R. L. A. E. Army research laboratory (arl) eegmodels.
-15. Aguilera-Rodríguez, E. Imagined speech datasets applying traditional and gamified acquisition paradigms, 10.17632/57G8Z63TMY.1 (2024).
-16. Nieto, N., Peterson, V., Rufiner, H., Kamienkowski, J. & Spies, R. "inner speech", doi:10.18112/openneuro.ds003626.v2.1.2 (2022)
-17. Coretto, G. A. P., Gareis, I. E. & Rufiner, H. L. Open access database of eeg signals recorded during imagined speech. In Symposium on Medical Information Processing and Analysis (2017)
-18. A. A. Torres-García, C. A. Reyes-García, L. Villaseñor-Pineda, and J. M. Ramírez-Cortes, “Análisis de Señales Electroencefalográficas para la Clasificación de Habla Imaginada,” Revista Mexicana de Ingeniería Biomédica, vol. 34, no. 1, pp. 23–39, 2013. ISSN: 0188-9532.
-19. Committee, B. 2020 international bci competition. Open Sci. Framew. 10.17605/OSF.IO/PQ7VB (2022)
-20. Schirrmeister, R. T. et al. Deep learning with convolutional neural networks for eeg decoding and visualization, 10.1002/337
-hbm.23730 (2017).338
+This runs exactly the benchmark's procedure:
+1. Train on the first session and test on the later ones. With a single session, train on the
+   first half of the runs (or trials) and test on the second half.
+2. Estimate out-of-fold accuracy with folds grouped by run, inside the training data only.
+3. Report every combination rule against the best single voter picked on training data.
+
+The data are band-pass filtered (1–45 Hz; use `--no-filter` if you filtered the continuous
+recording) and resampled to 128 Hz. Per-subject probabilities and `per_subject.csv` go to
+`Results/own_data/<name>/`. `Datasets/` and `Results/` are never committed.
+
+## Replicate the paper
+
+The benchmark uses 10 public [MOABB](https://moabb.neurotechx.com) datasets. MOABB downloads
+them on first use (24 GB) to `MNE_DATA` (default `~/mne_data`).
+
+```bash
+python -m processing_eeg_methods.ensemble.reproduce check      # code, environment, GPU, GREEN
+python -m processing_eeg_methods.ensemble.reproduce all        # benchmark, timing, analysis
+```
+
+The steps can also run one at a time: `benchmark`, `timing`, then `analyze`. Use
+`--datasets BNCI2014_001` for a single dataset.
+- **Resumable:** every step skips subjects that are already finished.
+- **Output:** results are written to `Results/ensemble_benchmark/`.
+- **Compute:** about 120 GPU-hours on one 8 GB laptop GPU. Most of that is Schirrmeister2017,
+  which also needs 16 GB of RAM with nothing else running.
+
+**Exact environment.** The paper ran on Python 3.10, Windows and CUDA 12.1, with the versions
+in [requirements-ensemble.lock.txt](requirements-ensemble.lock.txt):
+
+```bash
+py -3.10 -m venv ensemble_env
+ensemble_env\Scripts\python -m pip install -r requirements-ensemble.lock.txt --extra-index-url https://download.pytorch.org/whl/cu121
+ensemble_env\Scripts\python -m pip install -e . --no-deps
+```
+
+Newer versions run the same protocol. The network voters are not bit-for-bit deterministic on
+a GPU, so expect the same conclusions with small differences in individual accuracies.
+`reproduce check` lists every package that differs from the paper's.
+
+**Integrity.**
+- [PROTOCOL.md](src/processing_eeg_methods/ensemble/PROTOCOL.md) holds the pre-registration:
+  hypotheses, datasets, exclusion rules, every deviation, and SHA-256 fingerprints of the code
+  that produced the results.
+- `reproduce check` verifies those fingerprints.
+
+## Results
+
+The pre-registered cross-session benchmark:
+- **Split:** train on the first session, test on later sessions.
+- **Voters:** v1.
+- **Combination:** `auto`.
+- **Baseline:** the single voter picked on training data.
+- **Metric:** balanced accuracy, mean over subjects. Gain is in points, with the number of
+  subjects improved in brackets.
+
+| Dataset | Paradigm | Subjects | Best single voter | Ensemble | Gain |
+|---|---|---|---|---|---|
+| *Confirmatory (not used to design anything)* | | | | | |
+| BNCI2015_004 | Mental imagery, 5-class | 9 | 34.5% | 36.9% | +2.4 (6/9) |
+| Schirrmeister2017 | Motor execution, 4-class | 14 | 89.2% | 92.3% | +3.1 (13/14) |
+| Weibo2014 | Motor imagery, 2-class | 10 | 70.6% | 73.2% | +2.7 (6/10) |
+| BNCI2015_003 | P300 | 10 | 73.4% | 75.2% | +1.8 (6/10) |
+| MAMEM3 | SSVEP, 5-class | 10 | 26.0% | 27.7% | +1.7 (5/10) |
+| **All confirmatory** | | **53** | **61.5%** | **63.9%** | **+2.4 ± 5.5 (36/53), p = 0.0008** |
+| *Development (used to design the method)* | | | | | |
+| BNCI2014_001 | Motor imagery, 4-class | 9 | 72.0% | 76.5% | +4.5 (8/9) |
+| BNCI2014_004 | Motor imagery, 2-class | 9 | 70.6% | 74.4% | +3.7 (6/9) |
+| BNCI2015_001 | Motor imagery, 2-class | 12 | 78.3% | 84.6% | +6.4 (11/12) |
+| BNCI2014_009 | P300 | 10 | 79.8% | 84.3% | +4.5 (10/10) |
+| Kalunga2016 | SSVEP, 4-class | 12 | 52.0% | 53.6% | +1.6 (6/12) |
+
+The full set of findings, with practical guidance, is in [FINDINGS.md](FINDINGS.md). It covers:
+- why picking one voter loses to voting;
+- why voters must be above chance rather than good;
+- comparisons with published results.
+
+What the benchmark shows:
+- **Where the voters carry signal, the ensemble beats the voter you would have picked,** on
+  every confirmatory dataset. When every voter is near chance it cannot help (Condorcet).
+- **The gain comes from hedging an unreliable choice.**
+  - On the confirmatory data, the best voter in hindsight was 4.0 points above the one
+    picked from training data.
+  - The ensemble recovered 60% of that gap.
+  - The error correlation between voters did not predict the gain.
+- **Don't curate the voters on small data.**
+  - v2 (15 of 20 voters, picked on development data) looked 2.6 points better there.
+  - On the confirmatory data it was 0.2 points worse than v1 (p = 0.71).
+- **Fast and online use.**
+  - Prediction is fast: the `fast` set needs a median of 34 ms per trial, and the 15-voter
+    `v2` set 52 ms, run serially on a laptop. That fits an online loop.
+  - Calibration is the bottleneck, and it is dominated by the networks.
+  - The `fast` set needs no GPU and still beats its own best voter (+1.7 points, p = 0.002).
+    It is 1.6 points below the full ensemble.
+  - ATCNet was the most expensive voter, and removing it changed nothing measurable.
+
+Datasets that could not be evaluated without leakage:
+- **Zhou2016:** unreadable with current MNE.
+- **Nakanishi2015:** a single run, so a chronological split leaves classes out of training.
+- **Cho2017:** trials are stored grouped by class, so the recording order is lost.
+
+## Tests
+
+```bash
+pip install -e ".[dev]"
+pytest
+```
+
+## Cite
+
+See [CITATION.cff](CITATION.cff). The paper is in preparation.
+
+## Acknowledgments
+
+Built on:
+- [MOABB](https://github.com/NeuroTechX/moabb) for datasets;
+- [pyRiemann](https://github.com/pyRiemann/pyRiemann) for Riemannian geometry;
+- [braindecode](https://github.com/braindecode/braindecode) for EEGNet, ShallowNet, ATCNet,
+  FBCNet and EEGInception;
+- [GREEN](https://github.com/Roche/neuro-green) (Paillard et al., 2025, Apache-2.0);
+- [sktime](https://github.com/sktime/sktime) for MiniRocket;
+- [antropy](https://github.com/raphaelvallat/antropy).
+
+## License
+
+MIT

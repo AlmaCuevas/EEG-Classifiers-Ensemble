@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "EEG-Classifiers-Ensemble: leakage-safe voting ensembles of diverse EEG classifiers"
+version: 1.0.0
+license: MIT
+repository-code: "https://github.com/AlmaCuevas/EEG-Classifiers-Ensemble"
+keywords:
+  - EEG
+  - brain-computer interface
+  - ensemble learning
+  - voting
+authors:
+  - family-names: Cuevas Romero
+    given-names: Alma Rosa
+    orcid: "https://orcid.org/0000-0002-1597-3206"
+    affiliation: "Escuela de Ingeniería y Ciencias, Tecnológico de Monterrey, Nuevo León, México"
+  - family-names: Alonso-Valerdi
+    given-names: Luz María
+    orcid: "https://orcid.org/0000-0002-2256-2958"
+    affiliation: "Escuela de Ingeniería y Ciencias, Tecnológico de Monterrey, Nuevo León, México"
+  - family-names: Muñoz-Ubando
+    given-names: Luis Alberto
+    orcid: "https://orcid.org/0000-0002-5845-6663"
+    affiliation: "Escuela de Ingeniería y Ciencias, Tecnológico de Monterrey, Nuevo León, México"
+  - family-names: Torres-García
+    given-names: Alejandro A.
+    orcid: "https://orcid.org/0000-0001-5091-0764"
+    affiliation: "Instituto Nacional de Astrofísica, Óptica y Electrónica (INAOE), Puebla, México"
