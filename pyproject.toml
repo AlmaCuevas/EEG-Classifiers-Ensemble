@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "EEG-Classifiers-Ensemble"
-version = "1.0.0"
+version = "1.1.0"
 description = "Leakage-safe voting ensembles of diverse EEG classifiers, with a pre-registered cross-session benchmark."
 readme = "README.md"
 license = {file = "LICENSE"}

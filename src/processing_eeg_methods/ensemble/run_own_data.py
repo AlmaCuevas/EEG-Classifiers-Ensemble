@@ -20,7 +20,7 @@ Unlike MOABB, which filters the continuous recording before epoching, this filte
 epochs (1-45 Hz by default). If you already filtered the continuous data, pass --no-filter.
 
 Usage:
-  python -m processing_eeg_methods.ensemble.run_own_data <name> [--voters fast|v1|v2|a,b,c]
+  python -m processing_eeg_methods.ensemble.run_own_data <name> [--voters classical|main|curated|a,b,c]
          [--subjects 1 2] [--fmin 1 --fmax 45 | --no-filter] [--data-dir Datasets]
 
 Output: Results/own_data/<name>/<voters>/subject_<id>.npz (saved probabilities, same format
@@ -48,7 +48,7 @@ from processing_eeg_methods.ensemble.analyze_voters import (
 from processing_eeg_methods.ensemble.benchmark_extra import sync_gpu, training_groups
 from processing_eeg_methods.ensemble.benchmark_moabb import SFREQ, split_sessions
 from processing_eeg_methods.ensemble.features import bandpass
-from processing_eeg_methods.ensemble.voter_sets import get_voters, voter_names
+from processing_eeg_methods.ensemble.voter_sets import ALIASES, get_voters, voter_names
 from processing_eeg_methods.ensemble.voting_ensemble import (
     _fit_one,
     _oof_one,
@@ -164,7 +164,7 @@ def subject_files(folder):
 
 def run(
     name,
-    voters="fast",
+    voters="classical",
     subjects=None,
     data_dir=None,
     out_dir=None,
@@ -182,7 +182,11 @@ def run(
             f"no subject_<id>.npz or subject_<id>-epo.fif files in {folder}"
         )
     names = voter_names(voters)
-    label = voters if isinstance(voters, str) and "," not in voters else "custom"
+    label = (
+        ALIASES.get(voters, voters)
+        if isinstance(voters, str) and "," not in voters
+        else "custom"
+    )
     out = os.path.join(
         out_dir or os.path.join(ROOT_VOTING_SYSTEM_PATH, "Results", "own_data"),
         name,
@@ -217,7 +221,10 @@ def run(
 def summarize(df):
     if df.empty:
         return
-    gain = df["ensemble: auto"] - df["best single (picked on training data)"]
+    # rounded so that equal accuracies tie exactly in the Wilcoxon ranks
+    gain = (df["ensemble: auto"] - df["best single (picked on training data)"]).round(
+        10
+    )
     print(
         f"\n{len(df)} subjects | best single voter {100 * df['best single (picked on training data)'].mean():.1f}% "
         f"| ensemble (auto) {100 * df['ensemble: auto'].mean():.1f}% "
@@ -237,8 +244,8 @@ def main(argv=None):
     parser.add_argument("name", help="folder name inside --data-dir")
     parser.add_argument(
         "--voters",
-        default="fast",
-        help="fast (default), v1, v2, or comma-separated names",
+        default="classical",
+        help="classical (default), main, curated (or v1, v2, fast), or comma-separated names",
     )
     parser.add_argument("--subjects", nargs="+", default=None)
     parser.add_argument(

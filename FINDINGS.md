@@ -35,7 +35,7 @@ analyze`. The script that produces each result is named in brackets.
   the best on the test data for at least one subject. The most frequent, GREEN, was best for
   only 10 of 53.
 - **Training data rarely identifies the winner.** The voter that looked best on a subject's
-  own training data was the true best for only 21 of 53 subjects (40%).
+  own training data had the best test accuracy (alone or tied) for only 23 of 53 subjects (43%).
 - **Educated guesses do worse than voting.**
 
 | One voter, chosen as | Accuracy | Ensemble better in | Ensemble minus it |
@@ -107,12 +107,14 @@ analyze`. The script that produces each result is named in brackets.
 
 ## 6. Do not curate the voter pool on small data
 
-- **The experiment** [`select_voters`]:
+- **The experiment** (experiment 2 in the paper) [`select_voters`]:
   - eight more voters were added, giving 20;
-  - 15 were chosen by backward elimination on the development data ("v2").
+  - 15 were chosen by backward elimination on the development data (the curated ensemble,
+    `v2` in PROTOCOL.md).
 - **The result:**
-  - on the development data v2 looked 2.6 points better than the original 12;
-  - on the confirmatory data it was 0.2 points worse (p = 0.71).
+  - on the development data the curated ensemble looked 2.6 points better than the main
+    ensemble of 12;
+  - on the confirmatory data it was 0.2 points worse (p = 0.72).
 - **Voter-level effects did not transfer either.** CSP+LDA looked harmful on the development
   data and helpful on the confirmatory data.
 - **Keep a broad pool,** and let the out-of-fold weights do the selecting.
@@ -124,8 +126,8 @@ voters run one after another [`reproduce timing`]:
 
 | | Prediction per trial, median (max) | Calibration per subject, median (max) |
 |---|---|---|
-| `fast` (10 classical voters) | 34 ms (655 ms) | 1.5 min (52 min) |
-| `v2` (15 voters incl. 5 networks) | 52 ms (679 ms) | 11.3 min (98 min) |
+| `classical` (10 voters, no networks) | 34 ms (655 ms) | 1.5 min (52 min) |
+| `curated` (15 voters incl. 5 networks) | 52 ms (679 ms) | 11.3 min (98 min) |
 
 - **Prediction is fast.** The median voter classifies a trial in a few milliseconds. Even the
   whole ensemble run serially needs at most 17% of a trial's length, so it fits in an online
@@ -134,7 +136,7 @@ voters run one after another [`reproduce timing`]:
 - **Calibration is the bottleneck,** and the neural networks dominate it. ATCNet had the
   largest median calibration time (3.5 min); GREEN the largest single one (29 min on
   BNCI2015_003, which has 900 training trials).
-- **The `fast` set** (the 10 classical voters of v2, no GPU) scored 62.1% on the confirmatory
+- **The `classical` set** (the 10 curated voters that are not networks, no GPU) scored 62.1% on the confirmatory
   data:
   - +1.7 ± 4.7 points over its own best voter, improving 35/53 subjects (p = 0.002);
   - 1.6 points below the full ensemble.
@@ -146,7 +148,68 @@ voters run one after another [`reproduce timing`]:
   (−0.5) and ShallowNet (−0.4). [`voter_cost_benefit`]
 - **Per-voter costs** are written to `Results/ensemble_benchmark/timing/timing.csv`.
 
-## 8. How this compares with published results
+## 8. Tuning the networks helps them, not the ensemble
+
+*Experiment 3 in the paper, fixed before any tuning result (Amendment A2 in PROTOCOL.md)*
+[`tune_networks`]:
+- **Configurations.** Each of the six networks was trained in 4 configurations: the
+  benchmark's input (128 Hz, 1–45 Hz) or the recording's own rate (up to 250 Hz, 0.5–100 Hz),
+  crossed with the benchmark's training (AdamW, 300 epochs) or a published-style recipe (Adam,
+  batch 64, 1000 epochs).
+- **Selection.** One configuration per paradigm and network, chosen on development
+  out-of-fold accuracy only. The published-style recipe won 15 of 18 cells, and the native
+  rate 9.
+- **Test.** The selected configurations then ran once on the confirmatory data.
+
+| Confirmatory, 53 subjects | Benchmark settings | Tuned |
+|---|---|---|
+| ShallowNet alone | 55.1% | 57.6% (+2.5, p < 0.001) |
+| FBCNet alone | 57.0% | 59.1% (+2.1, p = 0.006) |
+| EEGNet / GREEN / ATCNet alone | 54.7 / 56.5 / 52.1% | 55.5 / 57.1 / 53.4% (none significant) |
+| Voter picked on training data | 61.5% | 62.4% |
+| **Ensemble (12 voters, `auto`)** | **63.9%** | **63.8%** (p = 0.43) |
+
+- **The ensemble still beats the voter you would have picked:** +1.4 ± 5.7 points with tuned
+  networks, 33/53 subjects improved, p = 0.036.
+- **It beats every tuned network used alone,** by 4.7 to 10.4 points (p ≤ 0.004).
+- **Tuning the networks did not change the ensemble** (−0.1 points, 95% CI −1.0 to +1.1).
+  Use generic network settings inside an ensemble, and spend the compute elsewhere: the tuning
+  took about 13 GPU-days.
+- **Every configuration's development score,** and the per-network tables, are in
+  [docs/SUPPLEMENTARY.md](docs/SUPPLEMENTARY.md) (S6).
+
+## 9. Adding each paradigm's standard pipeline
+
+*Experiment 4 in the paper, fixed before any of these voters was run (Amendment A3 in
+PROTOCOL.md)* [`standard_voters`]:
+- **Voters.** Each paradigm's standard pipeline, with the settings of its original paper and
+  added only to that paradigm's datasets: filter-bank CSP (motor imagery, mental imagery,
+  motor execution), xDAWN + shrinkage LDA (P300), and CCA and TRCA (SSVEP).
+- **Main + standard** = the 12 voters of the main ensemble plus the standard voters of the
+  dataset's paradigm.
+
+| Confirmatory | Subjects | Standard voter alone | Picked voter (main / + standard) | Ensemble (main / + standard) |
+|---|---|---|---|---|
+| Motor/mental imagery, execution | 33 | FBCSP 57.4% | 68.6 / 69.2% | 71.4 / 71.7% |
+| P300 | 10 | xDAWN + LDA 74.6% | 73.4 / 75.4% | 75.2 / 76.6% |
+| SSVEP | 10 | CCA 52.1%, TRCA 20.1% | 26.0 / 50.7% | 27.7 / 47.0% |
+| **All** | **53** | | **61.5 / 66.9%** | **63.9 / 67.9%** |
+
+- **The ensemble still beats the voter you would have picked:** +1.1 ± 6.8 points with the
+  main + standard pool, 36/53 subjects improved, one-sided p = 0.039.
+- **For motor imagery and P300 the standard voters changed little** (at most +1.4 points on the
+  ensemble). FBCSP alone was 14.2 points below the ensemble (Holm p < 0.001), and xDAWN + LDA
+  2.0 points below (not significant).
+- **For SSVEP, CCA is the voter that matters.** It lifted the ensemble from 27.7% to 47.0%, but
+  the ensemble stayed below CCA alone (−5.0 points, Holm p = 0.32, 10 subjects), on the
+  development SSVEP dataset too (64.2% vs 69.1%). With 8–12 training trials per class the
+  ensemble uses weighted voting, which also gives weight to 13 weaker voters.
+- **TRCA was at chance** on both SSVEP datasets. TRCA is designed for stimulus-locked trials
+  averaged over many repetitions; these datasets have few training trials per class.
+- **Cost.** FBCSP calibrates in a median of 18 s (7 min on the 128-channel Schirrmeister2017)
+  and predicts in under 13 ms; xDAWN + LDA, CCA and TRCA take under 1 s and 0.5 ms.
+- Every subject is in [docs/SUPPLEMENTARY.md](docs/SUPPLEMENTARY.md) (S7).
+## 10. How this compares with published results
 
 **Most published numbers are not comparable.** They come from easier protocols:
 - shuffled cross-validation within one session (the MOABB benchmark);
@@ -165,23 +228,26 @@ BNCI2014_001 (session 1 → session 2) and Schirrmeister2017 (official training 
 - **The ensemble reaches the level of tuned networks.** It uses generic, untuned voters and
   one preprocessing pipeline for every paradigm (1–45 Hz, 128 Hz).
 - **Its own ATCNet voter scored lower** on the same data and settings: 86.5% on
-  Schirrmeister2017 and 55.1% on BNCI2014_001.
-- **The published networks have advantages here.** They use the original sampling rate,
-  dataset-specific training, and (Schirrmeister2017) frequencies up to 125 Hz.
+  Schirrmeister2017 and 55.1% on BNCI2014_001. With the tuned configuration (native rate,
+  1000 epochs) it reached 88.6% and 68.2%, still below the published 92.6% and 79.1%.
+- **The published numbers are means over five seeds,** and we did not match every detail of
+  their preprocessing and trial windows.
 - **Status:** competitive with the state of the art, not above it, and without tuning.
 
-## 9. Practical guidance
+## 11. Practical guidance
 
 - **Pass `groups`** (the run, block or session of each trial). Without it, the out-of-fold
   weights are estimated on shuffled folds and inflated by neighbouring, correlated trials.
 - **Keep trials in recording order,** and test on data recorded after the training data.
-- **Start with `get_voters("fast")`.** Use `v1` with a GPU when the model is trained once and
+- **Start with `get_voters("classical")`.** Use `main` with a GPU when the model is trained once and
   reused.
 - **Check the condition before expecting a gain.** If every voter's out-of-fold accuracy is
   at chance, the ensemble cannot help; look at the data, not the model.
 - **Prefer `combination="auto"`.**
+- **For SSVEP, add CCA and compare it with the ensemble.** In this benchmark CCA alone
+  scored higher than the ensemble on both SSVEP datasets.
 
-## 10. Datasets we could not use without leakage
+## 12. Datasets we could not use without leakage
 
 - **Zhou2016:** unreadable with current MNE.
 - **Nakanishi2015:** a single run, so a chronological split leaves classes out of training.

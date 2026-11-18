@@ -120,6 +120,9 @@ def test_missing_class_in_test_session_is_excluded(tmp_path):
 def test_voter_sets_match_the_paper():
     assert len(V1) == 12 and len(V2) == 15 and len(FAST) == 10
     assert voter_names("v1") == V1 and voter_names("a,b") == ["a", "b"]
+    assert voter_names("main") == V1  # paper names; the PROTOCOL.md names are aliases
+    assert voter_names("curated") == voter_names("v2")
+    assert voter_names("classical") == voter_names("fast") == FAST
     assert set(get_voters("fast")) == set(FAST)  # needs the [features] extra
 
 

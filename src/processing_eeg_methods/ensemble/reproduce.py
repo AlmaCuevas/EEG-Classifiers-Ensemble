@@ -1,20 +1,35 @@
 """Reproduce the paper's benchmark, in the order it was run.
 
+Paper names (PROTOCOL.md names): main ensemble (v1), curated ensemble (v2), classical
+ensemble (fast); experiment 3, tuned networks (Amendment A2); experiment 4, paradigm-standard
+voters (Amendment A3).
+
   python -m processing_eeg_methods.ensemble.reproduce check
       code fingerprints against PROTOCOL.md, environment against the lock file, GPU, GREEN
   python -m processing_eeg_methods.ensemble.reproduce benchmark [--datasets ...]
-      1. benchmark_moabb: the 12 pre-registered voters (v1), every subject
-      2. benchmark_extra: the 8 extra voters of Amendment A1, same splits and folds
+      1. benchmark_moabb: the 12 voters of the main ensemble (v1), every subject
+      2. benchmark_extra: the 8 further candidates of the curated ensemble (Amendment A1),
+         same splits and folds
   python -m processing_eeg_methods.ensemble.reproduce timing [--datasets ...]
       calibration time and single-trial latency of all 20 voters, subject 1 of each dataset,
       with nothing else running on the machine
   python -m processing_eeg_methods.ensemble.reproduce analyze
-      H1-H3 and ablations (analyze_voters), v2 selection on development data
+      H1-H3 and ablations (analyze_voters), curated-ensemble selection on development data
       (select_voters select), H4-H5 (select_voters evaluate), leave-one-voter-out
       (voter_cost_benefit), and whether one voter chosen in advance could replace the ensemble
       (explore_selection, exploratory)
   python -m processing_eeg_methods.ensemble.reproduce all
       benchmark, then timing, then analyze
+  python -m processing_eeg_methods.ensemble.reproduce tune
+      Experiment 3, Amendment A2 (tune_networks): every network x 4 configurations on the
+      development datasets, selection on development OOF only, one run of the selected
+      configurations on the confirmatory datasets, then the planned comparisons. Needs the
+      benchmark first; about 13 days on one 8 GB laptop GPU. Not part of "all".
+  python -m processing_eeg_methods.ensemble.reproduce standard
+      Experiment 4, Amendment A3 (standard_voters): the standard pipeline of each paradigm
+      (FBCSP, xDAWN + LDA, CCA, TRCA) as extra voters, same splits and folds, then the planned
+      comparisons. Needs the benchmark first; CPU only, about three hours with data loading.
+      Not part of "all".
 
 Every step is resumable: finished subjects are skipped. Results go to Results/ensemble_benchmark/.
 MOABB downloads the datasets on first use to MNE_DATA (default ~/mne_data, 24 GB in total).
@@ -229,12 +244,27 @@ def analyze():
     explore_selection.main()
 
 
+def standard():
+    from processing_eeg_methods.ensemble import standard_voters
+
+    standard_voters.main(["run"])
+    standard_voters.main(["analyze"])
+
+
+def tune():
+    from processing_eeg_methods.ensemble import tune_networks
+
+    for command in ["tune", "select", "confirm", "analyze"]:
+        tune_networks.main([command])
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        "step", choices=["check", "benchmark", "timing", "analyze", "all"]
+        "step",
+        choices=["check", "benchmark", "timing", "analyze", "all", "tune", "standard"],
     )
     parser.add_argument("--datasets", nargs="+", default=DEVELOPMENT + CONFIRMATORY)
     args = parser.parse_args(argv)
@@ -246,6 +276,10 @@ def main(argv=None):
         timing(args.datasets)
     if args.step in ("analyze", "all"):
         analyze()
+    if args.step == "tune":
+        tune()
+    if args.step == "standard":
+        standard()
 
 
 if __name__ == "__main__":

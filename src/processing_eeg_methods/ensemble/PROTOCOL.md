@@ -3,6 +3,10 @@
 Frozen on **2026-10-26**, before any confirmatory dataset was analysed. Changes after
 this date must be listed under "Deviations" with a reason.
 
+**Names in the paper** (added 2026-11-18; nothing below changes): the main ensemble is v1,
+the curated ensemble v2 and the classical ensemble `fast`; experiment 3 (tuned networks) is
+Amendment A2 and experiment 4 (paradigm-standard voters) is Amendment A3.
+
 ## Question
 Across EEG paradigms, does combining many *diverse* classifiers ("voters") beat the
 single best voter that one would have chosen from the same training data? And does
@@ -271,3 +275,152 @@ training data, best on the development datasets overall, and best on the develop
 of the same paradigm. It also relates the gain to how far the picked voter is above chance. It
 reads only the saved v1 results and changes no hypothesis or frozen file. Its results are
 exploratory: the questions were asked after the data had been seen.
+
+## Amendment A2: network tuning (written 2026-10-30, before any tuning result existed)
+
+**Context and disclosure.**
+- Written after every v1, v2 and exploratory result above was known. The question it answers
+  is one a reader will ask of those results: the networks used generic settings (128 Hz,
+  1–45 Hz, 300 epochs), so does the ensemble still win when they are tuned?
+- Before writing it, a one-day pilot on BNCI2014_001 (a development dataset) trained the
+  networks with published-style settings. No confirmatory data was used.
+- Nothing above changes. H1–H5 and their results stand as reported.
+
+**Networks:** EEGNet, ShallowNet, GREEN, EEGInception-ERP, FBCNet and ATCNet. Classical
+voters are not changed.
+
+**Configurations (2 inputs x 2 training recipes):**
+
+| Name | Input | Training |
+|---|---|---|
+| paper | 128 Hz, 1–45 Hz (P300: 1–24 Hz) | AdamW, weight decay 1e-2, label smoothing 0.1, batch 32, 300 epochs, cosine |
+| paper_input_published_training | as paper | Adam, no weight decay, no smoothing, batch 64, 1000 epochs, cosine |
+| native_input_paper_training | recording rate up to 250 Hz, 0.5 Hz to min(100, 0.45 x rate) | as paper |
+| native_input_published_training | as native | as published |
+
+- Learning rate 1e-3 (GREEN 3e-3), as in the benchmark. One seed (42). Same trial windows.
+- The "paper" configuration is not retrained; its saved probabilities are reused.
+
+**Tuning:** the 5 development datasets only, with the benchmark's chronological split,
+subjects and grouped 5-fold out-of-fold estimate.
+
+**Selection rule:** for each paradigm (MI, P300, SSVEP) and network, the configuration with
+the highest out-of-fold balanced accuracy on the development training sessions, averaged
+over subjects within a dataset and then over datasets. Ties go to the earlier (cheaper) row.
+Test sessions are not used.
+
+**Confirmatory run:** the selected configuration of each network, trained once on the 5
+confirmatory datasets (the MI rule for BNCI2015_004, Schirrmeister2017 and Weibo2014).
+
+**Planned comparisons** (confirmatory datasets, per subject, Wilcoxon signed-rank, rule auto):
+1. The main ensemble with tuned networks vs the voter picked on training data from the same
+   pool.
+2. The main ensemble with tuned networks vs each tuned network used alone.
+3. The main ensemble with tuned networks vs the main ensemble with the benchmark's networks.
+
+"Tuned" replaces the main ensemble's EEGNet, ShallowNet and GREEN with their selected
+configuration.
+
+**Code as run (SHA-256, first 16 hex characters, line-ending-independent).** The run used
+scripts kept outside the repository. `tune_networks.py` is the same code, with the output
+folder moved to `Results/ensemble_benchmark/tuning/` and the two scripts merged. Re-run on
+the saved probabilities, it reproduced `selected.json`, the development scores and every
+per-subject result exactly.
+
+| File | Hash | Written |
+|---|---|---|
+| `tune.py` (tune, select, confirm) | `afe6b2ad069d3829` | 2026-10-30, with this amendment |
+| `analyze_tuned.py` (planned comparisons) | `9d4628b14196a55c` | 2026-11-03, during the confirmatory run; tested on development data only |
+| `selected.json` | `435ec5cde81edf01` | 2026-11-01, from development data only |
+| `src/processing_eeg_methods/ensemble/tune_networks.py` | `eaa2f202f23565c6` | 2026-11-14, public version |
+
+**Selected configurations (2026-11-01):**
+
+| Network | MI | P300 | SSVEP |
+|---|---|---|---|
+| EEGNet | paper input, published training | native input, paper training | paper input, published training |
+| ShallowNet | paper input, published training | native input, published training | paper input, published training |
+| GREEN | native input, paper training | paper input, published training | native input, published training |
+| EEGInception-ERP | native input, published training | native input, published training | paper input, published training |
+| FBCNet | native input, published training | paper | paper input, published training |
+| ATCNet | native input, published training | paper input, published training | native input, published training |
+
+**Deviations (none changes code, configuration or rule).**
+- 2026-10-31: the first tuning attempt stopped on a Zenodo download time-out (Kalunga2016).
+  All datasets were downloaded with retries, and the run restarted from scratch.
+- 2026-11-06: the machine restarted for an operating-system update during the confirmatory
+  run (Schirrmeister2017, subject 6). Finished files were kept and the run resumed on
+  2026-11-07. The resumed `select` step reproduced `selected.json` exactly.
+- Descriptive addition (2026-11-14, after the results): `tune_networks.analyze` also reports
+  each tuned network against its benchmark configuration. EEGInception-ERP has no such row on
+  the confirmatory data, because v2 had dropped it and its benchmark configuration was never
+  run there.
+- Tie handling (2026-11-14, after the results): per-subject differences are rounded to 1e-10
+  before the Wilcoxon test, so that equal accuracies tie exactly. Floating-point noise of about
+  1e-16 had split such ties. This moved p for comparison 1 from 0.035 to 0.036 and for comparison
+  3 from 0.41 to 0.43. The same rounding is now used in `explore_selection.py` and the paper's
+  tables. For H1, H4, H5 and the fast ensemble it changes only the third significant digit
+  (for example H1: 0.00083 to 0.00080); the frozen scripts that print them are unchanged.
+- Ties (2026-11-14): counts of subjects "better" and of subjects whose picked voter was the
+  best now treat equal accuracies as ties. The picked voter had the best test accuracy, alone or
+  tied, for 23/53 confirmatory subjects; the earlier count of 21 matched voters by name.
+
+**Result (2026-11-14, 53 confirmatory subjects):**
+1. The tuned ensemble 63.8% vs the picked voter 62.4%: +1.4 pp, better for 33/53, p = 0.036.
+2. It beat every tuned network used alone by 4.7 to 10.4 pp (p ≤ 0.004).
+3. Tuned vs benchmark networks in the ensemble: 63.8% vs 63.9%, −0.1 pp, p = 0.43.
+
+## Amendment A3: paradigm-standard voters (written 2026-11-14 15:00, before any of them was run on any dataset)
+
+**Context and disclosure.**
+- Written after every result above was known, in answer to a review of the draft: the v1 pool
+  has no standard pipeline for SSVEP (CCA, TRCA) and none for P300 in v1 (xDAWN with LDA), so
+  its baseline was the best voter of our pool rather than the paradigm's standard method.
+- Nothing above changes. H1-H5 and Amendment A2 stand as reported.
+
+**Voters** (`standard_voters.py`; settings from the original papers, no tuning):
+- **MI** (motor imagery, mental imagery and motor execution): `fbcsp`. Log-variance of 4 CSP
+  components (Ledoit-Wolf) in each 4-Hz band from 4 to 40 Hz, the 8 features with the highest
+  mutual information with the class, shrinkage LDA (Ang et al. 2008).
+- **P300:** `xdawn_lda`. xDAWN spatial filters (4 per class), the filtered time course
+  averaged in bins of 4 samples, shrinkage LDA with equal priors (Rivet et al. 2009; Blankertz
+  et al. 2011).
+- **SSVEP:** `cca`. Largest canonical correlation with sine/cosine references at each class's
+  stimulus frequency and its 2nd harmonic (Lin et al. 2006), followed by logistic regression
+  (C = 0.1, class-balanced), so that classes without a frequency (Kalunga2016 "rest") can be
+  learned. `trca`: ensemble TRCA (Nakanishi et al. 2018), correlation with each class
+  template, then the same logistic regression.
+- Each standard voter is added only to the datasets of its paradigm. Same trials, chronological
+  split, grouped 5-fold OOF and refit as the benchmark (`standard_voters run`).
+
+**Hypothesis and tests (confirmatory datasets, 53 subjects, rule auto).** "Full pool" = the 12
+v1 voters plus the standard voters of the dataset's paradigm.
+- **H6.** The full-pool ensemble beats the best single voter of the full pool chosen on
+  training OOF accuracy. One-sided Wilcoxon signed-rank on per-subject differences, alpha = 0.05.
+- **Secondary** (two-sided Wilcoxon, Holm-adjusted together): the full-pool ensemble vs the v1
+  ensemble (53 subjects); the full-pool ensemble vs each standard voter alone, on the subjects
+  of its paradigm (FBCSP: 33; xDAWN + LDA: 10; CCA and TRCA: 10).
+- The development datasets are reported descriptively.
+- Per-subject differences are rounded to 1e-10 before testing, so that equal accuracies tie.
+
+**Code fingerprint (SHA-256, first 16 hex characters, line-ending-independent).**
+
+| File | Hash |
+|---|---|
+| `src/processing_eeg_methods/ensemble/standard_voters.py` | `b1dd12c90a2e9e78` |
+
+**Run.** 2026-11-14 15:02 to 17:45, `standard_voters run` on all ten datasets, CPU only. The
+fingerprint above was re-checked after the run and is unchanged. No deviation from this
+amendment.
+
+**Result (2026-11-14, 53 confirmatory subjects):**
+- **H6 supported.** Full-pool ensemble 67.9% vs the full-pool picked voter 66.9%:
+  +1.1 ± 6.8 pp, 36 of 53 subjects improved, one-sided p = 0.039.
+- Secondary (Holm-adjusted): full vs v1 ensemble +4.1 pp (p = 0.030); vs FBCSP alone +14.2 pp
+  (p = 2.1e-5); vs TRCA alone +27.0 pp (p = 0.023); vs xDAWN + LDA alone +2.0 pp (p = 0.32);
+  vs CCA alone -5.0 pp (p = 0.32).
+- On SSVEP (MAMEM3) the ensemble (47.0%) scored below CCA alone (52.1%) and below the picked
+  voter (50.7%); the same held on the development SSVEP dataset (Kalunga2016). TRCA was at
+  chance level on both.
+- Full tables: `Results/ensemble_benchmark/standard/RESULTS.md` (`standard_voters analyze`) and
+  docs/SUPPLEMENTARY.md, table S7.

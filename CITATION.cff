@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 title: "EEG-Classifiers-Ensemble: leakage-safe voting ensembles of diverse EEG classifiers"
-version: 1.0.0
+version: 1.1.0
 license: MIT
 repository-code: "https://github.com/AlmaCuevas/EEG-Classifiers-Ensemble"
 keywords:

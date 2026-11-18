@@ -1,12 +1,16 @@
-"""The voter sets evaluated in the paper, by name.
+"""The voter sets evaluated in the paper, by the paper's names.
 
-  v1    the 12 pre-registered voters (PROTOCOL.md, frozen 2026-10-23)
-  v2    15 of 20 voters, chosen by backward elimination on development data only
-        (PROTOCOL.md, Amendment A1, frozen 2026-10-27)
-  fast  the classical (non-network) voters of v2: no GPU needed, calibrates in minutes
+  main       the 12 voters of the main ensemble (experiment 1; PROTOCOL.md "v1",
+             frozen 2026-10-23)
+  curated    15 of 20 voters, chosen by backward elimination on development data only
+             (experiment 2; PROTOCOL.md "v2", Amendment A1, frozen 2026-10-27)
+  classical  the curated voters that are not networks: no GPU needed, calibrates in minutes
+             (PROTOCOL.md "fast")
+
+The PROTOCOL.md names v1, v2 and fast are accepted as aliases.
 
     from processing_eeg_methods.ensemble.voter_sets import get_voters
-    ens = VotingEnsemble(get_voters("fast", sfreq=128.0)).fit(X, y, groups=runs)
+    ens = VotingEnsemble(get_voters("classical", sfreq=128.0)).fit(X, y, groups=runs)
 """
 
 from processing_eeg_methods.ensemble.extra_voters import DEEP_EXTRA, extra_voters
@@ -45,13 +49,20 @@ V2 = [
 ]
 DEEP = {"eegnet", "shallownet", "green"} | DEEP_EXTRA
 FAST = [v for v in V2 if v not in DEEP]
-SETS = {"v1": V1, "v2": V2, "fast": FAST}
+SETS = {"main": V1, "curated": V2, "classical": FAST}
+ALIASES = {
+    "v1": "main",
+    "v2": "curated",
+    "fast": "classical",
+}  # names used in PROTOCOL.md
+MAIN, CURATED, CLASSICAL = V1, V2, FAST
 
 
 def voter_names(spec):
-    """'v1' | 'v2' | 'fast' | a list (or comma-separated string) of voter names."""
+    """'main' | 'curated' | 'classical' (or 'v1' | 'v2' | 'fast') | a list (or comma-separated
+    string) of voter names."""
     if isinstance(spec, str):
-        spec = SETS.get(spec, spec.split(","))
+        spec = SETS.get(ALIASES.get(spec, spec), spec.split(","))
     return list(spec)
 
 
@@ -65,7 +76,7 @@ def voter_pool(sfreq=128.0, epochs=300, deep=True):
     return pool
 
 
-def get_voters(spec="fast", sfreq=128.0, epochs=300):
+def get_voters(spec="classical", sfreq=128.0, epochs=300):
     """Voters by set name or list of names. Raises if one cannot be built here (missing package)."""
     names = voter_names(spec)
     pool = voter_pool(sfreq, epochs, deep=bool(DEEP & set(names)))

@@ -40,7 +40,7 @@ inflated by neighbouring, correlated trials.
 from processing_eeg_methods.ensemble import VotingEnsemble
 from processing_eeg_methods.ensemble.voter_sets import get_voters
 
-ens = VotingEnsemble(get_voters("fast", sfreq=128.0))   # or "v1", "v2", or a list of names
+ens = VotingEnsemble(get_voters("classical", sfreq=128.0))  # or "main", "curated", or names
 ens.fit(X_train, y_train, groups=run_of_each_trial)
 proba = ens.predict_proba(X_new)
 print(ens.diversity_report())     # out-of-fold accuracy, weight and error correlation per voter
@@ -48,9 +48,12 @@ print(ens.diversity_report())     # out-of-fold accuracy, weight and error corre
 
 | Voter set | Voters | What it is |
 |---|---|---|
-| `fast` | 10 | The classical voters of v2. No GPU; calibrates in seconds to minutes. |
-| `v1` | 12 | The pre-registered set, including EEGNet, ShallowNet and GREEN. |
-| `v2` | 15 | Chosen from 20 voters on the development data (see the results below). |
+| `classical` | 10 | The curated voters that are not networks. No GPU; calibrates in seconds to minutes. |
+| `main` | 12 | The main ensemble of the paper, including EEGNet, ShallowNet and GREEN. |
+| `curated` | 15 | Chosen from 20 voters on the development data (see the results below). |
+
+PROTOCOL.md and the result files use the names from when the protocol was written: `v1`
+(main), `v2` (curated) and `fast` (classical). Both names work in `get_voters` and `--voters`.
 
 You can also pass your own scikit-learn classifiers:
 `VotingEnsemble({"name": classifier, ...})`.
@@ -76,7 +79,7 @@ Save one file per subject in `Datasets/<name>/`:
 Trials must be in recording order. Then run:
 
 ```bash
-python -m processing_eeg_methods.ensemble.run_own_data <name> --voters fast
+python -m processing_eeg_methods.ensemble.run_own_data <name> --voters classical
 ```
 
 This runs exactly the benchmark's procedure:
@@ -105,6 +108,26 @@ The steps can also run one at a time: `benchmark`, `timing`, then `analyze`. Use
 - **Output:** results are written to `Results/ensemble_benchmark/`.
 - **Compute:** about 120 GPU-hours on one 8 GB laptop GPU. Most of that is Schirrmeister2017,
   which also needs 16 GB of RAM with nothing else running.
+
+Experiment 3, the network-tuning test (Amendment A2 in PROTOCOL.md), runs separately, after the
+benchmark:
+
+```bash
+python -m processing_eeg_methods.ensemble.reproduce tune     # tune, select, confirm, analyze
+```
+
+It trains every network in 4 configurations on the development datasets and selects one per
+paradigm on development out-of-fold accuracy only. The selected configurations then run once on
+the confirmatory datasets. It took about 13 days on the same GPU, and its results go to
+`Results/ensemble_benchmark/tuning/`.
+
+Experiment 4, the paradigm-standard voters (Amendment A3: filter-bank CSP, xDAWN + LDA, CCA,
+TRCA), also runs separately, after the benchmark, on the CPU in about three hours:
+
+```bash
+python -m processing_eeg_methods.ensemble.reproduce standard   # run, then the planned tests
+```
+
 
 **Exact environment.** The paper ran on Python 3.10, Windows and CUDA 12.1, with the versions
 in [requirements-ensemble.lock.txt](requirements-ensemble.lock.txt):
@@ -147,7 +170,7 @@ that installation passed `pip-audit`.
 
 The pre-registered cross-session benchmark:
 - **Split:** train on the first session, test on later sessions.
-- **Voters:** v1.
+- **Voters:** the main ensemble (12 voters).
 - **Combination:** `auto`.
 - **Baseline:** the single voter picked on training data.
 - **Metric:** balanced accuracy, mean over subjects. Gain is in points, with the number of
@@ -172,7 +195,12 @@ The pre-registered cross-session benchmark:
 The full set of findings, with practical guidance, is in [FINDINGS.md](FINDINGS.md). It covers:
 - why picking one voter loses to voting;
 - why voters must be above chance rather than good;
+- what tuning the networks changes;
+- what each paradigm's standard pipeline adds;
 - comparisons with published results.
+
+Every subject, every voter's cost and every tuning configuration are in
+[docs/SUPPLEMENTARY.md](docs/SUPPLEMENTARY.md).
 
 What the benchmark shows:
 - **Where the voters carry signal, the ensemble beats the voter you would have picked,** on
@@ -183,13 +211,29 @@ What the benchmark shows:
   - The ensemble recovered 60% of that gap.
   - The error correlation between voters did not predict the gain.
 - **Don't curate the voters on small data.**
-  - v2 (15 of 20 voters, picked on development data) looked 2.6 points better there.
-  - On the confirmatory data it was 0.2 points worse than v1 (p = 0.71).
+  - The curated ensemble (15 of 20 voters, picked on development data) looked 2.6 points
+    better there.
+  - On the confirmatory data it was 0.2 points worse than the main ensemble (p = 0.72).
+- **The ensemble does not need tuned networks** (experiment 3, tested on the confirmatory
+  data).
+  - Each network was tuned on the development data: native sampling rate vs 128 Hz, and a
+    published-style recipe vs the benchmark's. Tuning raised ShallowNet by 2.5 points and
+    FBCNet by 2.1 used alone.
+  - The ensemble with tuned networks still beat the voter picked on training data (+1.4
+    points, 33/53 subjects, p = 0.036).
+  - It beat every tuned network used alone, by 4.7 to 10.4 points.
+  - It scored the same as with untuned networks (63.8% vs 63.9%, p = 0.43).
+- **Adding each paradigm's standard pipeline** (experiment 4: filter-bank CSP, xDAWN + LDA,
+  CCA, TRCA):
+  - The ensemble still beat the voter picked on training data (67.9% vs 66.9%, 36/53
+    subjects, p = 0.039).
+  - On SSVEP, CCA lifted the ensemble from 27.7% to 47.0%, but CCA alone scored higher
+    (52.1%; not significant, 10 subjects). For SSVEP, compare CCA with the ensemble.
 - **Fast and online use.**
-  - Prediction is fast: the `fast` set needs a median of 34 ms per trial, and the 15-voter
-    `v2` set 52 ms, run serially on a laptop. That fits an online loop.
+  - Prediction is fast: the `classical` set needs a median of 34 ms per trial, and the
+    15-voter `curated` set 52 ms, run serially on a laptop. That fits an online loop.
   - Calibration is the bottleneck, and it is dominated by the networks.
-  - The `fast` set needs no GPU and still beats its own best voter (+1.7 points, p = 0.002).
+  - The `classical` set needs no GPU and still beats its own best voter (+1.7 points, p = 0.002).
     It is 1.6 points below the full ensemble.
   - ATCNet was the most expensive voter, and removing it changed nothing measurable.
 

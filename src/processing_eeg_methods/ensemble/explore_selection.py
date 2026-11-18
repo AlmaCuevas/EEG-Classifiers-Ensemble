@@ -63,7 +63,8 @@ def load():
 
 
 def compare(name, ensemble, single):
-    gain = ensemble - single
+    # rounded so that equal accuracies tie exactly (float noise of ~1e-16 otherwise splits ties)
+    gain = np.round(ensemble - single, 10)
     return {
         "strategy": name,
         "accuracy": single.mean(),
@@ -125,7 +126,8 @@ def main():
         .sort_values(["set", "subjects"], ascending=[True, False])
     )
     winners.to_csv(os.path.join(out, "hindsight_winners.csv"), index=False)
-    picked_is_best = conf.picked_voter == conf.hindsight_voter
+    # a picked voter that ties the best test accuracy is a best voter (ties broken by name otherwise)
+    picked_is_best = conf.best_single >= conf[voters].max(axis=1) - 1e-10
 
     t["above_chance"] = t.best_single - t.chance
     t["gain"] = t["auto"] - t.best_single
